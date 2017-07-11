@@ -1,0 +1,8 @@
+{application, erlkaf, [
+    {description, "erlkaf - Erlang Kafka library based on librdkafka"},
+    {vsn, "1.0"},
+    {registered, []},
+    {applications, [kernel, stdlib, lager]},
+    {mod, {erlkaf_app, []}},
+    {env, []}
+]}.

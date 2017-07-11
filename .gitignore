@@ -1,0 +1,9 @@
+/.idea/
+/.rebar/
+/deps/
+/DerivedData/
+/ebin/
+/erlkaf_nif.xcodeproj/
+/log/
+/priv/
+*.iml
