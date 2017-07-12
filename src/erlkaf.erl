@@ -101,9 +101,8 @@ produce(ClientId, TopicId, Partition, Key, Value) ->
         {ok, ClientRef, _ClientPid} ->
             case erlkaf_nif:produce(ClientRef, erlkaf_utils:topicid2bin(TopicId), Partition, Key, Value) of
                 {error, ?RD_KAFKA_RESP_ERR_QUEUE_FULL} ->
-                    %todo: maybe instead logging an error we can block caller process for a while or add them in ets
-                    %for sending them later
-                    ?ERROR_MSG("drop message: ~p because queue is full", [{ClientId, TopicId, Partition, Key, Value}]);
+                    %todo: investigate something smarter
+                    produce(ClientId, TopicId, Partition, Key, Value);
                 Resp ->
                     Resp
             end;
