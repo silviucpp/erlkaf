@@ -6,6 +6,8 @@
 #include "erlkaf_config.h"
 #include "erlkaf_logger.h"
 
+#include <signal.h>
+
 const char* kThreadOptsId = "librdkafka_thread_opts";
 const char* kPollThreadId = "librdkafka_poll_thread";
 
@@ -174,6 +176,13 @@ ERL_NIF_TERM enif_producer_new(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv
 
     if(parse_result != ATOMS.atomOk)
         return parse_result;
+
+#ifdef SIGIO
+    //quick termination
+    char tmp[128];
+    snprintf(tmp, sizeof(tmp), "%i", SIGIO);
+    rd_kafka_conf_set(config.get(), "internal.termination.signal", tmp, NULL, 0);
+#endif
 
     rd_kafka_conf_set_log_cb(config.get(), logger_callback);
 
