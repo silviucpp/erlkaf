@@ -26,6 +26,7 @@ using `enif_send`.
 - Add statistics support   
 - Add benchmarks
 - Add unit tests
+- Add support for batch produce
 - Document all configs
 
 ### User guide
