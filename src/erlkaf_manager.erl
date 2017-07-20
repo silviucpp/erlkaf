@@ -10,6 +10,8 @@
     start_link/0,
     start_producer/3,
     stop_producer/1,
+    start_consumer_group/8,
+    stop_consumer_group/1,
     create_topic/4
 ]).
 
@@ -21,13 +23,19 @@ start_link() ->
     gen_server:start_link({local, ?SERVER}, ?MODULE, [], []).
 
 start_producer(ClientId, ErlkafConfig, LibRdkafkaConfig) ->
-    call({start_producer, ClientId, ErlkafConfig, LibRdkafkaConfig}).
+    erlkaf_utils:safe_call(?MODULE, {start_producer, ClientId, ErlkafConfig, LibRdkafkaConfig}).
 
 stop_producer(ClientId) ->
-    call({stop_producer, ClientId}).
+    erlkaf_utils:safe_call(?MODULE, {stop_producer, ClientId}).
+
+start_consumer_group(GroupId, Topics, EkClientConfig, RdkClientConfig, EkTopicConfig, RdkTopicConfig, CbModule, CbArgs) ->
+    erlkaf_utils:safe_call(?MODULE, {start_consumer_group, GroupId, Topics, EkClientConfig, RdkClientConfig, EkTopicConfig, RdkTopicConfig, CbModule, CbArgs}).
+
+stop_consumer_group(GroupId) ->
+    erlkaf_utils:safe_call(?MODULE, {stop_consumer_group, GroupId}).
 
 create_topic(ClientRef, TopicId, TopicName, TopicConfig) ->
-    call({create_topic, ClientRef, TopicId, TopicName, TopicConfig}).
+    erlkaf_utils:safe_call(?MODULE, {create_topic, ClientRef, TopicId, TopicName, TopicConfig}).
 
 %gen server
 
@@ -35,7 +43,7 @@ init([]) ->
     {ok, #state{}}.
 
 handle_call({create_topic, ClientRef, TopicId, TopicName, TopicConfig}, _From, State) ->
-    {reply, erlkaf_nif:topic_new(ClientRef, erlkaf_utils:topicid2bin(TopicId), TopicName, TopicConfig), State};
+    {reply, erlkaf_nif:producer_topic_new(ClientRef, erlkaf_utils:topicid2bin(TopicId), TopicName, TopicConfig), State};
 
 handle_call({start_producer, ClientId, ErlkafConfig, LibRdkafkaConfig}, _From, State) ->
     case internal_start_producer(ClientId, ErlkafConfig, LibRdkafkaConfig) of
@@ -44,6 +52,17 @@ handle_call({start_producer, ClientId, ErlkafConfig, LibRdkafkaConfig}, _From, S
         Error ->
             {reply, Error, State}
     end;
+
+handle_call({start_consumer_group, GroupId, Topics, EkClientConfig, RdkClientConfig, EkTopicConfig, RdkTopicConfig, CbModule, CbArgs}, _From, State) ->
+    case erlkaf_sup:add_client(GroupId, erlkaf_consumer_group, [GroupId, Topics, EkClientConfig, RdkClientConfig, EkTopicConfig, RdkTopicConfig, CbModule, CbArgs]) of
+        {ok, _Pid} ->
+            {reply, ok, State};
+        Error ->
+            {reply, Error, State}
+    end;
+
+handle_call({stop_consumer_group, GroupId}, _From, State) ->
+    {reply, erlkaf_sup:remove_client(GroupId), State};
 
 handle_call({stop_producer, ClientId}, _From, State) ->
     {reply, internal_stop_producer(ClientId), State};
@@ -77,7 +96,7 @@ internal_start_producer(ClientId, ErlkafConfig, LibRdkafkaConfig) ->
                 Error ->
                     Error
             end;
-        {ok, _} ->
+        {ok, _, _} ->
             {error, ?ERR_ALREADY_EXISTING_CLIENT}
     end.
 
@@ -87,17 +106,4 @@ internal_stop_producer(ClientId) ->
             erlkaf_sup:remove_client(ClientId);
         _ ->
             {error, ?ERR_UNDEFINED_CLIENT}
-    end.
-
-call(Message) ->
-    call(Message, 5000).
-
-call(Message, Timeout) ->
-    try
-        gen_server:call(?MODULE, Message, Timeout)
-    catch
-        exit:{noproc, _} ->
-            {error, erlkaf_not_started};
-        _: Exception ->
-            {error, Exception}
     end.

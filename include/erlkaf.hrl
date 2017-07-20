@@ -14,8 +14,6 @@
 -type reason() :: any().
 -type key() :: undefined | binary().
 -type partition() :: ?DEFULT_PARTITIONER | integer().
-
-
 -type compression_codec() :: none | gzip | snappy | lz4 | inherit.
 -type offset_reset() :: smallest | earliest | beginning | largest | latest.
 -type offset_store_method() :: file | broker.

@@ -1,17 +1,16 @@
-#include "erlkaf_rd_kafka.h"
+#include "erlkaf_producer.h"
 #include "nif_utils.h"
 #include "macros.h"
 #include "topicmanager.h"
 #include "erlkaf_nif.h"
 #include "erlkaf_config.h"
 #include "erlkaf_logger.h"
+#include "rdkafka.h"
 
-#include <signal.h>
+static const char* kThreadOptsId = "librdkafka_producer_thread_opts";
+static const char* kPollThreadId = "librdkafka_producer_poll_thread";
 
-const char* kThreadOptsId = "librdkafka_thread_opts";
-const char* kPollThreadId = "librdkafka_poll_thread";
-
-struct enif_rd_kafka
+struct enif_producer
 {
     rd_kafka_t* kf;
     TopicManager* topics;
@@ -29,9 +28,19 @@ struct callback_data
     ErlNifPid pid;
 };
 
-void* producer_poll_thread(void* arg);
+static void* producer_poll_thread(void* arg)
+{
+    enif_producer* enif_kafka = static_cast<enif_producer*>(arg);
 
-callback_data* callback_data_alloc(ERL_NIF_TERM ref, const ErlNifPid& pid)
+    while (enif_kafka->running)
+        rd_kafka_poll(enif_kafka->kf, 100);
+
+    rd_kafka_flush(enif_kafka->kf, 5000);
+
+    return NULL;
+}
+
+static callback_data* callback_data_alloc(ERL_NIF_TERM ref, const ErlNifPid& pid)
 {
     callback_data* callback = static_cast<callback_data*>(enif_alloc(sizeof(callback_data)));
     callback->env = enif_alloc_env();
@@ -40,7 +49,7 @@ callback_data* callback_data_alloc(ERL_NIF_TERM ref, const ErlNifPid& pid)
     return callback;
 }
 
-void callback_data_free(callback_data* cb)
+static void callback_data_free(callback_data* cb)
 {
     if(cb->env)
         enif_free_env(cb->env);
@@ -48,11 +57,11 @@ void callback_data_free(callback_data* cb)
     enif_free(cb);
 }
 
-void enif_rd_kafka_free(ErlNifEnv* env, void* obj)
+void enif_producer_free(ErlNifEnv* env, void* obj)
 {
     UNUSED(env);
 
-    enif_rd_kafka* enif_kafka = static_cast<enif_rd_kafka*>(obj);
+    enif_producer* enif_kafka = static_cast<enif_producer*>(obj);
     enif_kafka->running = false;
 
     if(enif_kafka->thread_opts)
@@ -69,9 +78,9 @@ void enif_rd_kafka_free(ErlNifEnv* env, void* obj)
         rd_kafka_destroy(enif_kafka->kf);
 }
 
-enif_rd_kafka* enif_kafka_new(erlkaf_data* data, rd_kafka_t* kf, bool has_dr_callback)
+enif_producer* enif_kafka_new(erlkaf_data* data, rd_kafka_t* kf, bool has_dr_callback)
 {
-    scoped_ptr(nif_kafka, enif_rd_kafka, static_cast<enif_rd_kafka*>(enif_alloc_resource(data->res_kafka_handler, sizeof(enif_rd_kafka))), enif_release_resource);
+    scoped_ptr(nif_kafka, enif_producer, static_cast<enif_producer*>(enif_alloc_resource(data->res_producer, sizeof(enif_producer))), enif_release_resource);
 
     if(nif_kafka.get() == NULL)
     {
@@ -79,7 +88,7 @@ enif_rd_kafka* enif_kafka_new(erlkaf_data* data, rd_kafka_t* kf, bool has_dr_cal
         return NULL;
     }
 
-    memset(nif_kafka.get(), 0, sizeof(enif_rd_kafka));
+    memset(nif_kafka.get(), 0, sizeof(enif_producer));
 
     nif_kafka->topics = new TopicManager(kf);
     nif_kafka->running = true;
@@ -93,7 +102,7 @@ enif_rd_kafka* enif_kafka_new(erlkaf_data* data, rd_kafka_t* kf, bool has_dr_cal
     return nif_kafka.release();
 }
 
-void delivery_report_callback (rd_kafka_t* rk, const rd_kafka_message_t* msg, void* data)
+static void delivery_report_callback (rd_kafka_t* rk, const rd_kafka_message_t* msg, void* data)
 {
     UNUSED(rk);
     UNUSED(data);
@@ -116,29 +125,17 @@ void delivery_report_callback (rd_kafka_t* rk, const rd_kafka_message_t* msg, vo
     callback_data_free(cb);
 }
 
-void* producer_poll_thread(void* arg)
-{
-    enif_rd_kafka* enif_kafka = static_cast<enif_rd_kafka*>(arg);
-
-    while (enif_kafka->running)
-        rd_kafka_poll(enif_kafka->kf, 100);
-
-    rd_kafka_flush(enif_kafka->kf, 5000);
-
-    return NULL;
-}
-
-ERL_NIF_TERM enif_topic_new(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
+ERL_NIF_TERM enif_producer_topic_new(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
 {
     UNUSED(argc);
 
     std::string topic_name;
     std::string topic_id;
-    enif_rd_kafka* enif_kafka;
+    enif_producer* enif_kafka;
 
     erlkaf_data* data = static_cast<erlkaf_data*>(enif_priv_data(env));
 
-    if(!enif_get_resource(env, argv[0], data->res_kafka_handler, (void**) &enif_kafka))
+    if(!enif_get_resource(env, argv[0], data->res_producer, (void**) &enif_kafka))
         return make_badarg(env);
 
     if(!get_string(env, argv[1], &topic_id) || !get_string(env, argv[2], &topic_name))
@@ -177,13 +174,6 @@ ERL_NIF_TERM enif_producer_new(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv
     if(parse_result != ATOMS.atomOk)
         return parse_result;
 
-#ifdef SIGIO
-    //quick termination
-    char tmp[128];
-    snprintf(tmp, sizeof(tmp), "%i", SIGIO);
-    rd_kafka_conf_set(config.get(), "internal.termination.signal", tmp, NULL, 0);
-#endif
-
     rd_kafka_conf_set_log_cb(config.get(), logger_callback);
 
     if(has_dr_callback)
@@ -199,7 +189,7 @@ ERL_NIF_TERM enif_producer_new(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv
 
     erlkaf_data* data = static_cast<erlkaf_data*>(enif_priv_data(env));
 
-    enif_rd_kafka* nif_kafka = enif_kafka_new(data, rk, has_dr_callback);
+    enif_producer* nif_kafka = enif_kafka_new(data, rk, has_dr_callback);
 
     if(nif_kafka == NULL)
         return make_error(env, "failed to create native kafka object");
@@ -209,14 +199,14 @@ ERL_NIF_TERM enif_producer_new(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv
     return enif_make_tuple2(env, ATOMS.atomOk, term);
 }
 
-ERL_NIF_TERM enif_client_set_owner(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
+ERL_NIF_TERM enif_producer_set_owner(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
 {
     UNUSED(argc);
     erlkaf_data* data = static_cast<erlkaf_data*>(enif_priv_data(env));
 
-    enif_rd_kafka* enif_kafka;
+    enif_producer* enif_kafka;
 
-    if(!enif_get_resource(env, argv[0], data->res_kafka_handler, (void**) &enif_kafka))
+    if(!enif_get_resource(env, argv[0], data->res_producer, (void**) &enif_kafka))
         return make_badarg(env);
 
     if(!enif_get_local_pid(env, argv[1], &enif_kafka->owner_pid))
@@ -231,13 +221,13 @@ ERL_NIF_TERM enif_produce(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
 
     erlkaf_data* data = static_cast<erlkaf_data*>(enif_priv_data(env));
 
-    enif_rd_kafka* enif_kafka;
+    enif_producer* enif_kafka;
     std::string topic_id;
     int32_t partition;
     ErlNifBinary key;
     ErlNifBinary value;
 
-    if(!enif_get_resource(env, argv[0], data->res_kafka_handler, (void**) &enif_kafka))
+    if(!enif_get_resource(env, argv[0], data->res_producer, (void**) &enif_kafka))
         return make_badarg(env);
 
     if(!get_string(env, argv[1], &topic_id))

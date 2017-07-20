@@ -12,16 +12,18 @@ struct atoms
     ERL_NIF_TERM atomFalse;
     ERL_NIF_TERM atomBadArg;
     ERL_NIF_TERM atomOptions;
-
     ERL_NIF_TERM atomMessage;
     ERL_NIF_TERM atomDeliveryReport;
     ERL_NIF_TERM atomLogEvent;
-
+    ERL_NIF_TERM atomAssignPartition;
+    ERL_NIF_TERM atomRevokePartition;
 };
 
 struct erlkaf_data
 {
-    ErlNifResourceType* res_kafka_handler;
+    ErlNifResourceType* res_producer;
+    ErlNifResourceType* res_consumer;
+    ErlNifResourceType* res_queue;
 };
 
 extern atoms ATOMS;

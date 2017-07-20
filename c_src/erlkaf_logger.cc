@@ -39,3 +39,8 @@ ERL_NIF_TERM nif_set_logger_pid(ErlNifEnv* env, int argc, const ERL_NIF_TERM arg
 
     return ATOMS.atomOk;
 }
+
+void log_message(const rd_kafka_t *rk, kRdLogLevel level, const std::string& msg)
+{
+    logger_callback(rk, static_cast<int>(level), "", msg.c_str());
+}

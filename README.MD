@@ -1,7 +1,7 @@
 # erlkaf
 
 *Erlang kafka driver based on [librdkafka][1]*
-      
+
 ### Implementation notes
 
 This project is under development and the interface might change.
@@ -19,10 +19,9 @@ Because the `librdkafka` driver is async, erlkaf won't block the scheduler threa
 will return immediately. The `librdkafka` driver use it's own thread pool for managing the requests. Also each client 
 has it's own thread from where is sending async the events (delivery reports, logs, statistics) to erlang 
 using `enif_send`.
-   
+
 ### TODO
 
-- Add consumer support
 - Add statistics support   
 - Add benchmarks
 - Add unit tests
@@ -42,7 +41,7 @@ Add `erlkaf` as a rebar dependency to your project:
 ##### Producer example:
 
 The following example will create a producer client with id `client1` which sends also delivery reports to the same module.
- 
+
 In order to receive the delivery reports you need to implement the `erlkaf_producer` protocol or to setup a function with
 arity 3 into `delivery_report_callback` (`{delivery_report_callback, fun(MsgRef, DeliveryStatus, Message) -> .. end}`).
 
@@ -53,7 +52,7 @@ Also in order to send messages to a topic you need to define a topic object atta
 `erlkaf:create_topic` method. You can create different versions of the same kafka topic by specifying an id (in the above example
 if you send the messages over `<<"benchmark">>` topic will send them without compression but if you send over `topic_id1` will send them
 using `lz4` - even if both objects refer to the same kafka topic).
-    
+
 ```erlang
 -module(test).
 
@@ -109,6 +108,56 @@ received delivery report: {#Ref<0.0.8.244>,ok, {erlkaf_msg,<<"benchmark">>,4,617
 In case you are not interested in the delivery reports don't specify any callback, or in case you want to receive the 
 delivery reports only in case of errors you have to specify a callback and set `delivery_report_only_error` on `true`.
 
+##### Consumer example:
+
+The following example creates a consumer group that will consume messages from `benchmark` topic. For each topic and partition
+the application will spawn an erlang process that will pull the messages. 
+
+Each time the rebalance process takes place the process it's restarted so the `init/4` method will be called again. In case the
+`handle_message/2` it's returning `{ok, State}` then the message is considered processed and the offset is stored to be committed
+based on `auto_commit_interval_ms` setting.
+
+```erlang
+-module(test_consumer).
+
+-include("erlkaf.hrl").
+
+-export([
+    create_consumer/0,
+    init/4,
+    handle_message/2
+]).
+
+-behavior(erlkaf_consumer).
+
+create_consumer() ->
+
+    ProducerConfig = [
+        {bootstrap_servers, "broker1:9092,broker2:9092"}
+    ],
+
+    TopicConf = [
+        {auto_offset_reset, smallest}
+    ],
+
+    ok = erlkaf:create_consumer_group(<<"group_id_here">>, [<<"benchmark">>], ProducerConfig, TopicConf, ?MODULE, []).
+
+init(Topic, Partition, Offset, Args) ->
+    io:format("init topic: ~p partition: ~p offset: ~p args: ~p ~n", [Topic, Partition, Offset, Args]),
+    {ok, my_state}.
+
+handle_message(#erlkaf_msg{topic = Topic, partition = Partition, offset = Offset}, State) ->
+    io:format("handle_message topic: ~p partition: ~p offset: ~p state: ~p ~n", [Topic, Partition, Offset, State]),
+    {ok, State}.
+```
+
+You can call those like:
+
+```erlang
+ok = erlkaf:start().
+ok = test_consumer:create_consumer().
+```
+
 ##### Start clients at startup
 
 You may include client configs in `sys.config` have them started by default (by application controller)
@@ -119,7 +168,7 @@ Example of configuration (for `sys.config`):
 {erlkaf, [
     {clients, [
         {client1, [
-        
+
             {type, producer},
 
             {topics, [

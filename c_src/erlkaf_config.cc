@@ -3,6 +3,7 @@
 #include "erlkaf_nif.h"
 
 #include <functional>
+#include <signal.h>
 
 template <typename T> struct set_config_fun
 {
@@ -44,13 +45,13 @@ template <typename T> ERL_NIF_TERM parse_config(ErlNifEnv* env, ERL_NIF_TERM lis
         if(fun.set_value(conf, key.c_str(), value.c_str(), errstr, sizeof(errstr)) != RD_KAFKA_CONF_OK)
             return make_error(env, errstr);
     }
-    
+
     return ATOMS.atomOk;
 }
 
 bool appy_kafka_default_config(rd_kafka_conf_t* config)
 {
-    if(rd_kafka_conf_set(config, "enable.auto.commit", "false", NULL, 0) != RD_KAFKA_CONF_OK)
+    if(rd_kafka_conf_set(config, "enable.auto.commit", "true", NULL, 0) != RD_KAFKA_CONF_OK)
         return false;
 
     if(rd_kafka_conf_set(config, "enable.auto.offset.store", "false", NULL, 0) != RD_KAFKA_CONF_OK)
@@ -58,6 +59,15 @@ bool appy_kafka_default_config(rd_kafka_conf_t* config)
 
     if(rd_kafka_conf_set(config, "enable.partition.eof", "false", NULL, 0) != RD_KAFKA_CONF_OK)
         return false;
+
+#ifdef SIGIO
+    //quick termination
+    char tmp[128];
+    snprintf(tmp, sizeof(tmp), "%i", SIGIO);
+
+    if(rd_kafka_conf_set(config, "internal.termination.signal", tmp, NULL, 0) != RD_KAFKA_CONF_OK)
+        return false;
+#endif
 
     return true;
 }

@@ -5,11 +5,18 @@
 -on_load(load_nif/0).
 
 -export([
+
     set_log_process/1,
-    client_set_owner/2,
-    topic_new/4,
+
     producer_new/2,
-    produce/5
+    producer_set_owner/2,
+    producer_topic_new/4,
+    produce/5,
+
+    consumer_new/4,
+    consumer_partition_revoke_completed/1,
+    consumer_queue_poll/1,
+    consumer_offset_store/4
 ]).
 
 %% nif functions
@@ -38,14 +45,26 @@ not_loaded(Line) ->
 set_log_process(_Pid) ->
     ?NOT_LOADED.
 
-client_set_owner(_ClientRef, _Pid) ->
-    ?NOT_LOADED.
-
-topic_new(_ClientRef, _TopicId, _TopicName, _TopicConfig) ->
-    ?NOT_LOADED.
-
 producer_new(_HasDrCallback, _Config) ->
     ?NOT_LOADED.
 
+producer_set_owner(_ClientRef, _Pid) ->
+    ?NOT_LOADED.
+
+producer_topic_new(_ClientRef, _TopicId, _TopicName, _TopicConfig) ->
+    ?NOT_LOADED.
+
 produce(_ClientRef, _TopicRef, _Partition, _Key, _Value) ->
+    ?NOT_LOADED.
+
+consumer_new(_GroupId, _Topics, _ClientConfig, _TopicsConfig) ->
+    ?NOT_LOADED.
+
+consumer_partition_revoke_completed(_ClientRef) ->
+    ?NOT_LOADED.
+
+consumer_queue_poll(_Queue) ->
+    ?NOT_LOADED.
+
+consumer_offset_store(_ClientRef, _TopicName, _Partition, _Offset) ->
     ?NOT_LOADED.

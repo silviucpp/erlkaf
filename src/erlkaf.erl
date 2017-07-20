@@ -11,6 +11,9 @@
     create_producer/2,
     stop_producer/1,
 
+    create_consumer_group/6,
+    stop_consumer_group/1,
+
     create_topic/2,
     create_topic/3,
     create_topic/4,
@@ -59,6 +62,28 @@ create_producer(ClientId, Config) ->
 stop_producer(ClientId) ->
     erlkaf_manager:stop_producer(ClientId).
 
+-spec create_consumer_group(binary(), [binary()], [client_option()], [topic_option()], atom(), any()) ->
+    ok | {error, reason()}.
+
+create_consumer_group(GroupId, Topics, ClientConfig, TopicConfig, CbModule, CbArgs) ->
+    case erlkaf_config:convert_kafka_config(ClientConfig) of
+        {ok, EkClientConfig, RdkClientConfig} ->
+            case erlkaf_config:convert_topic_config(TopicConfig) of
+                {ok, EkTopicConfig, RdkTopicConfig} ->
+                    erlkaf_manager:start_consumer_group(GroupId, Topics, EkClientConfig, RdkClientConfig, EkTopicConfig, RdkTopicConfig, CbModule, CbArgs);
+                Error ->
+                    Error
+            end;
+        Error ->
+            Error
+    end.
+
+-spec stop_consumer_group(binary()) ->
+    ok | {error, reason()}.
+
+stop_consumer_group(GroupId) ->
+    erlkaf_manager:stop_consumer_group(GroupId).
+
 -spec create_topic(client_id(), binary()) ->
     ok | {error, reason()}.
 
@@ -101,7 +126,8 @@ produce(ClientId, TopicId, Partition, Key, Value) ->
         {ok, ClientRef, _ClientPid} ->
             case erlkaf_nif:produce(ClientRef, erlkaf_utils:topicid2bin(TopicId), Partition, Key, Value) of
                 {error, ?RD_KAFKA_RESP_ERR_QUEUE_FULL} ->
-                    %todo: investigate something smarter
+                    %todo: investigate something smarter like storing the messages in DETS and
+                    %send them back when we have space in the memory queue
                     produce(ClientId, TopicId, Partition, Key, Value);
                 Resp ->
                     Resp

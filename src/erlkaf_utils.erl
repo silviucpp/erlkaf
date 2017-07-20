@@ -5,7 +5,9 @@
     lookup/2,
     lookup/3,
     to_binary/1,
-    topicid2bin/1
+    topicid2bin/1,
+    safe_call/2,
+    safe_call/3
 ]).
 
 get_env(Key) ->
@@ -40,3 +42,16 @@ topicid2bin(TopicId) when is_binary(TopicId) ->
     TopicId;
 topicid2bin(TopicId) ->
     term_to_binary(TopicId).
+
+safe_call(Receiver, Message) ->
+    safe_call(Receiver, Message, 5000).
+
+safe_call(Receiver, Message, Timeout) ->
+    try
+        gen_server:call(Receiver, Message, Timeout)
+    catch
+        exit:{noproc, _} ->
+            {error, not_started};
+        _: Exception ->
+            {error, Exception}
+    end.

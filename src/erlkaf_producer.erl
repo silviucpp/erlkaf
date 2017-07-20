@@ -29,7 +29,7 @@ start_link(ClientId, DrCallback, ProducerRef) ->
 
 init([ClientId, DrCallback, ProducerRef]) ->
     Pid = self(),
-    ok = erlkaf_nif:client_set_owner(ProducerRef, Pid),
+    ok = erlkaf_nif:producer_set_owner(ProducerRef, Pid),
     ok = erlkaf_cache_client:set(ClientId, ProducerRef, Pid),
     {ok, #state{ref = ProducerRef, dr_callback = DrCallback}}.
 

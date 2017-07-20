@@ -12,6 +12,7 @@ ifeq ($(UNAME_SYS), darwin)
 				-Wl,-U,_enif_alloc_resource \
 				-Wl,-U,_enif_open_resource_type \
 				-Wl,-U,_enif_release_resource \
+				-Wl,-U,_enif_keep_resource \
 				-Wl,-U,_enif_alloc_env \
 				-Wl,-U,_enif_free_env \
 				-Wl,-U,_enif_get_local_pid \
@@ -29,7 +30,9 @@ ifeq ($(UNAME_SYS), darwin)
 				-Wl,-U,_enif_is_identical \
 				-Wl,-U,_enif_is_list \
 				-Wl,-U,_enif_get_int \
+				-Wl,-U,_enif_get_long \
 				-Wl,-U,_enif_get_list_cell \
+				-Wl,-U,_enif_get_list_length \
 				-Wl,-U,_enif_get_resource \
 				-Wl,-U,_enif_get_tuple \
 				-Wl,-U,_enif_make_copy \
@@ -45,6 +48,7 @@ ifeq ($(UNAME_SYS), darwin)
 				-Wl,-U,_enif_make_string_len \
 				-Wl,-U,_enif_make_tuple \
 				-Wl,-U,_enif_make_list \
+				-Wl,-U,_enif_make_list_from_array \
 				-Wl,-U,_enif_make_ulong \
 				-Wl,-U,_enif_get_ulong \
 				-Wl,-U,_enif_make_list_cell \
