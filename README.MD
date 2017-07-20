@@ -130,9 +130,14 @@ based on `auto_commit_interval_ms` setting.
 
 -behavior(erlkaf_consumer).
 
+-record(state, {}).
+
 create_consumer() ->
 
-    ProducerConfig = [
+    GroupId = <<"group_id_here">>,
+    Topics = [<<"benchmark">>],
+
+    ProdConfig = [
         {bootstrap_servers, "broker1:9092,broker2:9092"}
     ],
 
@@ -140,14 +145,28 @@ create_consumer() ->
         {auto_offset_reset, smallest}
     ],
 
-    ok = erlkaf:create_consumer_group(<<"group_id_here">>, [<<"benchmark">>], ProducerConfig, TopicConf, ?MODULE, []).
+    ok = erlkaf:create_consumer_group(GroupId, Topics, ProdConfig, TopicConf, ?MODULE, []).
 
 init(Topic, Partition, Offset, Args) ->
-    io:format("init topic: ~p partition: ~p offset: ~p args: ~p ~n", [Topic, Partition, Offset, Args]),
-    {ok, my_state}.
+
+    io:format("init topic: ~p partition: ~p offset: ~p args: ~p ~n", [
+        Topic, 
+        Partition, 
+        Offset, 
+        Args
+    ]),
+
+    {ok, #state{}}.
 
 handle_message(#erlkaf_msg{topic = Topic, partition = Partition, offset = Offset}, State) ->
-    io:format("handle_message topic: ~p partition: ~p offset: ~p state: ~p ~n", [Topic, Partition, Offset, State]),
+
+    io:format("handle_message topic: ~p partition: ~p offset: ~p state: ~p ~n", [
+        Topic, 
+        Partition, 
+        Offset, 
+        State
+    ]),
+
     {ok, State}.
 ```
 
