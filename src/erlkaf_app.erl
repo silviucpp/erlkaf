@@ -39,9 +39,6 @@ start_client({ClientId, C}) ->
 
 create_topics(ClientId, [H|T]) ->
     case H of
-        {TopicId, TopicName, TopicOpts} ->
-            ok = erlkaf:create_topic(ClientId, TopicId, TopicName, TopicOpts),
-            ?INFO_MSG("topic ~p created over client: ~p", [TopicId, ClientId]);
         {TopicName, TopicOpts} ->
             ok = erlkaf:create_topic(ClientId, TopicName, TopicOpts),
             ?INFO_MSG("topic ~p created over client: ~p", [TopicName, ClientId]);

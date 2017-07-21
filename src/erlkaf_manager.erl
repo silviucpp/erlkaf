@@ -12,7 +12,7 @@
     stop_producer/1,
     start_consumer_group/8,
     stop_consumer_group/1,
-    create_topic/4
+    create_topic/3
 ]).
 
 -define(SERVER, ?MODULE).
@@ -34,16 +34,16 @@ start_consumer_group(GroupId, Topics, EkClientConfig, RdkClientConfig, EkTopicCo
 stop_consumer_group(GroupId) ->
     erlkaf_utils:safe_call(?MODULE, {stop_consumer_group, GroupId}).
 
-create_topic(ClientRef, TopicId, TopicName, TopicConfig) ->
-    erlkaf_utils:safe_call(?MODULE, {create_topic, ClientRef, TopicId, TopicName, TopicConfig}).
+create_topic(ClientRef, TopicName, TopicConfig) ->
+    erlkaf_utils:safe_call(?MODULE, {create_topic, ClientRef, TopicName, TopicConfig}).
 
 %gen server
 
 init([]) ->
     {ok, #state{}}.
 
-handle_call({create_topic, ClientRef, TopicId, TopicName, TopicConfig}, _From, State) ->
-    {reply, erlkaf_nif:producer_topic_new(ClientRef, erlkaf_utils:topicid2bin(TopicId), TopicName, TopicConfig), State};
+handle_call({create_topic, ClientRef, TopicName, TopicConfig}, _From, State) ->
+    {reply, erlkaf_nif:producer_topic_new(ClientRef, TopicName, TopicConfig), State};
 
 handle_call({start_producer, ClientId, ErlkafConfig, LibRdkafkaConfig}, _From, State) ->
     case internal_start_producer(ClientId, ErlkafConfig, LibRdkafkaConfig) of

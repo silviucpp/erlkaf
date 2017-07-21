@@ -8,7 +8,7 @@
 ]).
 
 -define(ETS_TOPIC_CACHE, erlkaf_client_cache_tab).
--define(GET_KEY(ClientId, TopicId), {ClientId, TopicId}).
+-define(GET_KEY(ClientId, TopicName), {ClientId, TopicName}).
 
 create() ->
     ?ETS_TOPIC_CACHE = ets:new(?ETS_TOPIC_CACHE, [set, named_table, public, {read_concurrency, true}]),

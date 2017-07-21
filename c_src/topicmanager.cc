@@ -10,9 +10,9 @@ TopicManager::~TopicManager()
     Cleanup();
 }
 
-rd_kafka_topic_t* TopicManager::AddTopic(const std::string& id, const std::string& name, rd_kafka_topic_conf_t *conf)
+rd_kafka_topic_t* TopicManager::AddTopic(const std::string& name, rd_kafka_topic_conf_t* conf)
 {
-    if(GetTopic(id) != NULL)
+    if(GetTopic(name) != NULL)
         return NULL;
 
     rd_kafka_topic_t* topic = rd_kafka_topic_new(rk_, name.c_str(), conf);
@@ -20,13 +20,13 @@ rd_kafka_topic_t* TopicManager::AddTopic(const std::string& id, const std::strin
     if(!topic)
         return NULL;
 
-    topics_[id] = topic;
+    topics_[name] = topic;
     return topic;
 }
 
-bool TopicManager::ReleaseTopic(const std::string& id)
+bool TopicManager::ReleaseTopic(const std::string& name)
 {
-    auto it = topics_.find(id);
+    auto it = topics_.find(name);
 
     if(it == topics_.end())
         return false;
@@ -44,9 +44,9 @@ void TopicManager::Cleanup()
     topics_.clear();
 }
 
-rd_kafka_topic_t* TopicManager::GetTopic(const std::string& id)
+rd_kafka_topic_t* TopicManager::GetTopic(const std::string& name)
 {
-    auto it = topics_.find(id);
+    auto it = topics_.find(name);
 
     if(it == topics_.end())
         return NULL;

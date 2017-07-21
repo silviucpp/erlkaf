@@ -10,7 +10,7 @@
 
     producer_new/2,
     producer_set_owner/2,
-    producer_topic_new/4,
+    producer_topic_new/3,
     produce/5,
 
     consumer_new/4,
@@ -51,7 +51,7 @@ producer_new(_HasDrCallback, _Config) ->
 producer_set_owner(_ClientRef, _Pid) ->
     ?NOT_LOADED.
 
-producer_topic_new(_ClientRef, _TopicId, _TopicName, _TopicConfig) ->
+producer_topic_new(_ClientRef, _TopicName, _TopicConfig) ->
     ?NOT_LOADED.
 
 produce(_ClientRef, _TopicRef, _Partition, _Key, _Value) ->

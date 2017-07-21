@@ -130,7 +130,6 @@ ERL_NIF_TERM enif_producer_topic_new(ErlNifEnv* env, int argc, const ERL_NIF_TER
     UNUSED(argc);
 
     std::string topic_name;
-    std::string topic_id;
     enif_producer* enif_kafka;
 
     erlkaf_data* data = static_cast<erlkaf_data*>(enif_priv_data(env));
@@ -138,20 +137,20 @@ ERL_NIF_TERM enif_producer_topic_new(ErlNifEnv* env, int argc, const ERL_NIF_TER
     if(!enif_get_resource(env, argv[0], data->res_producer, (void**) &enif_kafka))
         return make_badarg(env);
 
-    if(!get_string(env, argv[1], &topic_id) || !get_string(env, argv[2], &topic_name))
+    if(!get_string(env, argv[1], &topic_name))
         return make_badarg(env);
 
-    if(enif_kafka->topics->GetTopic(topic_id))
+    if(enif_kafka->topics->GetTopic(topic_name))
         return make_error(env, "topic already exist");
 
     scoped_ptr(config, rd_kafka_topic_conf_t, rd_kafka_topic_conf_new(), rd_kafka_topic_conf_destroy);
 
-    ERL_NIF_TERM parse_result = parse_topic_config(env, argv[3], config.get());
+    ERL_NIF_TERM parse_result = parse_topic_config(env, argv[2], config.get());
 
     if(parse_result != ATOMS.atomOk)
         return parse_result;
 
-    if(!enif_kafka->topics->AddTopic(topic_id, topic_name, config.get()))
+    if(!enif_kafka->topics->AddTopic(topic_name, config.get()))
         return make_error(env, "failed to create topic");
 
     config.release();
@@ -222,7 +221,7 @@ ERL_NIF_TERM enif_produce(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
     erlkaf_data* data = static_cast<erlkaf_data*>(enif_priv_data(env));
 
     enif_producer* enif_kafka;
-    std::string topic_id;
+    std::string topic_name;
     int32_t partition;
     ErlNifBinary key;
     ErlNifBinary value;
@@ -230,10 +229,10 @@ ERL_NIF_TERM enif_produce(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
     if(!enif_get_resource(env, argv[0], data->res_producer, (void**) &enif_kafka))
         return make_badarg(env);
 
-    if(!get_string(env, argv[1], &topic_id))
+    if(!get_string(env, argv[1], &topic_name))
         return make_badarg(env);
 
-    rd_kafka_topic_t* topic = enif_kafka->topics->GetTopic(topic_id);
+    rd_kafka_topic_t* topic = enif_kafka->topics->GetTopic(topic_name);
 
     if(topic == NULL)
         return make_error(env, "topic not found");

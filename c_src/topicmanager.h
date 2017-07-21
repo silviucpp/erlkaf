@@ -14,9 +14,9 @@ public:
     TopicManager(rd_kafka_t *rk);
     ~TopicManager();
 
-    rd_kafka_topic_t* AddTopic(const std::string& id, const std::string& topic, rd_kafka_topic_conf_t *conf);
-    bool ReleaseTopic(const std::string& id);
-    rd_kafka_topic_t* GetTopic(const std::string& id);
+    rd_kafka_topic_t* AddTopic(const std::string& name, rd_kafka_topic_conf_t* conf);
+    bool ReleaseTopic(const std::string& name);
+    rd_kafka_topic_t* GetTopic(const std::string& name);
 
 private:
 

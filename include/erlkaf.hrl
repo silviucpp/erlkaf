@@ -10,7 +10,6 @@
 -define(DEFULT_PARTITIONER, -1).
 
 -type client_id() :: atom().
--type topic_id() :: atom().
 -type reason() :: any().
 -type key() :: undefined | binary().
 -type partition() :: ?DEFULT_PARTITIONER | integer().

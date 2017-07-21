@@ -49,9 +49,7 @@ The function specified into delivery report callback is called async from anothe
 from where it's dispatching the delivery reports)
 
 Also in order to send messages to a topic you need to define a topic object attached to the client. To do this you can use the 
-`erlkaf:create_topic` method. You can create different versions of the same kafka topic by specifying an id (in the above example
-if you send the messages over `<<"benchmark">>` topic will send them without compression but if you send over `topic_id1` will send them
-using `lz4` - even if both objects refer to the same kafka topic).
+`erlkaf:create_topic` method.
 
 ```erlang
 -module(test).
@@ -59,7 +57,6 @@ using `lz4` - even if both objects refer to the same kafka topic).
 -export([
     delivery_report/3,
     create_producer/0,
-    create_topics/0,
     produce/2
 ]).
 
@@ -75,18 +72,11 @@ create_producer() ->
         {delivery_report_only_error, false},
         {delivery_report_callback, ?MODULE}
     ],
-    ok = erlkaf:create_producer(client1, ProducerConfig).
-
-create_topics() ->
-    TopicOpts = [{request_required_acks, 1}],
-    TopicName = <<"benchmark">>,
-
-    ok = erlkaf:create_topic(client1, TopicName, TopicOpts),
-    ok = erlkaf:create_topic(client1, topic_id1, TopicName, [{compression_codec, lz4} | TopicOpts]).
+    ok = erlkaf:create_producer(client1, ProducerConfig),
+    ok = erlkaf:create_topic(client1, <<"benchmark">>, [{request_required_acks, 1}]).
 
 produce(Key, Value) ->
-    {ok, _} = erlkaf:produce(client1, <<"benchmark">>, Key, Value),
-    {ok, _} = erlkaf:produce(client1, topic_id1, Key, Value).
+    {ok, _} = erlkaf:produce(client1, <<"benchmark">>, Key, Value).
 ``` 
 
 You can call those like:
@@ -94,7 +84,6 @@ You can call those like:
 ```erlang
 ok = erlkaf:start().
 ok = test:create_producer().
-ok = test:create_topics().
 test:produce(<<"key1">>, <<"val1">>).
 ```
 
@@ -102,7 +91,6 @@ And you will get into the console the delivery reports:
  
 ```erlang   
 received delivery report: {#Ref<0.0.8.243>,ok, {erlkaf_msg,<<"benchmark">>,4,6172,<<"key1">>,<<"val1">>}} 
-received delivery report: {#Ref<0.0.8.244>,ok, {erlkaf_msg,<<"benchmark">>,4,6173,<<"key1">>,<<"val1">>}}
 ```    
 
 In case you are not interested in the delivery reports don't specify any callback, or in case you want to receive the 

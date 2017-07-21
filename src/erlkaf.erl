@@ -16,7 +16,6 @@
 
     create_topic/2,
     create_topic/3,
-    create_topic/4,
 
     produce/4,
     produce/5
@@ -88,23 +87,17 @@ stop_consumer_group(GroupId) ->
     ok | {error, reason()}.
 
 create_topic(ClientId, TopicName) ->
-    create_topic(ClientId, TopicName, TopicName, []).
+    create_topic(ClientId, TopicName, []).
 
 -spec create_topic(client_id(), binary(), [topic_option()]) ->
     ok | {error, reason()}.
 
 create_topic(ClientId, TopicName, TopicConfig) ->
-    create_topic(ClientId, TopicName, TopicName, TopicConfig).
-
--spec create_topic(client_id(), topic_id(), binary(), [topic_option()]) ->
-    ok | {error, reason()}.
-
-create_topic(ClientId, TopicId, TopicName, TopicConfig) ->
     case erlkaf_cache_client:get(ClientId) of
         {ok, ClientRef, _ClientPid} ->
             case erlkaf_config:convert_topic_config(TopicConfig) of
                 {ok, _ErlkafConfig, LibRdkafkaConfig} ->
-                    erlkaf_manager:create_topic(ClientRef, TopicId, TopicName, LibRdkafkaConfig);
+                    erlkaf_manager:create_topic(ClientRef, TopicName, LibRdkafkaConfig);
                 Error ->
                     Error
             end;
@@ -112,23 +105,23 @@ create_topic(ClientId, TopicId, TopicName, TopicConfig) ->
             {error, ?ERR_UNDEFINED_CLIENT}
     end.
 
--spec produce(client_id(), topic_id(), key(), binary()) ->
+-spec produce(client_id(), binary(), key(), binary()) ->
     ok | {error, reason()}.
 
-produce(ClientId, TopicId, Key, Value) ->
-    produce(ClientId, TopicId, ?DEFULT_PARTITIONER, Key, Value).
+produce(ClientId, TopicName, Key, Value) ->
+    produce(ClientId, TopicName, ?DEFULT_PARTITIONER, Key, Value).
 
--spec produce(client_id(), topic_id(), partition(), key(), binary()) ->
+-spec produce(client_id(), binary(), partition(), key(), binary()) ->
     ok | {error, reason()}.
 
-produce(ClientId, TopicId, Partition, Key, Value) ->
+produce(ClientId, TopicName, Partition, Key, Value) ->
     case erlkaf_cache_client:get(ClientId) of
         {ok, ClientRef, _ClientPid} ->
-            case erlkaf_nif:produce(ClientRef, erlkaf_utils:topicid2bin(TopicId), Partition, Key, Value) of
+            case erlkaf_nif:produce(ClientRef, TopicName, Partition, Key, Value) of
                 {error, ?RD_KAFKA_RESP_ERR_QUEUE_FULL} ->
                     %todo: investigate something smarter like storing the messages in DETS and
                     %send them back when we have space in the memory queue
-                    produce(ClientId, TopicId, Partition, Key, Value);
+                    produce(ClientId, TopicName, Partition, Key, Value);
                 Resp ->
                     Resp
             end;

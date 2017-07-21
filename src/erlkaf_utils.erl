@@ -5,7 +5,6 @@
     lookup/2,
     lookup/3,
     to_binary/1,
-    topicid2bin/1,
     safe_call/2,
     safe_call/3
 ]).
@@ -37,11 +36,6 @@ to_binary(V) when is_float(V) ->
 
 float_to_bin(Value) ->
     float_to_binary(Value, [{decimals, 8}, compact]).
-
-topicid2bin(TopicId) when is_binary(TopicId) ->
-    TopicId;
-topicid2bin(TopicId) ->
-    term_to_binary(TopicId).
 
 safe_call(Receiver, Message) ->
     safe_call(Receiver, Message, 5000).
