@@ -13,6 +13,7 @@
 -type reason() :: any().
 -type key() :: undefined | binary().
 -type partition() :: ?DEFULT_PARTITIONER | integer().
+-type partition_assignment_strategy() :: range |roundrobin.
 -type compression_codec() :: none | gzip | snappy | lz4 | inherit.
 -type offset_reset() :: smallest | earliest | beginning | largest | latest.
 -type offset_store_method() :: file | broker.
@@ -41,7 +42,6 @@
     {topic_metadata_refresh_interval_ms, integer()} |
     {metadata_max_age_ms, integer()} |
     {topic_metadata_refresh_fast_interval_ms, integer()} |
-    {topic_metadata_refresh_fast_cnt, integer()} |
     {topic_metadata_refresh_sparse, boolean()} |
     {topic_blacklist, binary()} |
     {socket_timeout_ms, integer()} |
@@ -55,8 +55,6 @@
     {reconnect_backoff_jitter_ms, integer()} |
     {statistics_interval_ms, integer()} |
     {log_level, integer()} |
-    {log_queue, boolean()} |
-    {log_thread_name, boolean()} |
     {log_connection_close, boolean()} |
     {api_version_request, boolean()} |
     {api_version_fallback_ms, integer()} |
@@ -77,6 +75,7 @@
     {sasl_username, binary()} |
     {sasl_password, binary()} |
     {session_timeout_ms, integer()} |
+    {partition_assignment_strategy, partition_assignment_strategy()} |
     {heartbeat_interval_ms, integer()} |
     {coordinator_query_interval_ms, integer()} |
     {auto_commit_interval_ms, integer()} |
@@ -84,7 +83,6 @@
     {queued_max_messages_kbytes, integer()} |
     {fetch_wait_max_ms, integer()} |
     {fetch_message_max_bytes, integer()} |
-    {max_partition_fetch_bytes, integer()} |
     {fetch_min_bytes, integer()} |
     {fetch_error_backoff_ms, integer()} |
     {offset_store_method, offset_store_method()} |

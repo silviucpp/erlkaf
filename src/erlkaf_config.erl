@@ -99,8 +99,6 @@ to_librdkafka_config(metadata_max_age_ms, V) ->
     {<<"metadata.max.age.ms">>, erlkaf_utils:to_binary(V)};
 to_librdkafka_config(topic_metadata_refresh_fast_interval_ms, V) ->
     {<<"topic.metadata.refresh.fast.interval.ms">>, erlkaf_utils:to_binary(V)};
-to_librdkafka_config(topic_metadata_refresh_fast_cnt, V) ->
-    {<<"topic.metadata.refresh.fast.cnt">>, erlkaf_utils:to_binary(V)};
 to_librdkafka_config(topic_metadata_refresh_sparse, V) ->
     {<<"topic.metadata.refresh.sparse">>, erlkaf_utils:to_binary(V)};
 to_librdkafka_config(topic_blacklist, V) ->
@@ -127,10 +125,6 @@ to_librdkafka_config(statistics_interval_ms, V) ->
     {<<"statistics.interval.ms">>, erlkaf_utils:to_binary(V)};
 to_librdkafka_config(log_level, V) ->
     {<<"log_level">>, erlkaf_utils:to_binary(V)};
-to_librdkafka_config(log_queue, V) ->
-    {<<"log.queue">>, erlkaf_utils:to_binary(V)};
-to_librdkafka_config(log_thread_name, V) ->
-    {<<"log.thread.name">>, erlkaf_utils:to_binary(V)};
 to_librdkafka_config(log_connection_close, V) ->
     {<<"log.connection.close">>, erlkaf_utils:to_binary(V)};
 to_librdkafka_config(api_version_request, V) ->
@@ -171,6 +165,8 @@ to_librdkafka_config(sasl_password, V) ->
     {<<"sasl.password">>, erlkaf_utils:to_binary(V)};
 to_librdkafka_config(session_timeout_ms, V) ->
     {<<"session.timeout.ms">>, erlkaf_utils:to_binary(V)};
+to_librdkafka_config(partition_assignment_strategy, V) ->
+    {<<"partition.assignment.strategy">>, erlkaf_utils:to_binary(V)};
 to_librdkafka_config(heartbeat_interval_ms, V) ->
     {<<"heartbeat.interval.ms">>, erlkaf_utils:to_binary(V)};
 to_librdkafka_config(coordinator_query_interval_ms, V) ->
@@ -185,8 +181,6 @@ to_librdkafka_config(fetch_wait_max_ms, V) ->
     {<<"fetch.wait.max.ms">>, erlkaf_utils:to_binary(V)};
 to_librdkafka_config(fetch_message_max_bytes, V) ->
     {<<"fetch.message.max.bytes">>, erlkaf_utils:to_binary(V)};
-to_librdkafka_config(max_partition_fetch_bytes, V) ->
-    {<<"max.partition.fetch.bytes">>, erlkaf_utils:to_binary(V)};
 to_librdkafka_config(fetch_min_bytes, V) ->
     {<<"fetch.min.bytes">>, erlkaf_utils:to_binary(V)};
 to_librdkafka_config(fetch_error_backoff_ms, V) ->
