@@ -5,22 +5,7 @@
 
 -behaviour(gen_server).
 
--export([start_link/4]).
-
--export([
-    init/1,
-    handle_call/3,
-    handle_cast/2,
-    handle_info/2,
-    terminate/2,
-    code_change/3
-]).
-
--callback delivery_report(MsgRef::reference(), DeliveryStatus:: ok | {error, any()}, Message::#erlkaf_msg{}) ->
-    ok.
-
--callback stats_callback(ClientId::client_id(), Stats::list()) ->
-    ok.
+-export([start_link/4, init/1, handle_call/3, handle_cast/2, handle_info/2, terminate/2, code_change/3]).
 
 -record(state, {
     client_id,

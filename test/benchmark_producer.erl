@@ -7,7 +7,7 @@
     benchmark/4
 ]).
 
--behavior(erlkaf_producer).
+-behaviour(erlkaf_producer_callbacks).
 
 delivery_report(MsgRef, DeliveryStatus, Message) ->
     io:format("received delivery report: ~p ~n", [{MsgRef, DeliveryStatus, Message}]),

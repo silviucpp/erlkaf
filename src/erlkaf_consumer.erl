@@ -9,15 +9,6 @@
 
 -export([start_link/7, stop/1, init/1, handle_call/3, handle_cast/2, handle_info/2, terminate/2, code_change/3]).
 
--callback init(Topic::binary(), Partition::integer(), Offset::integer(), Args::any()) ->
-    {ok, State::any()}.
-
--callback handle_message(Message::#erlkaf_msg{}, State::any()) ->
-    {ok, State::any()}.
-
--callback stats_callback(ClientId::client_id(), Stats::list()) ->
-    ok.
-
 -record(state, {
     client_ref,
     topic_name,

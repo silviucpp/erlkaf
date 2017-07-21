@@ -93,7 +93,7 @@ Also in order to send messages to a topic you need to define a topic object atta
     produce/2
 ]).
 
--behavior(erlkaf_producer).
+-behaviour(erlkaf_producer_callbacks).
 
 delivery_report(MsgRef, DeliveryStatus, Message) ->
     io:format("received delivery report: ~p ~n", [{MsgRef, DeliveryStatus, Message}]),
@@ -149,7 +149,7 @@ based on `auto_commit_interval_ms` setting.
     handle_message/2
 ]).
 
--behavior(erlkaf_consumer).
+-behaviour(erlkaf_consumer_callbacks).
 
 -record(state, {}).
 
