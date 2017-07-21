@@ -133,7 +133,7 @@ create_consumer() ->
         {auto_offset_reset, smallest}
     ],
 
-    ok = erlkaf:create_consumer_group(GroupId, Topics, ProdConfig, TopicConf, ?MODULE, []).
+    ok = erlkaf:create_consumer_group(consumer_client, GroupId, Topics, ProdConfig, TopicConf, ?MODULE, []).
 
 init(Topic, Partition, Offset, Args) ->
 
@@ -174,12 +174,29 @@ Example of configuration (for `sys.config`):
 ```erlang
 {erlkaf, [
     {clients, [
-        {client1, [
+        {client_producer_id, [
 
             {type, producer},
 
             {topics, [
                 {<<"benchmark">>, [{request_required_acks, 1}]}
+            ]},
+
+            {client_options, [
+                {bootstrap_servers, "broker1.com:9092,broker2.com:9092"}
+            ]}
+        ]},
+
+        {client_consumer_id, [
+
+            {type, consumer},
+
+            {group_id, <<"erlkaf_consumer">>},
+            {callback_module, test_consumer},
+            {callback_args, []},
+            {topics, [<<"benchmark">>]},
+            {topic_options, [
+                {auto_offset_reset, smallest}
             ]},
 
             {client_options, [

@@ -9,10 +9,8 @@
     stop/0,
 
     create_producer/2,
-    stop_producer/1,
-
-    create_consumer_group/6,
-    stop_consumer_group/1,
+    create_consumer_group/7,
+    stop_client/1,
 
     create_topic/2,
     create_topic/3,
@@ -55,33 +53,17 @@ create_producer(ClientId, Config) ->
             Error
     end.
 
--spec stop_producer(client_id()) ->
+-spec create_consumer_group(client_id(), binary(), [binary()], [client_option()], [topic_option()], atom(), any()) ->
     ok | {error, reason()}.
 
-stop_producer(ClientId) ->
-    erlkaf_manager:stop_producer(ClientId).
+create_consumer_group(ClientId, GroupId, Topics, ClientConfig, TopicConfig, CbModule, CbArgs) ->
+    erlkaf_manager:start_consumer_group(ClientId, GroupId, Topics, ClientConfig, TopicConfig, CbModule, CbArgs).
 
--spec create_consumer_group(binary(), [binary()], [client_option()], [topic_option()], atom(), any()) ->
+-spec stop_client(client_id()) ->
     ok | {error, reason()}.
 
-create_consumer_group(GroupId, Topics, ClientConfig, TopicConfig, CbModule, CbArgs) ->
-    case erlkaf_config:convert_kafka_config(ClientConfig) of
-        {ok, EkClientConfig, RdkClientConfig} ->
-            case erlkaf_config:convert_topic_config(TopicConfig) of
-                {ok, EkTopicConfig, RdkTopicConfig} ->
-                    erlkaf_manager:start_consumer_group(GroupId, Topics, EkClientConfig, RdkClientConfig, EkTopicConfig, RdkTopicConfig, CbModule, CbArgs);
-                Error ->
-                    Error
-            end;
-        Error ->
-            Error
-    end.
-
--spec stop_consumer_group(binary()) ->
-    ok | {error, reason()}.
-
-stop_consumer_group(GroupId) ->
-    erlkaf_manager:stop_consumer_group(GroupId).
+stop_client(ClientId) ->
+    erlkaf_manager:stop_client(ClientId).
 
 -spec create_topic(client_id(), binary()) ->
     ok | {error, reason()}.

@@ -109,11 +109,11 @@ code_change(_OldVsn, State, _Extra) ->
 %internals
 
 schedule_poll(Timeout) ->
-    ?INFO_MSG("schedule_poll:~p timeout: ~p", [self(), Timeout]),
+    %?INFO_MSG("schedule_poll:~p timeout: ~p", [self(), Timeout]),
     erlang:send_after(Timeout, self(), poll_events).
 
 schedule_message_process(Timeout) ->
-    ?INFO_MSG("schedule_message_process:~p timeout: ~p", [self(), Timeout]),
+    %?INFO_MSG("schedule_message_process:~p timeout: ~p", [self(), Timeout]),
     erlang:send_after(Timeout, self(), process_messages).
 
 process_events([H|T] = Msgs, ClientRef, CbModule, CbState) ->

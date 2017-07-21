@@ -25,16 +25,21 @@ start_clients() ->
 
 start_client({ClientId, C}) ->
     Type = erlkaf_utils:lookup(type, C),
-    Topics = erlkaf_utils:lookup(topics, C, []),
     Options = erlkaf_utils:lookup(client_options, C, []),
+    Topics = erlkaf_utils:lookup(topics, C, []),
 
     case Type of
         producer ->
             ok = erlkaf:create_producer(ClientId, Options),
-            ?INFO_MSG("client ~p created", [ClientId]),
+            ?INFO_MSG("producer ~p created", [ClientId]),
             ok = create_topics(ClientId, Topics);
         consumer ->
-            throw(not_implemented)
+            GroupId = erlkaf_utils:lookup(group_id, C),
+            CbModule = erlkaf_utils:lookup(callback_module, C),
+            CbArgs = erlkaf_utils:lookup(callback_args, C, []),
+            TopicConfig = erlkaf_utils:lookup(topic_options, C, []),
+            ok = erlkaf:create_consumer_group(ClientId, GroupId, Topics, Options, TopicConfig, CbModule, CbArgs),
+            ?INFO_MSG("consumer ~p created", [ClientId])
     end.
 
 create_topics(ClientId, [H|T]) ->

@@ -4,7 +4,8 @@
     create/0,
     set/3,
     get/1,
-    del/1
+    del/1,
+    to_list/0
 ]).
 
 -define(ETS_TOPIC_CACHE, erlkaf_client_cache_tab).
@@ -27,4 +28,7 @@ get(ClientId) ->
     end.
 
 del(ClientId) ->
-    ets:delete(ClientId).
+    ets:delete(?ETS_TOPIC_CACHE, ClientId).
+
+to_list() ->
+    ets:tab2list(?ETS_TOPIC_CACHE).

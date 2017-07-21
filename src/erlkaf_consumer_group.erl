@@ -6,7 +6,7 @@
 
 -export([init/1, handle_call/3, handle_cast/2, handle_info/2, terminate/2, code_change/3]).
 
--export([start_link/8]).
+-export([start_link/9]).
 
 -record(state, {
     client_ref,
@@ -15,14 +15,15 @@
     topics_map =#{}
 }).
 
-start_link(GroupId, Topics, EkClientConfig, RdkClientConfig, EkTopicConfig, RdkTopicConfig, CbModule, CbArgs) ->
-    gen_server:start_link(?MODULE, [GroupId, Topics, EkClientConfig, RdkClientConfig, EkTopicConfig, RdkTopicConfig, CbModule, CbArgs], []).
+start_link(ClientId, GroupId, Topics, EkClientConfig, RdkClientConfig, EkTopicConfig, RdkTopicConfig, CbModule, CbArgs) ->
+    gen_server:start_link(?MODULE, [ClientId, GroupId, Topics, EkClientConfig, RdkClientConfig, EkTopicConfig, RdkTopicConfig, CbModule, CbArgs], []).
 
-init([GroupId, Topics, _EkClientConfig, RdkClientConfig, _EkTopicConfig, RdkTopicConfig, CbModule, CbArgs]) ->
+init([ClientId, GroupId, Topics, _EkClientConfig, RdkClientConfig, _EkTopicConfig, RdkTopicConfig, CbModule, CbArgs]) ->
     process_flag(trap_exit, true),
 
     case erlkaf_nif:consumer_new(GroupId, Topics, RdkClientConfig, RdkTopicConfig) of
         {ok, ClientRef} ->
+            ok = erlkaf_cache_client:set(ClientId, undefined, self()),
             {ok, #state{client_ref = ClientRef, cb_module = CbModule, cb_args = CbArgs}};
         Error ->
             {stop, Error}
