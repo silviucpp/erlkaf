@@ -8,6 +8,9 @@
 
 static const char* kThreadOptsId = "librdkafka_consumer_thread_opts";
 static const char* kPollThreadId = "librdkafka_consumer_poll_thread";
+static const uint32_t kMaxConsumeBatchSize = 100;
+
+#include <vector>
 
 struct callback_data;
 
@@ -332,38 +335,49 @@ ERL_NIF_TERM enif_consumer_queue_poll(ErlNifEnv* env, int argc, const ERL_NIF_TE
     if(!enif_get_resource(env, argv[0], data->res_queue, (void**) &q))
         return make_badarg(env);
 
-    rd_kafka_event_t* event = rd_kafka_queue_poll(q->queue, 0);
+    std::vector<ERL_NIF_TERM> messages;
+    messages.reserve(kMaxConsumeBatchSize);
 
-    if(event)
+    ERL_NIF_TERM topic = 0;
+    ERL_NIF_TERM partition = 0;
+    bool first = true;
+
+    while(messages.size() <= kMaxConsumeBatchSize)
     {
+        rd_kafka_event_t* event = rd_kafka_queue_poll(q->queue, 0);
+
+        if(!event)
+            break;
+
         ASSERT(rd_kafka_event_type(event) == RD_KAFKA_EVENT_FETCH);
 
         size_t msg_count = rd_kafka_event_message_count(event);
-
-        ERL_NIF_TERM items[msg_count];
 
         for (size_t i = 0; i < msg_count; i++)
         {
             const rd_kafka_message_t* msg = rd_kafka_event_message_next(event);
 
-            ERL_NIF_TERM key = msg->key == NULL ? ATOMS.atomUndefined : make_binary(env, reinterpret_cast<const char*>(msg->key), msg->key_len);
-            const char* topic_name = rd_kafka_topic_name(msg->rkt);
+            if(first)
+            {
+                const char* topic_name = rd_kafka_topic_name(msg->rkt);
+                topic = make_binary(env, topic_name, strlen(topic_name));
+                partition = enif_make_int(env, msg->partition);
+                first = false;
+            }
 
-            items[i] = enif_make_tuple6(env,
-                                        ATOMS.atomMessage,
-                                        make_binary(env, topic_name, strlen(topic_name)),
-                                        enif_make_int(env, msg->partition),
-                                        enif_make_int64(env, msg->offset),
-                                        key,
-                                        make_binary(env, reinterpret_cast<const char*>(msg->payload), msg->len));
+            ERL_NIF_TERM key = msg->key == NULL ? ATOMS.atomUndefined : make_binary(env, reinterpret_cast<const char*>(msg->key), msg->key_len);
+            ERL_NIF_TERM offset = enif_make_int64(env, msg->offset);
+            ERL_NIF_TERM value = make_binary(env, reinterpret_cast<const char*>(msg->payload), msg->len);
+            ERL_NIF_TERM msg_term = enif_make_tuple6(env, ATOMS.atomMessage, topic, partition, offset, key, value);
+
+            messages.push_back(msg_term);
         }
 
-        ERL_NIF_TERM list = enif_make_list_from_array(env, items, msg_count);
         rd_kafka_event_destroy(event);
-        return make_ok_result(env, list);
     }
 
-    return make_ok_result(env, enif_make_list(env, 0));
+    ERL_NIF_TERM list = enif_make_list_from_array(env, &messages[0], messages.size());
+    return make_ok_result(env, list);
 }
 
 ERL_NIF_TERM enif_consumer_offset_store(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
