@@ -4,7 +4,8 @@
 
 ### Implementation notes
 
-This project is under development and the interface might change.
+This project is under development and the interface might change. Also it's not considered stable in this stage so 
+please don't use this in production yet.
 
 The library is implemented in top of `librdkafka` which is a C library implementation of the Apache Kafka protocol 
 designed with message delivery reliability and high performance in mind, current figures exceed 1 million msgs/second 
@@ -20,14 +21,6 @@ will return immediately. The `librdkafka` driver use it's own thread pool for ma
 has it's own thread from where is sending async the events (delivery reports, logs, statistics) to erlang 
 using `enif_send`.
 
-### TODO
-
-- Add benchmarks
-- Add unit tests
-- Add support for batch produce
-- Document all configs
-- Bug fixing and create a stable API
-
 ### User guide
 
 Add `erlkaf` as a rebar dependency to your project:
@@ -38,7 +31,47 @@ Add `erlkaf` as a rebar dependency to your project:
 }.
 ```
 
-##### Producer example:
+Using `sys.config` you can have all clients (producers/consumers) started by default (by application controller)
+
+Example of a configuration file (for `sys.config`):
+
+```erlang
+{erlkaf, [
+    {clients, [
+        {client_producer_id, [
+
+            {type, producer},
+
+            {topics, [
+                {<<"benchmark">>, [{request_required_acks, 1}]}
+            ]},
+
+            {client_options, [
+                {bootstrap_servers, "broker1.com:9092,broker2.com:9092"}
+            ]}
+        ]},
+
+        {client_consumer_id, [
+
+            {type, consumer},
+
+            {group_id, <<"erlkaf_consumer">>},
+            {callback_module, test_consumer},
+            {callback_args, []},
+            {topics, [<<"benchmark">>]},
+            {topic_options, [
+                {auto_offset_reset, smallest}
+            ]},
+
+            {client_options, [
+                {bootstrap_servers, "broker1.com:9092,broker2.com:9092"}
+            ]}
+        ]}
+    ]}
+]}
+```
+
+### Producer API
 
 The following example will create a producer client with id `client1` which sends also delivery reports to the same module.
 
@@ -96,7 +129,7 @@ received delivery report: {#Ref<0.0.8.243>,ok, {erlkaf_msg,<<"benchmark">>,4,617
 In case you are not interested in the delivery reports don't specify any callback, or in case you want to receive the 
 delivery reports only in case of errors you have to specify a callback and set `delivery_report_only_error` on `true`.
 
-##### Consumer example:
+### Consumer API:
 
 The following example creates a consumer group that will consume messages from `benchmark` topic. For each topic and partition
 the application will spawn an erlang process that will pull the messages. 
@@ -164,52 +197,15 @@ You can call those like:
 ok = erlkaf:start().
 ok = test_consumer:create_consumer().
 ```
-
-##### Statistics
+  
+### Statistics
 
 In order to get statistics you can register the `stats_callback` callback which is called every `statistics_interval_ms` (default 0 which means
 statistics are disabled). The granularity is 1000 ms. Also you can poll the stats for each client using `erlkaf:get_stats/1`.
-  
-##### Start clients at startup
 
-You may include client configs in `sys.config` have them started by default (by application controller)
+### Configs
 
-Example of configuration (for `sys.config`):
-
-```erlang
-{erlkaf, [
-    {clients, [
-        {client_producer_id, [
-
-            {type, producer},
-
-            {topics, [
-                {<<"benchmark">>, [{request_required_acks, 1}]}
-            ]},
-
-            {client_options, [
-                {bootstrap_servers, "broker1.com:9092,broker2.com:9092"}
-            ]}
-        ]},
-
-        {client_consumer_id, [
-
-            {type, consumer},
-
-            {group_id, <<"erlkaf_consumer">>},
-            {callback_module, test_consumer},
-            {callback_args, []},
-            {topics, [<<"benchmark">>]},
-            {topic_options, [
-                {auto_offset_reset, smallest}
-            ]},
-
-            {client_options, [
-                {bootstrap_servers, "broker1.com:9092,broker2.com:9092"}
-            ]}
-        ]}
-    ]}
-]}
-```
+The list of all available properties of client and topics are described [here][2]
 
 [1]:https://github.com/edenhill/librdkafka
+[2]:https://github.com/silviucpp/erlkaf/blob/master/CONFIGURATION.md
