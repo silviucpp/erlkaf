@@ -17,6 +17,7 @@ struct atoms
     ERL_NIF_TERM atomLogEvent;
     ERL_NIF_TERM atomAssignPartition;
     ERL_NIF_TERM atomRevokePartition;
+    ERL_NIF_TERM atomStats;
 };
 
 struct erlkaf_data

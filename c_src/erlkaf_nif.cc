@@ -17,6 +17,7 @@ const char kAtomDeliveryReport[] = "delivery_report";
 const char kAtomLogEvent[] = "log_message";
 const char kAtomAssignPartition[] = "assign_partitions";
 const char kAtomRevokePartition[] = "revoke_partitions";
+const char kAtomStats[] = "stats";
 
 atoms ATOMS;
 
@@ -44,6 +45,7 @@ int on_nif_load(ErlNifEnv* env, void** priv_data, ERL_NIF_TERM load_info)
     ATOMS.atomLogEvent = make_atom(env, kAtomLogEvent);
     ATOMS.atomAssignPartition = make_atom(env, kAtomAssignPartition);
     ATOMS.atomRevokePartition = make_atom(env, kAtomRevokePartition);
+    ATOMS.atomStats = make_atom(env, kAtomStats);
 
     erlkaf_data* data = static_cast<erlkaf_data*>(enif_alloc(sizeof(erlkaf_data)));
     open_resources(env, data);

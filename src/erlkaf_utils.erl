@@ -6,7 +6,8 @@
     lookup/3,
     to_binary/1,
     safe_call/2,
-    safe_call/3
+    safe_call/3,
+    call_stats_callback/3
 ]).
 
 get_env(Key) ->
@@ -49,3 +50,10 @@ safe_call(Receiver, Message, Timeout) ->
         _: Exception ->
             {error, Exception}
     end.
+
+call_stats_callback(undefined, _ClientId, _Stats) ->
+    ok;
+call_stats_callback(C, ClientId, Stats) when is_function(C, 2) ->
+    C(ClientId, Stats);
+call_stats_callback(C, ClientId, Stats) ->
+    C:stats_callback(ClientId, Stats).

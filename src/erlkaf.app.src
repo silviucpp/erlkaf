@@ -2,7 +2,7 @@
     {description, "erlkaf - Erlang Kafka library based on librdkafka"},
     {vsn, "1.0"},
     {registered, []},
-    {applications, [kernel, stdlib, lager]},
+    {applications, [kernel, stdlib, lager, jsone]},
     {mod, {erlkaf_app, []}},
     {env, []}
 ]}.

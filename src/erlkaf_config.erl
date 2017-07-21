@@ -73,12 +73,9 @@ to_librdkafka_topic_config(K, V) ->
 % client related configs
 
 is_erlkaf_config(delivery_report_callback = K, V) ->
-    case is_function(V, 3) orelse is_atom(V) of
-        false ->
-            throw({error, {options, {K, V}}});
-        _ ->
-            true
-    end;
+    check_callback(K, V, 3);
+is_erlkaf_config(stats_callback = K, V) ->
+    check_callback(K, V, 2);
 is_erlkaf_config(_, _) ->
     false.
 
@@ -217,7 +214,13 @@ to_librdkafka_config(delivery_report_only_error, V) ->
 to_librdkafka_config(K, V) ->
     throw({error, {options, {K, V}}}).
 
-
+check_callback(K, V, Arity) ->
+    case is_function(V, Arity) orelse is_atom(V) of
+        false ->
+            throw({error, {options, {K, V}}});
+        _ ->
+            true
+    end.
 
 
 

@@ -85,7 +85,7 @@ internal_start_producer(ClientId, ErlkafConfig, LibRdkafkaConfig) ->
 
             case erlkaf_nif:producer_new(HasDrCallback, LibRdkafkaConfig) of
                 {ok, ProducerRef} ->
-                    erlkaf_sup:add_client(ClientId, erlkaf_producer, [ClientId, DeliveryReportCallback, ProducerRef]);
+                    erlkaf_sup:add_client(ClientId, erlkaf_producer, [ClientId, DeliveryReportCallback, ErlkafConfig, ProducerRef]);
                 Error ->
                     Error
             end;

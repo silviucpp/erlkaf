@@ -190,6 +190,18 @@ static void rebalance_cb (rd_kafka_t *rk, rd_kafka_resp_err_t err, rd_kafka_topi
     enif_free_env(env);
 }
 
+static int stats_callback(rd_kafka_t *rk, char *json, size_t json_len, void *opaque)
+{
+    UNUSED(rk);
+
+    callback_data* cb = static_cast<callback_data*>(opaque);
+    ErlNifEnv* env = enif_alloc_env();
+    ERL_NIF_TERM stats = make_binary(env, json, json_len);
+    enif_send(NULL, &cb->owner, env, enif_make_tuple2(env, ATOMS.atomStats, stats));
+    enif_free_env(env);
+    return 0;
+}
+
 rd_kafka_topic_partition_list_t* topic_subscribe(ErlNifEnv* env, ERL_NIF_TERM list)
 {
     uint32_t length;
@@ -247,10 +259,11 @@ ERL_NIF_TERM enif_consumer_new(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv
     erlkaf_data* data = static_cast<erlkaf_data*>(enif_priv_data(env));
     scoped_ptr(opaque, callback_data, callback_data_alloc(owner), callback_data_free);
 
+    rd_kafka_conf_set_opaque(client_conf.get(), opaque.get());
     rd_kafka_conf_set_default_topic_conf(client_conf.get(), topic_conf.release());
     rd_kafka_conf_set_log_cb(client_conf.get(), logger_callback);
     rd_kafka_conf_set_rebalance_cb(client_conf.get(), rebalance_cb);
-    rd_kafka_conf_set_opaque(client_conf.get(), opaque.get());
+    rd_kafka_conf_set_stats_cb(client_conf.get(), stats_callback);
 
     scoped_ptr(rk, rd_kafka_t, rd_kafka_new(RD_KAFKA_CONSUMER, client_conf.get(), errstr, sizeof(errstr)), rd_kafka_destroy);
 

@@ -5,7 +5,7 @@
 
 -behaviour(gen_server).
 
--export([start_link/3]).
+-export([start_link/4]).
 
 -export([
     init/1,
@@ -16,22 +16,32 @@
     code_change/3
 ]).
 
--callback delivery_report(MsgRef::reference(), DeliveryStatus:: ok| {error, any()}, Message::#erlkaf_msg{}) ->
+-callback delivery_report(MsgRef::reference(), DeliveryStatus:: ok | {error, any()}, Message::#erlkaf_msg{}) ->
+    ok.
+
+-callback stats_callback(ClientId::client_id(), Stats::list()) ->
     ok.
 
 -record(state, {
+    client_id,
     ref,
-    dr_callback
+    dr_cb,
+    stats_cb,
+    stats = []
 }).
 
-start_link(ClientId, DrCallback, ProducerRef) ->
-    gen_server:start_link(?MODULE, [ClientId, DrCallback, ProducerRef], []).
+start_link(ClientId, DrCallback, ErlkafConfig, ProducerRef) ->
+    gen_server:start_link(?MODULE, [ClientId, DrCallback, ErlkafConfig, ProducerRef], []).
 
-init([ClientId, DrCallback, ProducerRef]) ->
+init([ClientId, DrCallback, ErlkafConfig, ProducerRef]) ->
     Pid = self(),
+    StatsCallback =  erlkaf_utils:lookup(stats_callback, ErlkafConfig),
     ok = erlkaf_nif:producer_set_owner(ProducerRef, Pid),
     ok = erlkaf_cache_client:set(ClientId, ProducerRef, Pid),
-    {ok, #state{ref = ProducerRef, dr_callback = DrCallback}}.
+    {ok, #state{client_id = ClientId, ref = ProducerRef, dr_cb = DrCallback, stats_cb = StatsCallback}}.
+
+handle_call(get_stats, _From, #state{stats = Stats} = State) ->
+    {reply, {ok, Stats}, State};
 
 handle_call(_Request, _From, State) ->
     {reply, ok, State}.
@@ -39,19 +49,26 @@ handle_call(_Request, _From, State) ->
 handle_cast(_Request, State) ->
     {noreply, State}.
 
-handle_info({delivery_report, MsgRef, DeliveryStatus, Message}, #state{dr_callback = Callback} = State) ->
-    case Callback of
-        undefined ->
+handle_info({delivery_report, MsgRef, DeliveryStatus, Message}, #state{dr_cb = Callback} = State) ->
+    case catch call_callback(Callback, MsgRef, DeliveryStatus, Message) of
+        ok ->
             ok;
-        _ ->
-            case catch call_callback(Callback, MsgRef, DeliveryStatus, Message) of
-                ok ->
-                    ok;
-                Error ->
-                    ?ERROR_MSG("~p:delivery_report error: ~p", [Callback, Error])
-            end
+        Error ->
+            ?ERROR_MSG("~p:delivery_report error: ~p", [Callback, Error])
     end,
     {noreply, State};
+
+handle_info({stats, Stats0}, #state{stats_cb = StatsCb, client_id = ClientId} = State) ->
+    Stats = erlkaf_json:decode(Stats0),
+
+    case catch erlkaf_utils:call_stats_callback(StatsCb, ClientId, Stats) of
+        ok ->
+            ok;
+        Error ->
+            ?ERROR_MSG("~p:stats_callback client_id: ~p error: ~p", [StatsCb, ClientId, Error])
+    end,
+    {noreply, State#state{stats = Stats}};
+
 handle_info(Info, State) ->
     ?ERROR_MSG("received unknown message: ~p", [Info]),
     {noreply, State}.
@@ -64,6 +81,8 @@ code_change(_OldVsn, State, _Extra) ->
 
 %internals
 
+call_callback(undefined, _MsgRef, _DeliveryStatus, _Message) ->
+    ok;
 call_callback(C, MsgRef, DeliveryStatus, Message) when is_function(C, 3) ->
     C(MsgRef, DeliveryStatus, Message);
 call_callback(C, MsgRef, DeliveryStatus, Message) ->

@@ -11,6 +11,7 @@
     create_producer/2,
     create_consumer_group/7,
     stop_client/1,
+    get_stats/1,
 
     create_topic/2,
     create_topic/3,
@@ -64,6 +65,17 @@ create_consumer_group(ClientId, GroupId, Topics, ClientConfig, TopicConfig, CbMo
 
 stop_client(ClientId) ->
     erlkaf_manager:stop_client(ClientId).
+
+-spec get_stats(client_id()) ->
+    {ok, list()} | {error, reason()}.
+
+get_stats(ClientId) ->
+    case erlkaf_cache_client:get(ClientId) of
+        {ok, _ClientRef, ClientPid} ->
+            erlkaf_utils:safe_call(ClientPid, get_stats);
+        _ ->
+            {error, ?ERR_UNDEFINED_CLIENT}
+    end.
 
 -spec create_topic(client_id(), binary()) ->
     ok | {error, reason()}.

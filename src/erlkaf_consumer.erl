@@ -15,6 +15,9 @@
 -callback handle_message(Message::#erlkaf_msg{}, State::any()) ->
     {ok, State::any()}.
 
+-callback stats_callback(ClientId::client_id(), Stats::list()) ->
+    ok.
+
 -record(state, {
     client_ref,
     topic_name,

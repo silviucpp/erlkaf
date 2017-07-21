@@ -22,11 +22,11 @@ using `enif_send`.
 
 ### TODO
 
-- Add statistics support   
 - Add benchmarks
 - Add unit tests
 - Add support for batch produce
 - Document all configs
+- Bug fixing and create a stable API
 
 ### User guide
 
@@ -165,6 +165,11 @@ ok = erlkaf:start().
 ok = test_consumer:create_consumer().
 ```
 
+##### Statistics
+
+In order to get statistics you can register the `stats_callback` callback which is called every `statistics_interval_ms` (default 0 which means
+statistics are disabled). The granularity is 1000 ms. Also you can poll the stats for each client using `erlkaf:get_stats/1`.
+  
 ##### Start clients at startup
 
 You may include client configs in `sys.config` have them started by default (by application controller)
