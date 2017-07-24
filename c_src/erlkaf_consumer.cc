@@ -12,8 +12,6 @@ static const uint32_t kMaxConsumeBatchSize = 100;
 
 #include <vector>
 
-struct callback_data;
-
 struct enif_consumer
 {
     rd_kafka_t* kf;
