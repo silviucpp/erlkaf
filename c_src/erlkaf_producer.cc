@@ -17,15 +17,7 @@ struct enif_producer
     ErlNifThreadOpts* thread_opts;
     ErlNifTid thread_id;
     ErlNifPid owner_pid;
-    bool has_dr_callback;
     bool running;
-};
-
-struct callback_data
-{
-    ErlNifEnv* env;
-    ERL_NIF_TERM tag;
-    ErlNifPid pid;
 };
 
 static void* producer_poll_thread(void* arg)
@@ -38,23 +30,6 @@ static void* producer_poll_thread(void* arg)
     rd_kafka_flush(enif_kafka->kf, 5000);
 
     return NULL;
-}
-
-static callback_data* callback_data_alloc(ERL_NIF_TERM ref, const ErlNifPid& pid)
-{
-    callback_data* callback = static_cast<callback_data*>(enif_alloc(sizeof(callback_data)));
-    callback->env = enif_alloc_env();
-    callback->tag = enif_make_copy(callback->env, ref);
-    callback->pid = pid;
-    return callback;
-}
-
-static void callback_data_free(callback_data* cb)
-{
-    if(cb->env)
-        enif_free_env(cb->env);
-
-    enif_free(cb);
 }
 
 void enif_producer_free(ErlNifEnv* env, void* obj)
@@ -81,24 +56,23 @@ void enif_producer_free(ErlNifEnv* env, void* obj)
 static void delivery_report_callback (rd_kafka_t* rk, const rd_kafka_message_t* msg, void* data)
 {
     UNUSED(rk);
-    UNUSED(data);
+    enif_producer* producer = static_cast<enif_producer*>(data);
+    ErlNifEnv* env = enif_alloc_env();
 
-    callback_data* cb = static_cast<callback_data*>(msg->_private);
-
-    ERL_NIF_TERM status = msg->err == 0 ? ATOMS.atomOk : make_error(cb->env, rd_kafka_err2str(msg->err));
-    ERL_NIF_TERM key = msg->key == NULL ? ATOMS.atomUndefined : make_binary(cb->env, reinterpret_cast<const char*>(msg->key), msg->key_len);
+    ERL_NIF_TERM status = msg->err == 0 ? ATOMS.atomOk : make_error(env, rd_kafka_err2str(msg->err));
+    ERL_NIF_TERM key = msg->key == NULL ? ATOMS.atomUndefined : make_binary(env, reinterpret_cast<const char*>(msg->key), msg->key_len);
     const char* topic_name = rd_kafka_topic_name(msg->rkt);
 
-    ERL_NIF_TERM term = enif_make_tuple6(cb->env,
-                                        ATOMS.atomMessage,
-                                        make_binary(cb->env, topic_name, strlen(topic_name)),
-                                        enif_make_int(cb->env, msg->partition),
-                                        enif_make_int64(cb->env, msg->offset),
-                                        key,
-                                        make_binary(cb->env, reinterpret_cast<const char*>(msg->payload), msg->len));
+    ERL_NIF_TERM term = enif_make_tuple6(env,
+                                         ATOMS.atomMessage,
+                                         make_binary(env, topic_name, strlen(topic_name)),
+                                         enif_make_int(env, msg->partition),
+                                         enif_make_int64(env, msg->offset),
+                                         key,
+                                         make_binary(env, reinterpret_cast<const char*>(msg->payload), msg->len));
 
-    enif_send(NULL, &cb->pid, cb->env, enif_make_tuple4(cb->env, ATOMS.atomDeliveryReport, cb->tag, status, term));
-    callback_data_free(cb);
+    enif_send(NULL, &producer->owner_pid, env, enif_make_tuple3(env, ATOMS.atomDeliveryReport, status, term));
+    enif_free_env(env);
 }
 
 static int stats_callback(rd_kafka_t *rk, char *json, size_t json_len, void *opaque)
@@ -192,7 +166,6 @@ ERL_NIF_TERM enif_producer_new(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv
     producer->topics = new TopicManager(rk.get());
     producer->running = true;
     producer->kf = rk.release();
-    producer->has_dr_callback = has_dr_callback;
     producer->thread_opts = enif_thread_opts_create(const_cast<char*>(kThreadOptsId));
 
     if (enif_thread_create(const_cast<char*>(kPollThreadId), &producer->thread_id, producer_poll_thread, producer.get(), producer->thread_opts) != 0)
@@ -259,20 +232,8 @@ ERL_NIF_TERM enif_produce(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
     if (!get_binary(env, argv[4], &value))
         return make_badarg(env);
 
-    ERL_NIF_TERM tag = enif_make_ref(env);
-
-    callback_data* callback = NULL;
-
-    if(producer->owner_pid.pid && producer->has_dr_callback)
-        callback = callback_data_alloc(tag, producer->owner_pid);
-
-    if (rd_kafka_produce(topic, partition, RD_KAFKA_MSG_F_COPY, value.data, value.size, key.data, key.size, callback) != 0)
-    {
-        if(callback)
-            callback_data_free(callback);
-
+    if (rd_kafka_produce(topic, partition, RD_KAFKA_MSG_F_COPY, value.data, value.size, key.data, key.size, NULL) != 0)
         return make_error(env, enif_make_int(env, rd_kafka_last_error()));
-    }
 
-    return enif_make_tuple2(env, ATOMS.atomOk, tag);
+    return ATOMS.atomOk;
 }

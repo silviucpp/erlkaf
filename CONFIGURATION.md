@@ -68,7 +68,7 @@ retry_backoff_ms                         |  P  | 1 .. 300000     |           100
 compression_codec                        |  P  | none, gzip, snappy, lz4 |          none | compression codec to use for compressing message sets. This is the default value for all topics, may be overriden by the topic configuration property `compression_codec`
 batch_num_messages                       |  P  | 1 .. 1000000    |         10000 | Maximum number of messages batched in one MessageSet. The total MessageSet size is also limited by `message_max_bytes`
 delivery_report_only_error               |  P  | true, false     |         false | Only provide delivery reports for failed messages
-delivery_report_callback                 |  P  | module or fun/3 |       undefined| A callback where delivery reports are sent (`erlkaf_producer` behaviour)
+delivery_report_callback                 |  P  | module or fun/2 |       undefined| A callback where delivery reports are sent (`erlkaf_producer_callbacks` behaviour)
 
 ## Topic configuration properties
 

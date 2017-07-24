@@ -73,7 +73,7 @@ to_librdkafka_topic_config(K, V) ->
 % client related configs
 
 is_erlkaf_config(delivery_report_callback = K, V) ->
-    check_callback(K, V, 3);
+    check_callback(K, V, 2);
 is_erlkaf_config(stats_callback = K, V) ->
     check_callback(K, V, 2);
 is_erlkaf_config(_, _) ->

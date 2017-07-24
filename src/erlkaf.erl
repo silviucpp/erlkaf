@@ -112,6 +112,8 @@ produce(ClientId, TopicName, Partition, Key, Value) ->
     case erlkaf_cache_client:get(ClientId) of
         {ok, ClientRef, _ClientPid} ->
             case erlkaf_nif:produce(ClientRef, TopicName, Partition, Key, Value) of
+                ok ->
+                    ok;
                 {error, ?RD_KAFKA_RESP_ERR_QUEUE_FULL} ->
                     %todo: investigate something smarter like storing the messages in DETS and
                     %send them back when we have space in the memory queue

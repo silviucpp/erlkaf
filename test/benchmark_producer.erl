@@ -3,14 +3,14 @@
 -define(TOPIC, <<"benchmark">>).
 
 -export([
-    delivery_report/3,
+    delivery_report/2,
     benchmark/4
 ]).
 
 -behaviour(erlkaf_producer_callbacks).
 
-delivery_report(MsgRef, DeliveryStatus, Message) ->
-    io:format("received delivery report: ~p ~n", [{MsgRef, DeliveryStatus, Message}]),
+delivery_report(DeliveryStatus, Message) ->
+    io:format("received delivery report: ~p ~n", [{DeliveryStatus, Message}]),
     ok.
 
 benchmark(Driver, Concurrency, BytesPerMsg, MsgCount) ->
@@ -64,7 +64,7 @@ init(brod) ->
     brod:start().
 
 produce(erlkaf, Key, Message) ->
-    {ok, _} = erlkaf:produce(client_producer, ?TOPIC, Key, Message);
+    ok = erlkaf:produce(client_producer, ?TOPIC, Key, Message);
 produce(brod, Key, Message) ->
     PartitionFun = fun(_Topic, PartitionsCount, _Key, _Value) ->
         {ok, erlang:crc32(term_to_binary(Key)) rem PartitionsCount}

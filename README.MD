@@ -76,7 +76,7 @@ Example of a configuration file (for `sys.config`):
 The following example will create a producer client with id `client1` which sends also delivery reports to the same module.
 
 In order to receive the delivery reports you need to implement the `erlkaf_producer` protocol or to setup a function with
-arity 3 into `delivery_report_callback` (`{delivery_report_callback, fun(MsgRef, DeliveryStatus, Message) -> .. end}`).
+arity 2 into `delivery_report_callback` (`{delivery_report_callback, fun(MsgRef, DeliveryStatus, Message) -> .. end}`).
 
 The function specified into delivery report callback is called async from another process (each producer has it's own process
 from where it's dispatching the delivery reports)
@@ -88,15 +88,15 @@ Also in order to send messages to a topic you need to define a topic object atta
 -module(test).
 
 -export([
-    delivery_report/3,
+    delivery_report/2,
     create_producer/0,
     produce/2
 ]).
 
 -behaviour(erlkaf_producer_callbacks).
 
-delivery_report(MsgRef, DeliveryStatus, Message) ->
-    io:format("received delivery report: ~p ~n", [{MsgRef, DeliveryStatus, Message}]),
+delivery_report(DeliveryStatus, Message) ->
+    io:format("received delivery report: ~p ~n", [{DeliveryStatus, Message}]),
     ok.
 
 create_producer() ->
@@ -109,7 +109,7 @@ create_producer() ->
     ok = erlkaf:create_topic(client1, <<"benchmark">>, [{request_required_acks, 1}]).
 
 produce(Key, Value) ->
-    {ok, _} = erlkaf:produce(client1, <<"benchmark">>, Key, Value).
+    ok = erlkaf:produce(client1, <<"benchmark">>, Key, Value).
 ``` 
 
 You can call those like:

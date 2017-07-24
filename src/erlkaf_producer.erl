@@ -34,8 +34,8 @@ handle_call(_Request, _From, State) ->
 handle_cast(_Request, State) ->
     {noreply, State}.
 
-handle_info({delivery_report, MsgRef, DeliveryStatus, Message}, #state{dr_cb = Callback} = State) ->
-    case catch call_callback(Callback, MsgRef, DeliveryStatus, Message) of
+handle_info({delivery_report, DeliveryStatus, Message}, #state{dr_cb = Callback} = State) ->
+    case catch call_callback(Callback, DeliveryStatus, Message) of
         ok ->
             ok;
         Error ->
@@ -66,9 +66,9 @@ code_change(_OldVsn, State, _Extra) ->
 
 %internals
 
-call_callback(undefined, _MsgRef, _DeliveryStatus, _Message) ->
+call_callback(undefined, _DeliveryStatus, _Message) ->
     ok;
-call_callback(C, MsgRef, DeliveryStatus, Message) when is_function(C, 3) ->
-    C(MsgRef, DeliveryStatus, Message);
-call_callback(C, MsgRef, DeliveryStatus, Message) ->
-    C:delivery_report(MsgRef, DeliveryStatus, Message).
+call_callback(C, DeliveryStatus, Message) when is_function(C, 2) ->
+    C(DeliveryStatus, Message);
+call_callback(C, DeliveryStatus, Message) ->
+    C:delivery_report(DeliveryStatus, Message).
