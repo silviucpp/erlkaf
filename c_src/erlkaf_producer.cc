@@ -7,6 +7,9 @@
 #include "erlkaf_logger.h"
 #include "rdkafka.h"
 
+#include <string.h>
+#include <memory>
+
 static const char* kThreadOptsId = "librdkafka_producer_thread_opts";
 static const char* kPollThreadId = "librdkafka_producer_poll_thread";
 

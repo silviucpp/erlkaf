@@ -11,6 +11,8 @@ static const char* kPollThreadId = "librdkafka_consumer_poll_thread";
 static const uint32_t kMaxConsumeBatchSize = 100;
 
 #include <vector>
+#include <memory>
+#include <string.h>
 
 struct enif_consumer
 {

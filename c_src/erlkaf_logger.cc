@@ -2,6 +2,8 @@
 #include "nif_utils.h"
 #include "macros.h"
 
+#include <string.h>
+
 static ErlNifPid log_pid = {0};
 
 void logger_callback(const rd_kafka_t *rk, int level, const char *fac, const char *buf)

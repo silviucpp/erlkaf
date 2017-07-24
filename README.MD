@@ -23,6 +23,12 @@ using `enif_send`.
 
 ### User guide
 
+On Ubuntu make sure you have installed :
+
+```sh
+sudo apt-get install libsasl2-dev
+```
+
 Add `erlkaf` as a rebar dependency to your project:
 
 ```
