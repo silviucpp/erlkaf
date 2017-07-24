@@ -17,7 +17,7 @@ struct callback_data;
 struct enif_consumer
 {
     rd_kafka_t* kf;
-    callback_data* data;
+    ErlNifPid owner;
     ErlNifThreadOpts* thread_opts;
     ErlNifTid thread_id;
     ErlNifResourceType* res_queue;
@@ -29,25 +29,6 @@ struct enif_queue
     rd_kafka_queue_t* queue;
     enif_consumer* consumer;
 };
-
-struct callback_data
-{
-    ErlNifPid owner;
-    enif_consumer* consumer;
-};
-
-static callback_data* callback_data_alloc(const ErlNifPid& pid)
-{
-    callback_data* callback = static_cast<callback_data*>(enif_alloc(sizeof(callback_data)));
-    callback->owner = pid;
-    callback->consumer = NULL;
-    return callback;
-}
-
-static void callback_data_free(callback_data* cb)
-{
-    enif_free(cb);
-}
 
 void enif_queue_free(ErlNifEnv* env, void* obj)
 {
@@ -77,9 +58,6 @@ void enif_consumer_free(ErlNifEnv* env, void* obj)
 
     if(consumer->kf)
         rd_kafka_destroy(consumer->kf);
-
-    if(consumer->data)
-        callback_data_free(consumer->data);
 
     if(consumer->res_queue)
         enif_release_resource(consumer->res_queue);
@@ -147,47 +125,47 @@ static void* consumer_poll_thread(void* arg)
     return NULL;
 }
 
-void assign_partitions(ErlNifEnv* env, callback_data* cb, rd_kafka_t *rk, rd_kafka_topic_partition_list_t *partitions)
+void assign_partitions(ErlNifEnv* env, enif_consumer* consumer, rd_kafka_t *rk, rd_kafka_topic_partition_list_t *partitions)
 {
     rd_kafka_resp_err_t response = rd_kafka_assign(rk, partitions);
 
     if(response != RD_KAFKA_RESP_ERR_NO_ERROR)
         log_message(rk, kRdLogLevelError, "failed to assign the new partitions"+std::string(rd_kafka_err2str(response)));
 
-    ERL_NIF_TERM list = partition_list_to_nif(env, cb->consumer, rk, partitions, true);
-    enif_send(NULL, &cb->owner, env, enif_make_tuple2(env, ATOMS.atomAssignPartition, list));
+    ERL_NIF_TERM list = partition_list_to_nif(env, consumer, rk, partitions, true);
+    enif_send(NULL, &consumer->owner, env, enif_make_tuple2(env, ATOMS.atomAssignPartition, list));
 }
 
-void revoke_partitions(ErlNifEnv* env, callback_data* cb, rd_kafka_t *rk, rd_kafka_topic_partition_list_t *partitions)
+void revoke_partitions(ErlNifEnv* env, enif_consumer* consumer, rd_kafka_t *rk, rd_kafka_topic_partition_list_t *partitions)
 {
-    if(!cb->consumer->running)
+    if(!consumer->running)
     {
         rd_kafka_assign(rk, NULL);
         return;
     }
 
-    ERL_NIF_TERM list = partition_list_to_nif(env, cb->consumer, rk, partitions, false);
-    enif_send(NULL, &cb->owner, env, enif_make_tuple2(env, ATOMS.atomRevokePartition, list));
+    ERL_NIF_TERM list = partition_list_to_nif(env, consumer, rk, partitions, false);
+    enif_send(NULL, &consumer->owner, env, enif_make_tuple2(env, ATOMS.atomRevokePartition, list));
 }
 
 static void rebalance_cb (rd_kafka_t *rk, rd_kafka_resp_err_t err, rd_kafka_topic_partition_list_t *partitions, void *opaque)
 {
-    callback_data* cb = static_cast<callback_data*>(opaque);
+    enif_consumer* consumer = static_cast<enif_consumer*>(opaque);
     ErlNifEnv* env = enif_alloc_env();
 
     switch (err)
     {
         case RD_KAFKA_RESP_ERR__ASSIGN_PARTITIONS:
-            assign_partitions(env, cb, rk, partitions);
+            assign_partitions(env, consumer, rk, partitions);
             break;
 
         case RD_KAFKA_RESP_ERR__REVOKE_PARTITIONS:
-            revoke_partitions(env, cb, rk, partitions);
+            revoke_partitions(env, consumer, rk, partitions);
             break;
 
         default:
             log_message(rk, kRdLogLevelError, "rebalance error: "+std::string(rd_kafka_err2str(err)));
-            revoke_partitions(env, cb, rk, partitions);
+            revoke_partitions(env, consumer, rk, partitions);
     }
 
     enif_free_env(env);
@@ -197,10 +175,10 @@ static int stats_callback(rd_kafka_t *rk, char *json, size_t json_len, void *opa
 {
     UNUSED(rk);
 
-    callback_data* cb = static_cast<callback_data*>(opaque);
+    enif_consumer* consumer = static_cast<enif_consumer*>(opaque);
     ErlNifEnv* env = enif_alloc_env();
     ERL_NIF_TERM stats = make_binary(env, json, json_len);
-    enif_send(NULL, &cb->owner, env, enif_make_tuple2(env, ATOMS.atomStats, stats));
+    enif_send(NULL, &consumer->owner, env, enif_make_tuple2(env, ATOMS.atomStats, stats));
     enif_free_env(env);
     return 0;
 }
@@ -260,9 +238,15 @@ ERL_NIF_TERM enif_consumer_new(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv
         return make_error(env, errstr);
 
     erlkaf_data* data = static_cast<erlkaf_data*>(enif_priv_data(env));
-    scoped_ptr(opaque, callback_data, callback_data_alloc(owner), callback_data_free);
 
-    rd_kafka_conf_set_opaque(client_conf.get(), opaque.get());
+    scoped_ptr(consumer, enif_consumer, static_cast<enif_consumer*>(enif_alloc_resource(data->res_consumer, sizeof(enif_consumer))), enif_release_resource);
+
+    if(consumer.get() == NULL)
+        return make_error(env, "failed to alloc consumer");
+
+    memset(consumer.get(), 0, sizeof(enif_consumer));
+
+    rd_kafka_conf_set_opaque(client_conf.get(), consumer.get());
     rd_kafka_conf_set_default_topic_conf(client_conf.get(), topic_conf.release());
     rd_kafka_conf_set_log_cb(client_conf.get(), logger_callback);
     rd_kafka_conf_set_rebalance_cb(client_conf.get(), rebalance_cb);
@@ -287,19 +271,10 @@ ERL_NIF_TERM enif_consumer_new(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv
     if (err != RD_KAFKA_RESP_ERR_NO_ERROR)
         return make_error(env, rd_kafka_err2str(err));
 
-    scoped_ptr(consumer, enif_consumer, static_cast<enif_consumer*>(enif_alloc_resource(data->res_consumer, sizeof(enif_consumer))), enif_release_resource);
-
-    if(consumer.get() == NULL)
-        return make_error(env, "failed to alloc consumer");
-
-    memset(consumer.get(), 0, sizeof(enif_consumer));
-
-    opaque->consumer = consumer.get();
-
     consumer->running = true;
+    consumer->owner = owner;
     consumer->kf = rk.release();
     consumer->thread_opts = enif_thread_opts_create(const_cast<char*>(kThreadOptsId));
-    consumer->data = opaque.release();
     consumer->res_queue = data->res_queue;
 
     enif_keep_resource(data->res_queue);
