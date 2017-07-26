@@ -42,7 +42,7 @@ ssl_crl_location                         |  *  |                 |              
 sasl_mechanisms                          |  *  |                 |        GSSAPI | SASL mechanism to use for authentication. Supported: GSSAPI, PLAIN, SCRAM-SHA-256, SCRAM-SHA-512. **NOTE**: Despite the name only one mechanism must be configured.
 sasl_kerberos_service_name               |  *  |                 |         kafka | Kerberos principal name that Kafka runs as
 sasl_kerberos_principal                  |  *  |                 |   kafkaclient | This client's Kerberos principal name.
-sasl_kerberos_kinit_cmd                  |  *  |                 | kinit -S "%{sasl.kerberos.service.name}/%{broker.name}" -k -t "%{sasl.kerberos.keytab}" %{sasl.kerberos.principal} | Full kerberos kinit command string, %{config.prop.name} is replaced by corresponding config object value, %{broker.name} returns the broker's hostname
+sasl_kerberos_kinit_cmd                  |  *  |                 |  | Full kerberos kinit command string, %{config.prop.name} is replaced by corresponding config object value, %{broker.name} returns the broker's hostname
 sasl_kerberos_keytab                     |  *  |                 |               | Path to Kerberos keytab file. Uses system default if not set.**NOTE**: This is not automatically used but must be added to the template in `sasl_kerberos_kinit_cmd` as ` ... -t %{sasl_kerberos_keytab}`
 sasl_kerberos_min_time_before_relogin    |  *  | 1 .. 86400000   |         60000 | Minimum time in milliseconds between key refresh attempts.
 sasl_username                            |  *  |                 |               | SASL username for use with the PLAIN and SASL-SCRAM-.. mechanisms
