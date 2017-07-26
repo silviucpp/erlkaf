@@ -78,7 +78,7 @@ handle_info({revoke_partitions, Partitions}, #state{client_ref = ClientRef, topi
     {noreply, State#state{topics_map = NewTopicMap}};
 
 handle_info({'EXIT', FromPid, Reason} , State) when Reason =/= normal ->
-    ?WARNING_MSG("consumer ~p died with reason: ~p. restart consumer ...", [FromPid, Reason]),
+    ?WARNING_MSG("consumer ~p died with reason: ~p. restart consumer group ...", [FromPid, Reason]),
     {stop, {error, Reason}, State};
 
 handle_info(_Info, State) ->

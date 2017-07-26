@@ -80,7 +80,7 @@ handle_info(process_messages, #state{messages = Msg, client_ref = ClientRef, cb_
             {noreply, State#state{messages = [], cb_state = NewCbState}};
         {stop, From, Tag} ->
             handle_stop(From, Tag, State),
-            {stop, ok, State};
+            {stop, normal, State};
         Error ->
             ?ERROR_MSG("unexpected response: ~p", [Error]),
             {stop, Error, State}
