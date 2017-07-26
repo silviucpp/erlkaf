@@ -130,8 +130,9 @@ process_events([], _ClientRef, _CbModule, CbState) ->
 recv_stop() ->
     receive {stop, _From, _Tag} = Msg -> Msg after 0 -> false end.
 
-handle_stop(From, Tag, #state{topic_name = TopicName, partition = Partition}) ->
+handle_stop(From, Tag, #state{topic_name = TopicName, partition = Partition, queue_ref = Queue}) ->
     ?INFO_MSG("stop consumer for: ~p partition: ~p", [TopicName, Partition]),
+    ok = erlkaf_nif:consumer_queue_cleanup(Queue),
     From ! {stopped, Tag}.
 
 commit_offset(ClientRef, #erlkaf_msg{topic = Topic, partition = Partition, offset = Offset}) ->

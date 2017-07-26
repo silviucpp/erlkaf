@@ -13,6 +13,7 @@ static const uint32_t kMaxConsumeBatchSize = 100;
 #include <vector>
 #include <memory>
 #include <string.h>
+#include <unistd.h>
 
 struct enif_consumer
 {
@@ -37,7 +38,7 @@ void enif_queue_free(ErlNifEnv* env, void* obj)
     enif_queue* q = static_cast<enif_queue*>(obj);
 
     if(q->queue)
-        rd_kafka_queue_destroy(q->queue);
+        rd_kafka_queue_forward(q->queue, rd_kafka_queue_get_consumer(q->consumer->kf));
 
     enif_release_resource(q->consumer);
 }
@@ -112,16 +113,24 @@ ERL_NIF_TERM partition_list_to_nif(ErlNifEnv* env, enif_consumer* consumer, rd_k
 
 static void* consumer_poll_thread(void* arg)
 {
-    enif_consumer* enif_kafka = static_cast<enif_consumer*>(arg);
-    rd_kafka_message_t* msg;
+    enif_consumer* consumer = static_cast<enif_consumer*>(arg);
 
-    while (enif_kafka->running)
+    while (consumer->running)
     {
-        msg = rd_kafka_consumer_poll(enif_kafka->kf, 100);
-        ASSERT(msg == NULL);
+        rd_kafka_message_t* msg = rd_kafka_consumer_poll(consumer->kf, 100);
+
+        if(msg)
+        {
+            //because communication between nif and erlang it's based on async messages might be a small window
+            //between starting of revoking partitions (queued are forwarded back on the main queue) and when actual we revoked them
+            //when we get the messages here. we drop all this messages as time they have no impact because offset is not changed.
+            //we are sleeping here as well to not consume lot of cpu
+            rd_kafka_message_destroy(msg);
+            usleep(50000);
+        }
     }
 
-    rd_kafka_consumer_close(enif_kafka->kf);
+    rd_kafka_consumer_close(consumer->kf);
     return NULL;
 }
 
@@ -284,6 +293,26 @@ ERL_NIF_TERM enif_consumer_new(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv
 
     ERL_NIF_TERM term = enif_make_resource(env, consumer.get());
     return enif_make_tuple2(env, ATOMS.atomOk, term);
+}
+
+ERL_NIF_TERM enif_consumer_queue_cleanup(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
+{
+    UNUSED(argc);
+
+    erlkaf_data* data = static_cast<erlkaf_data*>(enif_priv_data(env));
+
+    enif_queue* q;
+
+    if(!enif_get_resource(env, argv[0], data->res_queue, (void**) &q))
+        return make_badarg(env);
+
+    if(q->queue)
+    {
+        rd_kafka_queue_forward(q->queue, rd_kafka_queue_get_consumer(q->consumer->kf));
+        q->queue = NULL;
+    }
+
+    return ATOMS.atomOk;
 }
 
 ERL_NIF_TERM enif_consumer_partition_revoke_completed(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])

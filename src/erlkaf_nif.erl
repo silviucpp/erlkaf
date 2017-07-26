@@ -16,6 +16,7 @@
     consumer_new/4,
     consumer_partition_revoke_completed/1,
     consumer_queue_poll/1,
+    consumer_queue_cleanup/1,
     consumer_offset_store/4
 ]).
 
@@ -64,6 +65,9 @@ consumer_partition_revoke_completed(_ClientRef) ->
     ?NOT_LOADED.
 
 consumer_queue_poll(_Queue) ->
+    ?NOT_LOADED.
+
+consumer_queue_cleanup(_Queue) ->
     ?NOT_LOADED.
 
 consumer_offset_store(_ClientRef, _TopicName, _Partition, _Offset) ->
