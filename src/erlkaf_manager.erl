@@ -28,7 +28,7 @@ start_consumer_group(ClientId, GroupId, Topics, ClientConfig, TopicConfig, CbMod
     erlkaf_utils:safe_call(?MODULE, {start_consumer_group, ClientId, GroupId, Topics, ClientConfig, TopicConfig, CbModule, CbArgs}).
 
 stop_client(ClientId) ->
-    erlkaf_utils:safe_call(?MODULE, {stop_client, ClientId}).
+    erlkaf_utils:safe_call(?MODULE, {stop_client, ClientId}, infinity).
 
 create_topic(ClientRef, TopicName, TopicConfig) ->
     erlkaf_utils:safe_call(?MODULE, {create_topic, ClientRef, TopicName, TopicConfig}).

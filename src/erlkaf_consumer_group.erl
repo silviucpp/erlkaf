@@ -66,16 +66,10 @@ handle_info({assign_partitions, Partitions}, #state{client_ref = Crf, cb_module 
 
 handle_info({revoke_partitions, Partitions}, #state{client_ref = ClientRef, topics_map = TopicsMap} = State) ->
     ?INFO_MSG("revoke partitions: ~p", [Partitions]),
-
-    PartFun = fun(Key, Tmap) ->
-        {Pid, NewTmap} = maps:take(Key, Tmap),
-        erlkaf_consumer:stop(Pid),
-        NewTmap
-    end,
-
-    NewTopicMap = lists:foldl(PartFun, TopicsMap, Partitions),
+    Pids = get_pids(TopicsMap, Partitions),
+    ok = stop_consumers(Pids),
     ok = erlkaf_nif:consumer_partition_revoke_completed(ClientRef),
-    {noreply, State#state{topics_map = NewTopicMap}};
+    {noreply, State#state{topics_map = #{}}};
 
 handle_info({'EXIT', FromPid, Reason} , State) when Reason =/= normal ->
     ?WARNING_MSG("consumer ~p died with reason: ~p. restart consumer group ...", [FromPid, Reason]),
@@ -84,8 +78,15 @@ handle_info({'EXIT', FromPid, Reason} , State) when Reason =/= normal ->
 handle_info(_Info, State) ->
     {noreply, State}.
 
-terminate(_Reason, _State) ->
+terminate(_Reason, #state{topics_map = TopicsMap}) ->
+    ok = stop_consumers(maps:values(TopicsMap)),
     ok.
 
 code_change(_OldVsn, State, _Extra) ->
     {ok, State}.
+
+get_pids(TopicsMap, Partitions) ->
+    lists:map(fun(P) -> maps:get(P, TopicsMap) end, Partitions).
+
+stop_consumers(Pids) ->
+    plists:foreach(fun(Pid) -> erlkaf_consumer:stop(Pid) end, Pids).

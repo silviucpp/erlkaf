@@ -136,4 +136,5 @@ handle_stop(From, Tag, #state{topic_name = TopicName, partition = Partition, que
     From ! {stopped, Tag}.
 
 commit_offset(ClientRef, #erlkaf_msg{topic = Topic, partition = Partition, offset = Offset}) ->
+    %?INFO_MSG("commit topic:~p partition:~p offset:~p",[Topic, Partition, Offset]),
     erlkaf_nif:consumer_offset_store(ClientRef, Topic, Partition, Offset).
