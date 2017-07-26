@@ -47,7 +47,7 @@ sasl_kerberos_keytab                     |  *  |                 |              
 sasl_kerberos_min_time_before_relogin    |  *  | 1 .. 86400000   |         60000 | Minimum time in milliseconds between key refresh attempts.
 sasl_username                            |  *  |                 |               | SASL username for use with the PLAIN and SASL-SCRAM-.. mechanisms
 sasl_password                            |  *  |                 |               | SASL password for use with the PLAIN and SASL-SCRAM-.. mechanism 
-partition_assignment_strategy            |  *  |                 | range,roundrobin | Name of partition assignment strategy to use when elected group leader assigns partitions to group members
+partition_assignment_strategy            |  *  |                 | range, roundrobin | Name of partition assignment strategy to use when elected group leader assigns partitions to group members
 session_timeout_ms                       |  *  | 1 .. 3600000    |         30000 | Client group session and failure detection timeout
 heartbeat_interval_ms                    |  *  | 1 .. 3600000    |          1000 | Group session keepalive heartbeat interval
 coordinator_query_interval_ms            |  *  | 1 .. 3600000    |        600000 | How often to query for the current client group coordinator. If the currently assigned coordinator is down the configured query interval will be divided by ten to more quickly recover in case of coordinator reassignment
