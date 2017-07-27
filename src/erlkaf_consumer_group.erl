@@ -79,8 +79,7 @@ handle_info(_Info, State) ->
     {noreply, State}.
 
 terminate(_Reason, #state{topics_map = TopicsMap}) ->
-    ok = stop_consumers(maps:values(TopicsMap)),
-    ok.
+    stop_consumers(maps:values(TopicsMap)).
 
 code_change(_OldVsn, State, _Extra) ->
     {ok, State}.
