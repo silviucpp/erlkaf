@@ -166,18 +166,10 @@ based on `auto_commit_interval_ms` setting.
 
 create_consumer() ->
     erlkaf:start(),
-
     ClientId = client_consumer,
     GroupId = <<"erlkaf_consumer">>,
-
-    ClientCfg = [
-        {bootstrap_servers, "broker1:9092"}
-    ],
-
-    TopicConf = [
-        {auto_offset_reset, smallest}
-    ],
-
+    ClientCfg = [{bootstrap_servers, "broker1:9092"}],
+    TopicConf = [{auto_offset_reset, smallest}],
     ok = erlkaf:create_consumer_group(ClientId, GroupId, ?TOPICS, ClientCfg, TopicConf, ?MODULE, []).
 
 init(Topic, Partition, Offset, Args) ->
