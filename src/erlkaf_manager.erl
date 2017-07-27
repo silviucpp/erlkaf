@@ -113,8 +113,8 @@ internal_start_consumer(ClientId, GroupId, Topics, ClientConfig, TopicConfig, Cb
     end.
 
 internal_stop_client(ClientId) ->
-    case erlkaf_cache_client:del(ClientId) of
-        true ->
+    case erlkaf_cache_client:take(ClientId) of
+        [_] ->
             erlkaf_sup:remove_client(ClientId);
         _ ->
             {error, ?ERR_UNDEFINED_CLIENT}

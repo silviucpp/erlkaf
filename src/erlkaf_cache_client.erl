@@ -4,7 +4,7 @@
     create/0,
     set/3,
     get/1,
-    del/1,
+    take/1,
     to_list/0
 ]).
 
@@ -27,8 +27,8 @@ get(ClientId) ->
             undefined
     end.
 
-del(ClientId) ->
-    ets:delete(?ETS_TOPIC_CACHE, ClientId).
+take(ClientId) ->
+    ets:take(?ETS_TOPIC_CACHE, ClientId).
 
 to_list() ->
     ets:tab2list(?ETS_TOPIC_CACHE).

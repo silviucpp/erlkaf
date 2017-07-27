@@ -20,17 +20,25 @@ struct enif_producer
     ErlNifThreadOpts* thread_opts;
     ErlNifTid thread_id;
     ErlNifPid owner_pid;
+    bool stop_feedback;
     bool running;
 };
 
 static void* producer_poll_thread(void* arg)
 {
-    enif_producer* enif_kafka = static_cast<enif_producer*>(arg);
+    enif_producer* producer = static_cast<enif_producer*>(arg);
 
-    while (enif_kafka->running)
-        rd_kafka_poll(enif_kafka->kf, 100);
+    while (producer->running)
+        rd_kafka_poll(producer->kf, 100);
 
-    rd_kafka_flush(enif_kafka->kf, 5000);
+    rd_kafka_flush(producer->kf, -1);
+
+    if(producer->stop_feedback)
+    {
+        ErlNifEnv* env = enif_alloc_env();
+        enif_send(NULL, &producer->owner_pid, env, ATOMS.atomClientStopped);
+        enif_free_env(env);
+    }
 
     return NULL;
 }
@@ -39,21 +47,21 @@ void enif_producer_free(ErlNifEnv* env, void* obj)
 {
     UNUSED(env);
 
-    enif_producer* enif_kafka = static_cast<enif_producer*>(obj);
-    enif_kafka->running = false;
+    enif_producer* producer = static_cast<enif_producer*>(obj);
+    producer->running = false;
 
-    if(enif_kafka->thread_opts)
+    if(producer->thread_opts)
     {
         void *result = NULL;
-        enif_thread_join(enif_kafka->thread_id, &result);
-        enif_thread_opts_destroy(enif_kafka->thread_opts);
+        enif_thread_join(producer->thread_id, &result);
+        enif_thread_opts_destroy(producer->thread_opts);
     }
 
-    if(enif_kafka->topics)
-        delete enif_kafka->topics;
+    if(producer->topics)
+        delete producer->topics;
 
-    if(enif_kafka->kf)
-        rd_kafka_destroy(enif_kafka->kf);
+    if(producer->kf)
+        rd_kafka_destroy(producer->kf);
 }
 
 static void delivery_report_callback (rd_kafka_t* rk, const rd_kafka_message_t* msg, void* data)
@@ -99,17 +107,17 @@ ERL_NIF_TERM enif_producer_topic_new(ErlNifEnv* env, int argc, const ERL_NIF_TER
     UNUSED(argc);
 
     std::string topic_name;
-    enif_producer* enif_kafka;
+    enif_producer* producer;
 
     erlkaf_data* data = static_cast<erlkaf_data*>(enif_priv_data(env));
 
-    if(!enif_get_resource(env, argv[0], data->res_producer, (void**) &enif_kafka))
+    if(!enif_get_resource(env, argv[0], data->res_producer, (void**) &producer))
         return make_badarg(env);
 
     if(!get_string(env, argv[1], &topic_name))
         return make_badarg(env);
 
-    if(enif_kafka->topics->GetTopic(topic_name))
+    if(producer->topics->GetTopic(topic_name))
         return make_error(env, "topic already exist");
 
     scoped_ptr(config, rd_kafka_topic_conf_t, rd_kafka_topic_conf_new(), rd_kafka_topic_conf_destroy);
@@ -119,7 +127,7 @@ ERL_NIF_TERM enif_producer_topic_new(ErlNifEnv* env, int argc, const ERL_NIF_TER
     if(parse_result != ATOMS.atomOk)
         return parse_result;
 
-    if(!enif_kafka->topics->AddTopic(topic_name, config.get()))
+    if(!producer->topics->AddTopic(topic_name, config.get()))
         return make_error(env, "failed to create topic");
 
     config.release();
@@ -168,6 +176,7 @@ ERL_NIF_TERM enif_producer_new(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv
 
     producer->topics = new TopicManager(rk.get());
     producer->running = true;
+    producer->stop_feedback = false;
     producer->kf = rk.release();
     producer->thread_opts = enif_thread_opts_create(const_cast<char*>(kThreadOptsId));
 
@@ -194,6 +203,22 @@ ERL_NIF_TERM enif_producer_set_owner(ErlNifEnv* env, int argc, const ERL_NIF_TER
 
     if(!enif_get_local_pid(env, argv[1], &producer->owner_pid))
         return make_badarg(env);
+
+    return ATOMS.atomOk;
+}
+
+ERL_NIF_TERM enif_producer_cleanup(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
+{
+    UNUSED(argc);
+
+    erlkaf_data* data = static_cast<erlkaf_data*>(enif_priv_data(env));
+    enif_producer* producer;
+
+    if(!enif_get_resource(env, argv[0], data->res_producer, (void**) &producer))
+        return make_badarg(env);
+
+    producer->stop_feedback = true;
+    producer->running = false;
 
     return ATOMS.atomOk;
 }

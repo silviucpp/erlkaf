@@ -83,6 +83,7 @@ static ErlNifFunc nif_funcs[] =
     {"producer_new", 2, enif_producer_new},
     {"producer_set_owner", 2, enif_producer_set_owner},
     {"producer_topic_new", 3, enif_producer_topic_new},
+    {"producer_cleanup", 1, enif_producer_cleanup},
     {"produce", 5, enif_produce},
 
     {"consumer_new", 4, enif_consumer_new},

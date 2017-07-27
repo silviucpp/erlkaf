@@ -23,6 +23,7 @@ init([ClientId, DrCallback, ErlkafConfig, ProducerRef]) ->
     StatsCallback =  erlkaf_utils:lookup(stats_callback, ErlkafConfig),
     ok = erlkaf_nif:producer_set_owner(ProducerRef, Pid),
     ok = erlkaf_cache_client:set(ClientId, ProducerRef, Pid),
+    process_flag(trap_exit, true),
     {ok, #state{client_id = ClientId, ref = ProducerRef, dr_cb = DrCallback, stats_cb = StatsCallback}}.
 
 handle_call(get_stats, _From, #state{stats = Stats} = State) ->
@@ -58,8 +59,18 @@ handle_info(Info, State) ->
     ?ERROR_MSG("received unknown message: ~p", [Info]),
     {noreply, State}.
 
-terminate(_Reason, _State) ->
-    ok.
+terminate(Reason, #state{client_id = ClientId, ref = ClientRef}) ->
+    case Reason of
+        shutdown ->
+            ok = erlkaf_nif:producer_cleanup(ClientRef),
+            ?INFO_MSG("wait for producer client ~p to stop...", [ClientId]),
+            receive
+                client_stopped ->
+                    ?INFO_MSG("producer client ~p stopped", [ClientId])
+            end;
+        _ ->
+            ok
+    end.
 
 code_change(_OldVsn, State, _Extra) ->
     {ok, State}.

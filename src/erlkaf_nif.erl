@@ -9,6 +9,7 @@
     set_log_process/1,
 
     producer_new/2,
+    producer_cleanup/1,
     producer_set_owner/2,
     producer_topic_new/3,
     produce/5,
@@ -48,6 +49,9 @@ set_log_process(_Pid) ->
     ?NOT_LOADED.
 
 producer_new(_HasDrCallback, _Config) ->
+    ?NOT_LOADED.
+
+producer_cleanup(_ClientRef) ->
     ?NOT_LOADED.
 
 producer_set_owner(_ClientRef, _Pid) ->
