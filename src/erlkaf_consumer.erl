@@ -103,12 +103,13 @@ code_change(_OldVsn, State, _Extra) ->
 %internals
 
 schedule_poll(Timeout) ->
-    %?INFO_MSG("schedule_poll:~p timeout: ~p", [self(), Timeout]),
     erlang:send_after(Timeout, self(), poll_events).
 
 schedule_message_process(Timeout) ->
-    %?INFO_MSG("schedule_message_process:~p timeout: ~p", [self(), Timeout]),
     erlang:send_after(Timeout, self(), process_messages).
+
+commit_offset(ClientRef, #erlkaf_msg{topic = Topic, partition = Partition, offset = Offset}) ->
+    erlkaf_nif:consumer_offset_store(ClientRef, Topic, Partition, Offset).
 
 process_events([H|T] = Msgs, ClientRef, CbModule, CbState) ->
     case recv_stop() of
@@ -134,7 +135,3 @@ handle_stop(From, Tag, #state{topic_name = TopicName, partition = Partition, que
     ?INFO_MSG("stop consumer for: ~p partition: ~p", [TopicName, Partition]),
     ok = erlkaf_nif:consumer_queue_cleanup(Queue),
     From ! {stopped, Tag}.
-
-commit_offset(ClientRef, #erlkaf_msg{topic = Topic, partition = Partition, offset = Offset}) ->
-    %?INFO_MSG("commit topic:~p partition:~p offset:~p",[Topic, Partition, Offset]),
-    erlkaf_nif:consumer_offset_store(ClientRef, Topic, Partition, Offset).
