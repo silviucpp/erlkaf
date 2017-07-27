@@ -91,7 +91,9 @@ Also in order to send messages to a topic you need to define a topic object atta
 `erlkaf:create_topic` method.
 
 ```erlang
--module(test).
+-module(test_producer).
+
+-define(TOPIC, <<"benchmark">>).
 
 -export([
     delivery_report/2,
@@ -106,24 +108,25 @@ delivery_report(DeliveryStatus, Message) ->
     ok.
 
 create_producer() ->
+    erlkaf:start(),
+
     ProducerConfig = [
-        {bootstrap_servers, "broker1:9092,broker2:9092"},
+        {bootstrap_servers, "broker1:9092"},
         {delivery_report_only_error, false},
         {delivery_report_callback, ?MODULE}
     ],
-    ok = erlkaf:create_producer(client1, ProducerConfig),
-    ok = erlkaf:create_topic(client1, <<"benchmark">>, [{request_required_acks, 1}]).
+    ok = erlkaf:create_producer(client_producer, ProducerConfig),
+    ok = erlkaf:create_topic(client_producer, ?TOPIC, [{request_required_acks, 1}]).
 
 produce(Key, Value) ->
-    ok = erlkaf:produce(client1, <<"benchmark">>, Key, Value).
+    ok = erlkaf:produce(client_producer, ?TOPIC, Key, Value).
 ``` 
 
 You can call those like:
 
 ```erlang
-ok = erlkaf:start().
-ok = test:create_producer().
-test:produce(<<"key1">>, <<"val1">>).
+ok = test_producer:create_producer().
+test_producer:produce(<<"key1">>, <<"val1">>).
 ```
 
 And you will get into the console the delivery reports:
@@ -149,6 +152,8 @@ based on `auto_commit_interval_ms` setting.
 
 -include("erlkaf.hrl").
 
+-define(TOPICS, [<<"benchmark">>]).
+
 -export([
     create_consumer/0,
     init/4,
@@ -160,47 +165,42 @@ based on `auto_commit_interval_ms` setting.
 -record(state, {}).
 
 create_consumer() ->
+    erlkaf:start(),
 
-    GroupId = <<"group_id_here">>,
-    Topics = [<<"benchmark">>],
+    GroupId = <<"erlkaf_consumer">>,
 
-    ProdConfig = [
-        {bootstrap_servers, "broker1:9092,broker2:9092"}
+    ClientConfig = [
+        {bootstrap_servers, "jabber-beanstalkd01.woow.office:9092"}
     ],
 
     TopicConf = [
         {auto_offset_reset, smallest}
     ],
 
-    ok = erlkaf:create_consumer_group(consumer_client, GroupId, Topics, ProdConfig, TopicConf, ?MODULE, []).
+    ok = erlkaf:create_consumer_group(client_consumer, GroupId, ?TOPICS, ClientConfig, TopicConf, ?MODULE, []).
 
 init(Topic, Partition, Offset, Args) ->
-
     io:format("init topic: ~p partition: ~p offset: ~p args: ~p ~n", [
-        Topic, 
-        Partition, 
-        Offset, 
+        Topic,
+        Partition,
+        Offset,
         Args
     ]),
-
     {ok, #state{}}.
 
 handle_message(#erlkaf_msg{topic = Topic, partition = Partition, offset = Offset}, State) ->
-
     io:format("handle_message topic: ~p partition: ~p offset: ~p state: ~p ~n", [
-        Topic, 
-        Partition, 
-        Offset, 
+        Topic,
+        Partition,
+        Offset,
         State
     ]),
-
     {ok, State}.
 ```
 
 You can call those like:
 
 ```erlang
-ok = erlkaf:start().
 ok = test_consumer:create_consumer().
 ```
   
