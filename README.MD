@@ -167,17 +167,18 @@ based on `auto_commit_interval_ms` setting.
 create_consumer() ->
     erlkaf:start(),
 
+    ClientId = client_consumer,
     GroupId = <<"erlkaf_consumer">>,
 
-    ClientConfig = [
-        {bootstrap_servers, "jabber-beanstalkd01.woow.office:9092"}
+    ClientCfg = [
+        {bootstrap_servers, "broker1:9092"}
     ],
 
     TopicConf = [
         {auto_offset_reset, smallest}
     ],
 
-    ok = erlkaf:create_consumer_group(client_consumer, GroupId, ?TOPICS, ClientConfig, TopicConf, ?MODULE, []).
+    ok = erlkaf:create_consumer_group(ClientId, GroupId, ?TOPICS, ClientCfg, TopicConf, ?MODULE, []).
 
 init(Topic, Partition, Offset, Args) ->
     io:format("init topic: ~p partition: ~p offset: ~p args: ~p ~n", [
