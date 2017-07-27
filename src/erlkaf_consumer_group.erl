@@ -78,8 +78,18 @@ handle_info({'EXIT', FromPid, Reason} , State) when Reason =/= normal ->
 handle_info(_Info, State) ->
     {noreply, State}.
 
-terminate(_Reason, #state{topics_map = TopicsMap}) ->
-    stop_consumers(maps:values(TopicsMap)).
+terminate(_Reason, #state{topics_map = TopicsMap, client_ref = ClientRef, client_id = ClientId}) ->
+    stop_consumers(maps:values(TopicsMap)),
+    ok = erlkaf_nif:consumer_cleanup(ClientRef),
+
+    ?INFO_MSG("wait for consumer client ~p to stop...", [ClientId]),
+
+    receive
+        client_stopped ->
+            ?INFO_MSG("client ~p stopped", [ClientId])
+        after 180000 ->
+            ?ERROR_MSG("wait for client ~p stop timeout", [ClientId])
+    end.
 
 code_change(_OldVsn, State, _Extra) ->
     {ok, State}.

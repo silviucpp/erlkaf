@@ -18,6 +18,7 @@ const char kAtomLogEvent[] = "log_message";
 const char kAtomAssignPartition[] = "assign_partitions";
 const char kAtomRevokePartition[] = "revoke_partitions";
 const char kAtomStats[] = "stats";
+const char kAtomClientStopped[] = "client_stopped";
 
 atoms ATOMS;
 
@@ -46,6 +47,7 @@ int on_nif_load(ErlNifEnv* env, void** priv_data, ERL_NIF_TERM load_info)
     ATOMS.atomAssignPartition = make_atom(env, kAtomAssignPartition);
     ATOMS.atomRevokePartition = make_atom(env, kAtomRevokePartition);
     ATOMS.atomStats = make_atom(env, kAtomStats);
+    ATOMS.atomClientStopped = make_atom(env, kAtomClientStopped);
 
     erlkaf_data* data = static_cast<erlkaf_data*>(enif_alloc(sizeof(erlkaf_data)));
     open_resources(env, data);
@@ -87,7 +89,8 @@ static ErlNifFunc nif_funcs[] =
     {"consumer_partition_revoke_completed", 1, enif_consumer_partition_revoke_completed},
     {"consumer_queue_poll", 1, enif_consumer_queue_poll},
     {"consumer_queue_cleanup", 1, enif_consumer_queue_cleanup},
-    {"consumer_offset_store", 4, enif_consumer_offset_store}
+    {"consumer_offset_store", 4, enif_consumer_offset_store},
+    {"consumer_cleanup", 1, enif_consumer_cleanup}
 };
 
 ERL_NIF_INIT(erlkaf_nif, nif_funcs, on_nif_load, NULL, on_nif_upgrade, on_nif_unload)

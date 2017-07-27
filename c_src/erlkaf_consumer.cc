@@ -23,6 +23,7 @@ struct enif_consumer
     ErlNifTid thread_id;
     ErlNifResourceType* res_queue;
     bool running;
+    bool stop_feedback;
 };
 
 struct enif_queue
@@ -56,9 +57,6 @@ void enif_consumer_free(ErlNifEnv* env, void* obj)
         enif_thread_join(consumer->thread_id, &result);
         enif_thread_opts_destroy(consumer->thread_opts);
     }
-
-    if(consumer->kf)
-        rd_kafka_destroy(consumer->kf);
 
     if(consumer->res_queue)
         enif_release_resource(consumer->res_queue);
@@ -131,6 +129,15 @@ static void* consumer_poll_thread(void* arg)
     }
 
     rd_kafka_consumer_close(consumer->kf);
+    rd_kafka_destroy(consumer->kf);
+
+    if(consumer->stop_feedback)
+    {
+        ErlNifEnv* env = enif_alloc_env();
+        enif_send(NULL, &consumer->owner, env, ATOMS.atomClientStopped);
+        enif_free_env(env);
+    }
+
     return NULL;
 }
 
@@ -281,6 +288,7 @@ ERL_NIF_TERM enif_consumer_new(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv
         return make_error(env, rd_kafka_err2str(err));
 
     consumer->running = true;
+    consumer->stop_feedback = false;
     consumer->owner = owner;
     consumer->kf = rk.release();
     consumer->thread_opts = enif_thread_opts_create(const_cast<char*>(kThreadOptsId));
@@ -415,5 +423,20 @@ ERL_NIF_TERM enif_consumer_offset_store(ErlNifEnv* env, int argc, const ERL_NIF_
         return ATOMS.atomOk;
 
     return make_error(env, error);
+}
+
+ERL_NIF_TERM enif_consumer_cleanup(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
+{
+    UNUSED(argc);
+
+    erlkaf_data* data = static_cast<erlkaf_data*>(enif_priv_data(env));
+    enif_consumer* consumer;
+
+    if(!enif_get_resource(env, argv[0], data->res_consumer, (void**) &consumer))
+        return make_badarg(env);
+
+    consumer->stop_feedback = true;
+    consumer->running = false;
+    return ATOMS.atomOk;
 }
 

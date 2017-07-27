@@ -17,7 +17,8 @@
     consumer_partition_revoke_completed/1,
     consumer_queue_poll/1,
     consumer_queue_cleanup/1,
-    consumer_offset_store/4
+    consumer_offset_store/4,
+    consumer_cleanup/1
 ]).
 
 %% nif functions
@@ -71,4 +72,7 @@ consumer_queue_cleanup(_Queue) ->
     ?NOT_LOADED.
 
 consumer_offset_store(_ClientRef, _TopicName, _Partition, _Offset) ->
+    ?NOT_LOADED.
+
+consumer_cleanup(_ClientRef) ->
     ?NOT_LOADED.
