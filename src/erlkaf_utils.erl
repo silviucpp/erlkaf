@@ -1,6 +1,7 @@
 -module(erlkaf_utils).
 
 -export([
+    get_priv_path/1,
     get_env/1,
     lookup/2,
     lookup/3,
@@ -9,6 +10,19 @@
     safe_call/3,
     call_stats_callback/3
 ]).
+
+get_priv_path(File) ->
+    case code:priv_dir(erlkaf) of
+        {error, bad_name} ->
+            case filelib:is_dir(filename:join(["..", priv])) of
+                true ->
+                    filename:join(["..", priv, File]);
+                false ->
+                    filename:join([priv, File])
+            end;
+        Dir ->
+            filename:join(Dir, File)
+    end.
 
 get_env(Key) ->
     application:get_env(erlkaf, Key).

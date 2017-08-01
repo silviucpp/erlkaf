@@ -138,6 +138,15 @@ received delivery report: {#Ref<0.0.8.243>,ok, {erlkaf_msg,<<"benchmark">>,4,617
 In case you are not interested in the delivery reports don't specify any callback, or in case you want to receive the 
 delivery reports only in case of errors you have to specify a callback and set `delivery_report_only_error` on `true`.
 
+##### Message queues
+
+The produced messages are queued in memory based on (`queue_buffering_max_messages` and `queue_buffering_max_kbytes`), 
+until they are delivered and acknowledged by the kafka broker, once the memory queue it's full there are three options defined by (`queue_buffering_overflow_strategy`) :
+
+- `local_disk_queue` (default) - records are persisted on local disk and once there is enough space are sent to memory queue
+- `block_calling_process` - calling process it's blocked until there is enough room into the memory queue 
+- `drop_records` - records are dropped in case the memory queue is full
+ 
 ### Consumer API:
 
 The following example creates a consumer group that will consume messages from `benchmark` topic. For each topic and partition

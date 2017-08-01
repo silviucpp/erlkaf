@@ -110,19 +110,40 @@ produce(ClientId, TopicName, Key, Value) ->
 
 produce(ClientId, TopicName, Partition, Key, Value) ->
     case erlkaf_cache_client:get(ClientId) of
-        {ok, ClientRef, _ClientPid} ->
+        {ok, ClientRef, ClientPid} ->
             case erlkaf_nif:produce(ClientRef, TopicName, Partition, Key, Value) of
                 ok ->
                     ok;
                 {error, ?RD_KAFKA_RESP_ERR_QUEUE_FULL} ->
-                    %todo: investigate something smarter like storing the messages in DETS and
-                    %send them back when we have space in the memory queue
-                    produce(ClientId, TopicName, Partition, Key, Value);
-                Resp ->
-                    Resp
+                    case erlkaf_producer:queue_event(ClientPid, TopicName, Partition, Key, Value) of
+                        ok ->
+                            ok;
+                        drop_records ->
+                            ?WARNING_MSG("message: ~p dropped", [{TopicName, Partition, Key, Value}]),
+                            ok;
+                        block_calling_process ->
+                            produce_blocking(ClientRef, TopicName, Partition, Key, Value);
+                        Error ->
+                            Error
+                    end;
+                Error ->
+                    Error
             end;
         undefined ->
             {error, ?ERR_UNDEFINED_CLIENT};
+        Error ->
+            Error
+    end.
+
+%internals
+
+produce_blocking(ClientRef, TopicName, Partition, Key, Value) ->
+    case erlkaf_nif:produce(ClientRef, TopicName, Partition, Key, Value) of
+        ok ->
+            ok;
+        {error, ?RD_KAFKA_RESP_ERR_QUEUE_FULL} ->
+            timer:sleep(100),
+            produce_blocking(ClientRef, TopicName, Partition, Key, Value);
         Error ->
             Error
     end.

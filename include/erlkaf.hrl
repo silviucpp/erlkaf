@@ -19,6 +19,7 @@
 -type offset_store_method() :: file | broker.
 -type ip_family() :: any| v4| v6.
 -type security_protocol() :: plaintext | ssl | sasl_plaintext | sasl_ssl.
+-type overflow_strategy() :: local_disk_queue | block_calling_process | drop_records.
 
 -type topic_option() ::
     {request_required_acks, integer()} |
@@ -90,6 +91,7 @@
     {queue_buffering_max_messages, integer()} |
     {queue_buffering_max_kbytes, integer()} |
     {queue_buffering_max_ms, integer()} |
+    {queue_buffering_overflow_strategy, overflow_strategy()} |
     {message_send_max_retries, integer()} |
     {retry_backoff_ms, integer()} |
     {compression_codec, compression_codec()} |

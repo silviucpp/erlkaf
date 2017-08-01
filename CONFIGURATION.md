@@ -2,7 +2,7 @@
 
 C/P legend: C = Consumer, P = Producer, * = both
 
-Property                                 | C/P | Range              |       Default | Description              
+Property                                 | C/P | Range              |       Default | Description
 -----------------------------------------|-----|--------------------|--------------:|--------------------------
 client_id                                |  *  |                    |       rdkafka | Client identifier
 bootstrap_servers                        |  *  |                    |               | Initial list of brokers host:port separated by comma
@@ -63,6 +63,7 @@ check_crcs                               |  C  | true, false     |         false
 queue_buffering_max_messages             |  P  | 1 .. 10000000   |        100000 | Maximum number of messages allowed on the producer queue
 queue_buffering_max_kbytes               |  P  | 1 .. 2097151    |       4000000 | Maximum total message size sum allowed on the producer queue
 queue_buffering_max_ms                   |  P  | 0 .. 900000     |             0 | Maximum time, in milliseconds, for buffering data on the producer queue
+queue_buffering_overflow_strategy        |  P  | local_disk_queue, block_calling_process, drop_records | local_disk_queue| What strategy to pick in case the memory queue is full: write messages on a local disk queue and send them in kafka when the in memory queue have enough space, block calling process until memory queue has enough space or drop the messages
 message_send_max_retries                 |  P  | 0 .. 10000000   |             2 | How many times to retry sending a failing MessageSet. **Note:** retrying may cause reordering
 retry_backoff_ms                         |  P  | 1 .. 300000     |           100 | The backoff time in milliseconds before retrying a message send
 compression_codec                        |  P  | none, gzip, snappy, lz4 |          none | compression codec to use for compressing message sets. This is the default value for all topics, may be overriden by the topic configuration property `compression_codec`
@@ -74,7 +75,7 @@ delivery_report_callback                 |  P  | module or fun/2 |       undefin
 
 C/P legend: C = Consumer, P = Producer, * = both
 
-Property                                 | C/P | Range           |       Default | Description              
+Property                                 | C/P | Range           |       Default | Description
 -----------------------------------------|-----|-----------------|--------------:|--------------------------
 request_required_acks                    |  P  | -1 .. 1000      |             1 | This field indicates how many acknowledgements the leader broker must receive from ISR brokers before responding to the request: *0*=Broker does not send any response/ack to client, *1*=Only the leader broker will need to ack the message, *-1* or *all*=broker will block until message is committed by all in sync replicas (ISRs) or broker's `in.sync.replicas` setting before sending response.
 request_timeout_ms                       |  P  | 1 .. 900000     |          5000 | The ack timeout of the producer request in milliseconds. This value is only enforced by the broker and relies on `request_required_acks` being != 0

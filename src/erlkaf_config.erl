@@ -76,6 +76,17 @@ is_erlkaf_config(delivery_report_callback = K, V) ->
     check_callback(K, V, 2);
 is_erlkaf_config(stats_callback = K, V) ->
     check_callback(K, V, 2);
+is_erlkaf_config(queue_buffering_overflow_strategy = K, V) ->
+    case V of
+        local_disk_queue ->
+            true;
+        block_calling_process ->
+            true;
+        drop_records ->
+            true;
+        _ ->
+            throw({error, {options, {K, V}}})
+    end;
 is_erlkaf_config(_, _) ->
     false.
 
