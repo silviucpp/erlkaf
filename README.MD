@@ -151,7 +151,8 @@ the application will spawn an erlang process that will pull the messages.
 
 Each time the rebalance process takes place the process it's restarted so the `init/4` method will be called again. In case the
 `handle_message/2` it's returning `{ok, State}` then the message is considered processed and the offset is stored to be committed
-based on `auto_commit_interval_ms` setting.
+based on `auto_commit_interval_ms` setting. In case you want to mark an error but also to update the state you can use `{error, Reason, NewState}`,
+basically the event for the same message will be triggered again but with the new state.
 
 ```erlang
 -module(test_consumer).

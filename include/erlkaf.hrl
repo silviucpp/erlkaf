@@ -11,6 +11,7 @@
 
 -type client_id() :: atom().
 -type reason() :: any().
+-type state() :: any().
 -type key() :: undefined | binary().
 -type partition() :: ?DEFULT_PARTITIONER | integer().
 -type partition_assignment_strategy() :: range |roundrobin.

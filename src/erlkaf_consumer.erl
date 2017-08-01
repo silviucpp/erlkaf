@@ -118,6 +118,9 @@ process_events([H|T] = Msgs, ClientRef, CbModule, CbState) ->
                 {ok, NewCbState} ->
                     ok = commit_offset(ClientRef, H),
                     process_events(T, ClientRef, CbModule, NewCbState);
+                {error, Reason, NewCbState} ->
+                    ?ERROR_MSG("~p:handle_message for: ~p error: ~p", [CbModule, H, Reason]),
+                    process_events(Msgs, ClientRef, CbModule, NewCbState);
                 Error ->
                     ?ERROR_MSG("~p:handle_message for: ~p error: ~p", [CbModule, H, Error]),
                     process_events(Msgs, ClientRef, CbModule, CbState)
