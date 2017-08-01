@@ -4,9 +4,6 @@
 
 ### Implementation notes
 
-This project is under development and the interface might change. Also it's not considered stable in this stage so 
-please don't use this in production yet.
-
 The library is implemented in top of `librdkafka` which is a C library implementation of the Apache Kafka protocol 
 designed with message delivery reliability and high performance in mind, current figures exceed 1 million msgs/second 
 for the producer and 3 million msgs/second for the consumer. 
