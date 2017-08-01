@@ -76,10 +76,10 @@ Example of a configuration file (for `sys.config`):
 
 ### Producer API
 
-The following example will create a producer client with id `client1` which sends also delivery reports to the same module.
+The following example will create a producer client with id `client_producer` which sends also delivery reports to the same module.
 
-In order to receive the delivery reports you need to implement the `erlkaf_producer` protocol or to setup a function with
-arity 2 into `delivery_report_callback` (`{delivery_report_callback, fun(MsgRef, DeliveryStatus, Message) -> .. end}`).
+In order to receive the delivery reports you need to implement the `erlkaf_producer_callbacks` protocol or to setup a function with
+arity 2 into `delivery_report_callback` (`{delivery_report_callback, fun(DeliveryStatus, Message) -> .. end}`).
 
 The function specified into delivery report callback is called async from another process (each producer has it's own process
 from where it's dispatching the delivery reports)
@@ -129,7 +129,7 @@ test_producer:produce(<<"key1">>, <<"val1">>).
 And you will get into the console the delivery reports:
  
 ```erlang   
-received delivery report: {#Ref<0.0.8.243>,ok, {erlkaf_msg,<<"benchmark">>,4,6172,<<"key1">>,<<"val1">>}} 
+received delivery report: {ok, {erlkaf_msg,<<"benchmark">>,4,6172,<<"key1">>,<<"val1">>}} 
 ```    
 
 In case you are not interested in the delivery reports don't specify any callback, or in case you want to receive the 
