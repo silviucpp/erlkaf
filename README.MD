@@ -79,7 +79,7 @@ Example of a configuration file (for `sys.config`):
 The following example will create a producer client with id `client_producer` which sends also delivery reports to the same module.
 
 In order to receive the delivery reports you need to implement the `erlkaf_producer_callbacks` protocol or to setup a function with
-arity 2 into `delivery_report_callback` (`{delivery_report_callback, fun(DeliveryStatus, Message) -> .. end}`).
+arity 2 into `delivery_report_callback` config (for example: `{delivery_report_callback, fun(DeliveryStatus, Message) -> .. end}`).
 
 The function specified into delivery report callback is called async from another process (each producer has it's own process
 from where it's dispatching the delivery reports)
