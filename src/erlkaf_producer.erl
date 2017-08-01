@@ -132,22 +132,30 @@ schedule_consume_queue(_, _) ->
 schedule_consume_queue(Timeout) ->
     erlang:send_after(Timeout, self(), consume_queue).
 
+%todo:
+% 1. once esq will have support for peek we need to integrate here in order to not queue/enqueue
+%    same message as an alternative
+% 2. we need support in case we shutdown the producer to get back the pending messages and write them in the local queue
+%    this is not supported now by librdkafka
+
 consume_queue(_ClientRef, Q, 0) ->
-    %?INFO_MSG("push event limit hit", []),
     {ok, Q};
 consume_queue(ClientRef, Q, N) ->
     case erlkaf_pcache:deq(Q) of
         {[], Q2} ->
-            %?INFO_MSG("push event completed", []),
+            case N =/= ?MAX_QUEUE_PROCESS_MSG of
+                true ->
+                    ?INFO_MSG("pushed ~p events from local queue cache", [?MAX_QUEUE_PROCESS_MSG - N]);
+                _ ->
+                    ok
+            end,
             {completed, Q2};
         {[{_, Msg}], Q2} ->
             {TopicName, Partition, Key, Value} = Msg,
             case erlkaf_nif:produce(ClientRef, TopicName, Partition, Key, Value) of
                 ok ->
-                    %?INFO_MSG("push event:~p", [Msg]),
                     consume_queue(ClientRef, Q2, N-1);
                 {error, ?RD_KAFKA_RESP_ERR_QUEUE_FULL} ->
-                    %?INFO_MSG("queue full enqueue back:~p", [Msg]),
                     {ok, erlkaf_pcache:enq(Q2, TopicName, Partition, Key, Value)};
                 Error ->
                     ?ERROR_MSG("message ~p skipped because of error: ~p", [Msg, Error]),

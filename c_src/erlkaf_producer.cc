@@ -31,7 +31,7 @@ static void* producer_poll_thread(void* arg)
     while (producer->running)
         rd_kafka_poll(producer->kf, 100);
 
-    rd_kafka_flush(producer->kf, -1);
+    rd_kafka_flush(producer->kf, 30000);
 
     if(producer->stop_feedback)
     {
