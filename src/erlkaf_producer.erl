@@ -137,6 +137,7 @@ schedule_consume_queue(Timeout) ->
 %    same message as an alternative
 % 2. we need support in case we shutdown the producer to get back the pending messages and write them in the local queue
 %    this is not supported now by librdkafka
+% 3. add support for batch produce and use it when cleanup the local queue
 
 consume_queue(_ClientRef, Q, 0) ->
     {ok, Q};
