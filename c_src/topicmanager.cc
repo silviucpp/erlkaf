@@ -24,18 +24,6 @@ rd_kafka_topic_t* TopicManager::AddTopic(const std::string& name, rd_kafka_topic
     return topic;
 }
 
-bool TopicManager::ReleaseTopic(const std::string& name)
-{
-    auto it = topics_.find(name);
-
-    if(it == topics_.end())
-        return false;
-
-    rd_kafka_topic_destroy(it->second);
-    topics_.erase(it);
-    return true;
-}
-
 void TopicManager::Cleanup()
 {
     for(auto it = topics_.begin(); it != topics_.end(); ++it)
