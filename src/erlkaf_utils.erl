@@ -3,6 +3,7 @@
 -export([
     get_priv_path/1,
     get_env/1,
+    get_env/2,
     lookup/2,
     lookup/3,
     to_binary/1,
@@ -25,7 +26,15 @@ get_priv_path(File) ->
     end.
 
 get_env(Key) ->
-    application:get_env(erlkaf, Key).
+    get_env(Key, undefined).
+
+get_env(Key, Default) ->
+    case application:get_env(erlkaf, Key) of
+        undefined ->
+            Default;
+        {ok, Val} ->
+            Val
+    end.
 
 lookup(Key, List) ->
     lookup(Key, List, undefined).

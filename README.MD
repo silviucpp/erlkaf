@@ -40,6 +40,11 @@ Example of a configuration file (for `sys.config`):
 
 ```erlang
 {erlkaf, [
+
+    {global_client_options, [
+        {bootstrap_servers, "broker1.com:9092,broker2.com:9092"},
+    ]},
+
     {clients, [
         {client_producer_id, [
 
@@ -50,7 +55,7 @@ Example of a configuration file (for `sys.config`):
             ]},
 
             {client_options, [
-                {bootstrap_servers, "broker1.com:9092,broker2.com:9092"}
+                {queue_buffering_max_messages, 10000}
             ]}
         ]},
 
@@ -67,12 +72,15 @@ Example of a configuration file (for `sys.config`):
             ]},
 
             {client_options, [
-                {bootstrap_servers, "broker1.com:9092,broker2.com:9092"}
+                {offset_store_method, broker}
             ]}
         ]}
     ]}
 ]}
 ```
+
+`global_client_options` will apply to all clients defined. In case the global property it's defined as well in the client
+options it's value will be overwritten. 
 
 ### Producer API
 
