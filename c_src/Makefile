@@ -21,6 +21,10 @@ ifeq ($(UNAME_SYS), darwin)
 				-Wl,-U,_enif_thread_join \
 				-Wl,-U,_enif_thread_opts_create \
 				-Wl,-U,_enif_thread_opts_destroy \
+				-Wl,-U,_enif_mutex_create \
+				-Wl,-U,_enif_mutex_destroy \
+				-Wl,-U,_enif_mutex_lock \
+				-Wl,-U,_enif_mutex_unlock \
 				-Wl,-U,_enif_priv_data \
 				-Wl,-U,_enif_self \
 				-Wl,-U,_enif_consume_timeslice \

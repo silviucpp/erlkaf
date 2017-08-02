@@ -82,6 +82,9 @@ Example of a configuration file (for `sys.config`):
 `global_client_options` will apply to all clients defined. In case the global property it's defined as well in the client
 options it's value will be overwritten. 
 
+For producers in case you don't need to customize the topic properties you can omit the `topics` property as time they will
+be created on the first produce operation with default settings. 
+
 ### Producer API
 
 The following example will create a producer client with id `client_producer` which sends also delivery reports to the same module.
@@ -92,8 +95,8 @@ arity 2 into `delivery_report_callback` config (for example: `{delivery_report_c
 The function specified into delivery report callback is called async from another process (each producer has it's own process
 from where it's dispatching the delivery reports)
 
-Also in order to send messages to a topic you need to define a topic object attached to the client. To do this you can use the 
-`erlkaf:create_topic` method.
+In case you want to define any properties to the topic where you are going to produce messages, you need to create the topic object attached to the client. To do this you can use the 
+`erlkaf:create_topic` method. This needs to be done before any produce operation which will lead in create the topic with default settings.
 
 ```erlang
 -module(test_producer).

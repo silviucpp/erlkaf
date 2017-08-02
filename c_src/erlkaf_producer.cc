@@ -117,9 +117,6 @@ ERL_NIF_TERM enif_producer_topic_new(ErlNifEnv* env, int argc, const ERL_NIF_TER
     if(!get_string(env, argv[1], &topic_name))
         return make_badarg(env);
 
-    if(producer->topics->GetTopic(topic_name))
-        return make_error(env, "topic already exist");
-
     scoped_ptr(config, rd_kafka_topic_conf_t, rd_kafka_topic_conf_new(), rd_kafka_topic_conf_destroy);
 
     ERL_NIF_TERM parse_result = parse_topic_config(env, argv[2], config.get());
@@ -127,8 +124,10 @@ ERL_NIF_TERM enif_producer_topic_new(ErlNifEnv* env, int argc, const ERL_NIF_TER
     if(parse_result != ATOMS.atomOk)
         return parse_result;
 
-    if(!producer->topics->AddTopic(topic_name, config.get()))
-        return make_error(env, "failed to create topic");
+    bool already_exist;
+
+    if(!producer->topics->AddTopic(topic_name, config.get(), &already_exist))
+        return make_error(env, already_exist ? "topic already exist" : "failed to create topic");
 
     config.release();
     return ATOMS.atomOk;
@@ -241,10 +240,10 @@ ERL_NIF_TERM enif_produce(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
     if(!get_string(env, argv[1], &topic_name))
         return make_badarg(env);
 
-    rd_kafka_topic_t* topic = producer->topics->GetTopic(topic_name);
+    rd_kafka_topic_t* topic = producer->topics->GetOrCreateTopic(topic_name);
 
     if(topic == NULL)
-        return make_error(env, "topic not found");
+        return make_error(env, "failed to create topic object");
 
     if(!enif_get_int(env, argv[2], &partition))
         return make_badarg(env);

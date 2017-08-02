@@ -3,6 +3,7 @@
 
 #include "rdkafka.h"
 #include "macros.h"
+#include "critical_section.h"
 
 #include <map>
 #include <string>
@@ -14,8 +15,8 @@ public:
     explicit TopicManager(rd_kafka_t *rk);
     ~TopicManager();
 
-    rd_kafka_topic_t* AddTopic(const std::string& name, rd_kafka_topic_conf_t* conf);
-    rd_kafka_topic_t* GetTopic(const std::string& name);
+    rd_kafka_topic_t* AddTopic(const std::string& name, rd_kafka_topic_conf_t* conf, bool* already_exist);
+    rd_kafka_topic_t* GetOrCreateTopic(const std::string& name);
 
 private:
 
@@ -23,6 +24,7 @@ private:
 
     void Cleanup();
 
+    CriticalSection crt_;
     std::map<std::string, rd_kafka_topic_t*> topics_;
     rd_kafka_t* rk_;
 };
