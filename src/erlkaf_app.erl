@@ -24,13 +24,9 @@ start_clients() ->
     end.
 
 start_client({ClientId, C}) ->
-    GlobalClientOpts = erlkaf_utils:get_env(global_client_options, []),
-
     Type = erlkaf_utils:lookup(type, C),
-    LocalClientOpts = erlkaf_utils:lookup(client_options, C, []),
+    ClientOpts = erlkaf_utils:lookup(client_options, C, []),
     Topics = erlkaf_utils:lookup(topics, C, []),
-
-    ClientOpts = append_props(LocalClientOpts, GlobalClientOpts),
 
     case Type of
         producer ->
@@ -58,13 +54,3 @@ create_topics(ClientId, [H|T]) ->
     create_topics(ClientId, T);
 create_topics(_ClientId, []) ->
     ok.
-
-append_props(L1, [{K, _} = H|T]) ->
-    case erlkaf_utils:lookup(K, L1) of
-        undefined ->
-            append_props([H|L1], T);
-        _ ->
-            append_props(L1, T)
-    end;
-append_props(L1, []) ->
-    L1.

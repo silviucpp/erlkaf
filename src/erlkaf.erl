@@ -46,7 +46,10 @@ stop() ->
 -spec create_producer(client_id(), [client_option()]) ->
     ok | {error, reason()}.
 
-create_producer(ClientId, Config) ->
+create_producer(ClientId, ClientConfig) ->
+    GlobalClientOpts = erlkaf_utils:get_env(global_client_options, []),
+    Config = erlkaf_utils:append_props(ClientConfig, GlobalClientOpts),
+
     case erlkaf_config:convert_kafka_config(Config) of
         {ok, ErlkafConfig, LibRdkafkaConfig} ->
             erlkaf_manager:start_producer(ClientId, ErlkafConfig, LibRdkafkaConfig);
@@ -58,7 +61,9 @@ create_producer(ClientId, Config) ->
     ok | {error, reason()}.
 
 create_consumer_group(ClientId, GroupId, Topics, ClientConfig, TopicConfig, CbModule, CbArgs) ->
-    erlkaf_manager:start_consumer_group(ClientId, GroupId, Topics, ClientConfig, TopicConfig, CbModule, CbArgs).
+    GlobalClientOpts = erlkaf_utils:get_env(global_client_options, []),
+    Config = erlkaf_utils:append_props(ClientConfig, GlobalClientOpts),
+    erlkaf_manager:start_consumer_group(ClientId, GroupId, Topics, Config, TopicConfig, CbModule, CbArgs).
 
 -spec stop_client(client_id()) ->
     ok | {error, reason()}.

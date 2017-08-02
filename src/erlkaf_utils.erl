@@ -6,6 +6,7 @@
     get_env/2,
     lookup/2,
     lookup/3,
+    append_props/2,
     to_binary/1,
     safe_call/2,
     safe_call/3,
@@ -46,6 +47,16 @@ lookup(Key, List, Default) ->
         false ->
             Default
     end.
+
+append_props(L1, [{K, _} = H|T]) ->
+    case lookup(K, L1) of
+        undefined ->
+            append_props([H|L1], T);
+        _ ->
+            append_props(L1, T)
+    end;
+append_props(L1, []) ->
+    L1.
 
 to_binary(V) when is_binary(V) ->
     V;
