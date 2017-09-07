@@ -3,7 +3,7 @@
 -include("erlkaf_private.hrl").
 -include("erlkaf.hrl").
 
--define(MAX_QUEUE_PROCESS_MSG, 1000).
+-define(MAX_QUEUE_PROCESS_MSG, 5000).
 
 -behaviour(gen_server).
 
@@ -33,7 +33,7 @@ init([ClientId, DrCallback, ErlkafConfig, ProducerRef]) ->
     StatsCallback =  erlkaf_utils:lookup(stats_callback, ErlkafConfig),
     ok = erlkaf_nif:producer_set_owner(ProducerRef, Pid),
     ok = erlkaf_cache_client:set(ClientId, ProducerRef, Pid),
-    Queue = erlkaf_pcache:new(ClientId),
+    {ok, Queue} = erlkaf_local_queue:new(ClientId),
     process_flag(trap_exit, true),
 
     case OverflowStrategy of
@@ -51,7 +51,8 @@ handle_call({queue_event, TopicName, Partition, Key, Value}, _From, State) ->
     case OverflowMethod of
         local_disk_queue ->
             schedule_consume_queue(QueueScheduled, 1000),
-            {reply, ok, State#state{pqueue = erlkaf_pcache:enq(Queue, TopicName, Partition, Key, Value), pqueue_sch = true}};
+            ok = erlkaf_local_queue:enq(Queue, TopicName, Partition, Key, Value),
+            {reply, ok, State#state{pqueue_sch = true}};
         _ ->
             {reply, OverflowMethod, State}
     end;
@@ -67,11 +68,11 @@ handle_cast(_Request, State) ->
 
 handle_info(consume_queue, #state{ref = ClientRef, pqueue = Queue} = State) ->
     case consume_queue(ClientRef, Queue, ?MAX_QUEUE_PROCESS_MSG) of
-        {completed, Queue2} ->
-            {noreply, State#state{pqueue = Queue2, pqueue_sch = false}};
-        {ok, Queue2} ->
+        completed ->
+            {noreply, State#state{pqueue_sch = false}};
+        ok ->
             schedule_consume_queue(1000),
-            {noreply, State#state{pqueue = Queue2, pqueue_sch = true}}
+            {noreply, State#state{pqueue_sch = true}}
     end;
 
 handle_info({delivery_report, DeliveryStatus, Message}, #state{dr_cb = Callback} = State) ->
@@ -99,7 +100,7 @@ handle_info(Info, State) ->
     {noreply, State}.
 
 terminate(Reason, #state{client_id = ClientId, ref = ClientRef, pqueue = Queue}) ->
-    erlkaf_pcache:free(Queue),
+    erlkaf_local_queue:free(Queue),
     case Reason of
         shutdown ->
             ok = erlkaf_nif:producer_cleanup(ClientRef),
@@ -133,32 +134,39 @@ schedule_consume_queue(Timeout) ->
     erlang:send_after(Timeout, self(), consume_queue).
 
 %todo:
-% 1. once esq will have support for peek we need to integrate here in order to not queue/enqueue
-%    same message as an alternative
-% 2. we need support in case we shutdown the producer to get back the pending messages and write them in the local queue
-%    this is not supported now by librdkafka
+% * we need support in case we shutdown the producer to get back the pending messages from librdkafka and
+%   write them in the local queue. this is not supported now by librdkafka
+%   more details: https://github.com/edenhill/librdkafka/issues/990
 
-consume_queue(_ClientRef, Q, 0) ->
-    {ok, Q};
+consume_queue(_ClientRef, _Q, 0) ->
+    log_completed(0),
+    ok;
 consume_queue(ClientRef, Q, N) ->
-    case erlkaf_pcache:deq(Q) of
-        {[], Q2} ->
-            case N =/= ?MAX_QUEUE_PROCESS_MSG of
-                true ->
-                    ?INFO_MSG("pushed ~p events from local queue cache", [?MAX_QUEUE_PROCESS_MSG - N]);
-                _ ->
-                    ok
-            end,
-            {completed, Q2};
-        {[{_, Msg}], Q2} ->
+
+    case erlkaf_local_queue:head(Q) of
+        undefined ->
+            log_completed(N),
+            completed;
+        #{payload := Msg} ->
             {TopicName, Partition, Key, Value} = Msg,
             case erlkaf_nif:produce(ClientRef, TopicName, Partition, Key, Value) of
                 ok ->
-                    consume_queue(ClientRef, Q2, N-1);
+                    [#{payload := Msg}] = erlkaf_local_queue:deq(Q),
+                    consume_queue(ClientRef, Q, N-1);
                 {error, ?RD_KAFKA_RESP_ERR_QUEUE_FULL} ->
-                    {ok, erlkaf_pcache:enq(Q2, TopicName, Partition, Key, Value)};
+                    log_completed(N),
+                    ok;
                 Error ->
                     ?ERROR_MSG("message ~p skipped because of error: ~p", [Msg, Error]),
-                    consume_queue(ClientRef, Q2, N-1)
+                    [#{payload := Msg}] = erlkaf_local_queue:deq(Q),
+                    consume_queue(ClientRef, Q, N-1)
             end
+    end.
+
+log_completed(N) ->
+    case N =/= ?MAX_QUEUE_PROCESS_MSG of
+        true ->
+            ?INFO_MSG("pushed ~p events from local queue cache", [?MAX_QUEUE_PROCESS_MSG - N]);
+        _ ->
+            ok
     end.

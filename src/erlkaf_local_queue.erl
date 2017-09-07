@@ -1,4 +1,4 @@
--module(erlkaf_pcache).
+-module(erlkaf_local_queue).
 
 -include("erlkaf_private.hrl").
 
@@ -6,13 +6,14 @@
     new/1,
     free/1,
     enq/5,
-    deq/1
+    deq/1,
+    head/1
 ]).
 
 new(ClientId) ->
     Path = erlkaf_utils:get_priv_path(ClientId),
     ?INFO_MSG("persistent queue path: ~p", [Path]),
-    esq:new([{fspool, Path}, {tts, 0}, {capacity, 0}]).
+    esq:new(Path).
 
 free(undefined) ->
     ok;
@@ -24,3 +25,6 @@ enq(Queue, TopicName, Partition, Key, Value) ->
 
 deq(Queue) ->
     esq:deq(Queue).
+
+head(Queue) ->
+    esq:head(Queue).
