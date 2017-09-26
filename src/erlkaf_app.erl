@@ -17,7 +17,7 @@ stop(_State) ->
 
 start_clients() ->
     case erlkaf_utils:get_env(clients) of
-        undefied ->
+        undefined ->
             ok;
         Value ->
             ok = lists:foreach(fun(Client) -> start_client(Client) end, Value)
