@@ -90,6 +90,8 @@ is_erlkaf_config(queue_buffering_overflow_strategy = K, V) ->
 is_erlkaf_config(_, _) ->
     false.
 
+to_librdkafka_config(debug, V) ->
+    {<<"debug">>, erlkaf_utils:to_binary(V)};
 to_librdkafka_config(client_id, V) ->
     {<<"client.id">>, erlkaf_utils:to_binary(V)};
 to_librdkafka_config(bootstrap_servers, V) ->
