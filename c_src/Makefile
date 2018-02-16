@@ -5,7 +5,8 @@ include nif.mk
 
 ifeq ($(UNAME_SYS), darwin)
     CXXFLAGS += -I/usr/local/opt/openssl/include
-    LDFLAGS  += -L/usr/local/opt/openssl/lib
+    LDFLAGS  += -L/usr/local/opt/openssl/lib \
+                -L/usr/local/lib
 
 	LDFLAGS +=  -Wl,-U,_enif_alloc \
 				-Wl,-U,_enif_free \

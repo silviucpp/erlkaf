@@ -44,6 +44,17 @@ function BuildLib()
 	pushd $DEPS_LOCATION
 	pushd $DESTINATION
 
+    OS=$(uname -s)
+
+	case $OS in
+        Darwin)
+            brew install openssl
+            OPENSSL_ROOT_DIR=$(brew --prefix openssl)
+            export CPPFLAGS=-I$OPENSSL_ROOT_DIR/include/
+            export LDFLAGS=-L$OPENSSL_ROOT_DIR/lib
+            ;;
+    esac
+
     fail_check ./configure
     fail_check make
 
