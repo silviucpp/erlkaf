@@ -23,7 +23,7 @@ create_producer() ->
     erlkaf:start(),
 
     ProducerConfig = [
-        {bootstrap_servers, "172.17.33.123:9092"},
+        {bootstrap_servers, "172.17.3.163:9092"},
         {delivery_report_only_error, true},
         {delivery_report_callback, ?MODULE}
     ],

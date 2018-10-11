@@ -20,7 +20,7 @@ create_consumer() ->
     GroupId = <<"erlkaf_consumer">>,
 
     ClientConfig = [
-        {bootstrap_servers, "172.17.33.123:9092"}
+        {bootstrap_servers, "172.17.3.163:9092"}
     ],
 
     TopicConf = [

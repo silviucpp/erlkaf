@@ -55,8 +55,14 @@ to_librdkafka_topic_config(request_timeout_ms, V) ->
     {<<"request.timeout.ms">>, erlkaf_utils:to_binary(V)};
 to_librdkafka_topic_config(message_timeout_ms, V) ->
     {<<"message.timeout.ms">>, erlkaf_utils:to_binary(V)};
+to_librdkafka_topic_config(queuing_strategy, V) ->
+    {<<"queuing.strategy">>, erlkaf_utils:to_binary(V)};
+to_librdkafka_topic_config(partitioner, V) ->
+    {<<"partitioner">>, erlkaf_utils:to_binary(V)};
 to_librdkafka_topic_config(compression_codec, V) ->
     {<<"compression.codec">>, erlkaf_utils:to_binary(V)};
+to_librdkafka_topic_config(compression_level, V) ->
+    {<<"compression.level">>, erlkaf_utils:to_binary(V)};
 to_librdkafka_topic_config(auto_commit_interval_ms, V) ->
     {<<"auto.commit.interval.ms">>, erlkaf_utils:to_binary(V)};
 to_librdkafka_topic_config(auto_offset_reset, V) ->
@@ -150,6 +156,10 @@ to_librdkafka_config(security_protocol, V) ->
     {<<"security.protocol">>, erlkaf_utils:to_binary(V)};
 to_librdkafka_config(ssl_cipher_suites, V) ->
     {<<"ssl.cipher.suites">>, erlkaf_utils:to_binary(V)};
+to_librdkafka_config(ssl_curves_list, V) ->
+    {<<"ssl.curves.list">>, erlkaf_utils:to_binary(V)};
+to_librdkafka_config(ssl_sigalgs_list, V) ->
+    {<<"ssl.sigalgs.list">>, erlkaf_utils:to_binary(V)};
 to_librdkafka_config(ssl_key_location, V) ->
     {<<"ssl.key.location">>, erlkaf_utils:to_binary(V)};
 to_librdkafka_config(ssl_key_password, V) ->
@@ -160,6 +170,10 @@ to_librdkafka_config(ssl_ca_location, V) ->
     {<<"ssl.ca.location">>, erlkaf_utils:to_binary(V)};
 to_librdkafka_config(ssl_crl_location, V) ->
     {<<"ssl.crl.location">>, erlkaf_utils:to_binary(V)};
+to_librdkafka_config(ssl_keystore_location, V) ->
+    {<<"ssl.keystore.location">>, erlkaf_utils:to_binary(V)};
+to_librdkafka_config(ssl_keystore_password, V) ->
+    {<<"ssl.keystore.password">>, erlkaf_utils:to_binary(V)};
 to_librdkafka_config(sasl_mechanisms, V) ->
     {<<"sasl.mechanisms">>, erlkaf_utils:to_binary(V)};
 to_librdkafka_config(sasl_kerberos_service_name, V) ->
@@ -194,6 +208,8 @@ to_librdkafka_config(fetch_wait_max_ms, V) ->
     {<<"fetch.wait.max.ms">>, erlkaf_utils:to_binary(V)};
 to_librdkafka_config(fetch_message_max_bytes, V) ->
     {<<"fetch.message.max.bytes">>, erlkaf_utils:to_binary(V)};
+to_librdkafka_config(fetch_max_bytes, V) ->
+    {<<"fetch.max.bytes">>, erlkaf_utils:to_binary(V)};
 to_librdkafka_config(fetch_min_bytes, V) ->
     {<<"fetch.min.bytes">>, erlkaf_utils:to_binary(V)};
 to_librdkafka_config(fetch_error_backoff_ms, V) ->

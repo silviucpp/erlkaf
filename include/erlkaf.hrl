@@ -21,14 +21,19 @@
 -type ip_family() :: any| v4| v6.
 -type security_protocol() :: plaintext | ssl | sasl_plaintext | sasl_ssl.
 -type overflow_strategy() :: local_disk_queue | block_calling_process | drop_records.
+-type queuing_strategy() :: fifo | lifo.
+-type partitioner() :: random|consistent|consistent_random|murmur2|murmur2_random.
 
 -type topic_option() ::
     {request_required_acks, integer()} |
     {request_timeout_ms, integer()} |
     {message_timeout_ms, integer()} |
+    {queuing_strategy, queuing_strategy()} |
     {compression_codec, compression_codec()} |
+    {compression_level, integer()} |
     {auto_commit_interval_ms, integer()} |
     {auto_offset_reset, offset_reset()} |
+    {partitioner, partitioner()} |
     {offset_store_path, binary()} |
     {offset_store_sync_interval_ms, integer()} |
     {offset_store_method, offset_store_method()}.
@@ -63,11 +68,15 @@
     {broker_version_fallback, boolean()} |
     {security_protocol, security_protocol()} |
     {ssl_cipher_suites, binary()} |
+    {ssl_curves_list, binary()} |
+    {ssl_sigalgs_list, binary()} |
     {ssl_key_location, binary()} |
     {ssl_key_password, binary()} |
     {ssl_certificate_location, binary()} |
     {ssl_ca_location, binary()} |
     {ssl_crl_location, binary()} |
+    {ssl_keystore_location, binary()} |
+    {ssl_keystore_password, binary()} |
     {sasl_mechanisms, binary()} |
     {sasl_kerberos_service_name, binary()} |
     {sasl_kerberos_principal, binary()} |
@@ -85,6 +94,7 @@
     {queued_max_messages_kbytes, integer()} |
     {fetch_wait_max_ms, integer()} |
     {fetch_message_max_bytes, integer()} |
+    {fetch_max_bytes, integer()} |
     {fetch_min_bytes, integer()} |
     {fetch_error_backoff_ms, integer()} |
     {offset_store_method, offset_store_method()} |
