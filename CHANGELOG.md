@@ -1,5 +1,9 @@
 ### Changelog:
 
+##### v1.1.1
+
+- Add missing app dependency
+
 ##### v1.1.0
 
 - Based on librdkafka v0.11.5

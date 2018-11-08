@@ -3,9 +3,9 @@
     {maintainers, ["Silviu Caragea"]},
     {licenses, ["MIT"]},
     {links,[{"Github","https://github.com/silviucpp/erlkaf"}]},
-    {vsn, "1.1.0"},
+    {vsn, "1.1.1"},
     {registered, []},
-    {applications, [kernel, stdlib, lager, jsone, esq]},
+    {applications, [kernel, stdlib, lager, plists, jsone, esq]},
     {mod, {erlkaf_app, []}},
     {env, []}
 ]}.
