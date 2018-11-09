@@ -8,3 +8,4 @@
 /priv/
 *.iml
 /_build/
+*.DS_Store
