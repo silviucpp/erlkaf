@@ -1,5 +1,10 @@
 ### Changelog:
 
+##### v1.1.2
+
+- Fix crash when stopping erlkaf while using consumers
+- Update esq dependency
+
 ##### v1.1.1
 
 - Add missing app dependency

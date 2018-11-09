@@ -4,14 +4,24 @@
 
 -behaviour(gen_server).
 
--export([init/1, handle_call/3, handle_cast/2, handle_info/2, terminate/2, code_change/3]).
-
 -export([
+
+    % api
+
     start_link/0,
     start_producer/3,
     start_consumer_group/7,
     stop_client/1,
-    create_topic/3
+    create_topic/3,
+
+    % gen_server
+
+    init/1,
+    handle_call/3,
+    handle_cast/2,
+    handle_info/2,
+    terminate/2,
+    code_change/3
 ]).
 
 -define(SERVER, ?MODULE).

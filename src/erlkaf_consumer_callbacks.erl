@@ -11,4 +11,6 @@
 -callback stats_callback(client_id(), list()) ->
     ok.
 
--optional_callbacks([stats_callback/2]).
+-optional_callbacks([
+    stats_callback/2
+]).
