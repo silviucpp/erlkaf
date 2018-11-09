@@ -57,9 +57,6 @@ void enif_consumer_free(ErlNifEnv* env, void* obj)
         enif_thread_join(consumer->thread_id, &result);
         enif_thread_opts_destroy(consumer->thread_opts);
     }
-
-    if(consumer->res_queue)
-        enif_release_resource(consumer->res_queue);
 }
 
 enif_queue* enif_new_queue(enif_consumer* consumer, rd_kafka_t* rk, const std::string& topic, int32_t partition)
