@@ -1,13 +1,9 @@
 {"1.1.0",
-[{<<"datum">>,{pkg,<<"datum">>,<<"4.3.6">>},1},
+[{<<"datum">>,{pkg,<<"datum">>,<<"4.5.0">>},1},
  {<<"esq">>,
   {git,"https://github.com/fogfish/esq.git",
-       {ref,"d4c220695f2ca538e0e2b10ef33d93ddf8753ec7"}},
+       {ref,"3416bf929d94a061804325d86d0b90d4e8407640"}},
   0},
- {<<"feta">>,
-  {git,"https://github.com/fogfish/feta",
-       {ref,"c5d251b3f995b96afd5e8ec7da61516842aa658c"}},
-  1},
  {<<"goldrush">>,{pkg,<<"goldrush">>,<<"0.1.9">>},1},
  {<<"jsone">>,
   {git,"https://github.com/sile/jsone.git",
@@ -22,13 +18,11 @@
   {git,"https://github.com/silviucpp/plists.git",
        {ref,"13f6c97bd432bfa493d93b279e7b90d22ff6971a"}},
   0},
- {<<"uid">>,
-  {git,"https://github.com/fogfish/uid",
-       {ref,"698ebcb27b273a2f879d8bd24be5f5ea54c98850"}},
-  1}]}.
+ {<<"uid">>,{pkg,<<"uid">>,<<"1.3.3">>},1}]}.
 [
 {pkg_hash,[
- {<<"datum">>, <<"07AA802EF8C68FC990164BB398890FBE03FF4FA30570C37BF6D836A4FDF27D54">>},
+ {<<"datum">>, <<"0F7F064A509632C70448F9BC7E7295BD5F9CD6E3207863B176416EF14FD19E0C">>},
  {<<"goldrush">>, <<"F06E5D5F1277DA5C413E84D5A2924174182FB108DABB39D5EC548B27424CD106">>},
- {<<"pipe">>, <<"A10DF54F1EC80EAA491EE7BD689C794886E6E668A9F05436514695E9CF5370AE">>}]}
+ {<<"pipe">>, <<"A10DF54F1EC80EAA491EE7BD689C794886E6E668A9F05436514695E9CF5370AE">>},
+ {<<"uid">>, <<"31CA7E3C9D53716A2FF425E18A33E32C141B763D47B174F757D7CAF7E4228A67">>}]}
 ].
