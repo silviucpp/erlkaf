@@ -1,4 +1,5 @@
 # erlkaf
+[![Build Status](https://travis-ci.org/silviucpp/erlkaf.svg?branch=master)](https://travis-ci.org/silviucpp/erlkaf)
 
 *Erlang kafka driver based on [librdkafka][1]*
 

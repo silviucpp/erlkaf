@@ -1,5 +1,9 @@
 ### Changelog:
 
+##### v1.1.3 (not released)
+
+- Add support for Trevis CI
+
 ##### v1.1.2
 
 - Fix crash when stopping erlkaf while using consumers
