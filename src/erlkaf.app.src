@@ -15,8 +15,8 @@
     {mod, {erlkaf_app, []}},
     {env, []},
     {files, [
-        "LICENSE*"
-        "*.MD"
+        "LICENSE*",
+        "*.MD",
         "Makefile",
         "build_deps.sh",
         "rebar.*",
