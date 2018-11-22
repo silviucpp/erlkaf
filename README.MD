@@ -27,7 +27,7 @@ On Ubuntu make sure you have installed :
 sudo apt-get install libsasl2-dev liblz4-dev
 ```
 
-Add `erlkaf` as a rebar dependency to your project:
+Add `erlkaf` as a dependency to your project. The library works with `rebar`, `rebar3` or `hex.pm`
 
 ```
 {deps, [

@@ -1,8 +1,10 @@
 ### Changelog:
 
-##### v1.1.3 (not released)
+##### v1.1.3
 
 - Add support for Trevis CI
+- Remove plists from deps
+- Available via HEX
 
 ##### v1.1.2
 
