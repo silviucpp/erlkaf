@@ -5,7 +5,13 @@
     {links,[{"Github","https://github.com/silviucpp/erlkaf"}]},
     {vsn, "1.1.3"},
     {registered, []},
-    {applications, [kernel, stdlib, lager, plists, jsone, esq]},
+    {applications, [
+        kernel,
+        stdlib,
+        lager,
+        jsone,
+        esq
+    ]},
     {mod, {erlkaf_app, []}},
     {env, []}
 ]}.

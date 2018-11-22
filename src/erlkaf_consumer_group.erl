@@ -107,4 +107,5 @@ get_pids(TopicsMap, Partitions) ->
     lists:map(fun(P) -> maps:get(P, TopicsMap) end, Partitions).
 
 stop_consumers(Pids) ->
-    plists:foreach(fun(Pid) -> erlkaf_consumer:stop(Pid) end, Pids).
+    erlkaf_utils:parralel_exec(fun(Pid) -> erlkaf_consumer:stop(Pid) end, Pids).
+

@@ -10,7 +10,8 @@
     to_binary/1,
     safe_call/2,
     safe_call/3,
-    call_stats_callback/3
+    call_stats_callback/3,
+    parralel_exec/2
 ]).
 
 get_priv_path(File) ->
@@ -87,3 +88,9 @@ call_stats_callback(C, ClientId, Stats) when is_function(C, 2) ->
     C(ClientId, Stats);
 call_stats_callback(C, ClientId, Stats) ->
     C:stats_callback(ClientId, Stats).
+
+parralel_exec(Fun, List) ->
+    Parent = self(),
+    Pids = [spawn_link(fun() -> Fun(E), Parent ! {self(), done} end) || E <- List],
+    [receive {Pid, done} -> ok end || Pid <- Pids],
+    ok.
