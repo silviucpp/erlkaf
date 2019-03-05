@@ -7,7 +7,8 @@
     delivery_report/2,
     stats_callback/2,
     create_producer/0,
-    produce/2
+    produce/2,
+    produce/3
 ]).
 
 -behaviour(erlkaf_producer_callbacks).
@@ -32,3 +33,9 @@ create_producer() ->
 
 produce(Key, Value) ->
     ok = erlkaf:produce(client_producer, ?TOPIC, Key, Value).
+
+produce(0, _Key, _Value) ->
+    ok;
+produce(Count, Key, Value) ->
+    ok = erlkaf:produce(client_producer, ?TOPIC, Key, Value),
+    produce(Count -1, Key, Value).

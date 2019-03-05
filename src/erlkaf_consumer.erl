@@ -4,11 +4,12 @@
 -include("erlkaf_private.hrl").
 
 -define(POLL_IDLE_MS, 1000).
+-define(DEFAULT_BATCH_SIZE, 100).
 
 -behaviour(gen_server).
 
 -export([
-    start_link/7,
+    start_link/8,
     stop/1,
 
     % gen_server
@@ -28,11 +29,14 @@
     queue_ref,
     cb_module,
     cb_state,
-    messages = []
+    poll_batch_size,
+    dispatch_mode,
+    messages = [],
+    last_offset = -1
 }).
 
-start_link(ClientRef, TopicName, Partition, Offset, QueueRef, CbModule, CbArgs) ->
-    gen_server:start_link(?MODULE, [ClientRef, TopicName, Partition, Offset, QueueRef, CbModule, CbArgs], []).
+start_link(ClientRef, TopicName, DispatchMode, Partition, Offset, QueueRef, CbModule, CbArgs) ->
+    gen_server:start_link(?MODULE, [ClientRef, TopicName, DispatchMode, Partition, Offset, QueueRef, CbModule, CbArgs], []).
 
 stop(Pid) ->
     case erlang:is_process_alive(Pid) of
@@ -50,13 +54,25 @@ stop(Pid) ->
             {error, not_alive}
     end.
 
-init([ClientRef, TopicName, Partition, Offset, QueueRef, CbModule, CbArgs]) ->
+init([ClientRef, TopicName, DispatchMode, Partition, Offset, QueueRef, CbModule, CbArgs]) ->
     ?INFO_MSG("start consumer for: ~p partition: ~p offset: ~p", [TopicName, Partition, Offset]),
 
     case catch CbModule:init(TopicName, Partition, Offset, CbArgs) of
         {ok, CbState} ->
             schedule_poll(0),
-            {ok, #state{client_ref = ClientRef, topic_name = TopicName, partition = Partition, queue_ref = QueueRef, cb_module = CbModule, cb_state = CbState}};
+
+            {DpMode, PollBatchSize} = dispatch_mode_parse(DispatchMode),
+
+            {ok, #state{
+                client_ref = ClientRef,
+                topic_name = TopicName,
+                partition = Partition,
+                queue_ref = QueueRef,
+                cb_module = CbModule,
+                cb_state = CbState,
+                poll_batch_size = PollBatchSize,
+                dispatch_mode = DpMode
+            }};
         Error ->
             {stop, Error}
     end.
@@ -69,27 +85,33 @@ handle_cast(Request, State) ->
     ?ERROR_MSG("handle_cast unexpected message: ~p", [Request]),
     {noreply, State}.
 
-handle_info(poll_events, #state{queue_ref = Queue} = State) ->
-    case erlkaf_nif:consumer_queue_poll(Queue) of
-        {ok, Events} ->
+handle_info(poll_events, #state{queue_ref = Queue, poll_batch_size = PollBatchSize} = State) ->
+    case erlkaf_nif:consumer_queue_poll(Queue, PollBatchSize) of
+        {ok, Events, LastOffset} ->
             case Events of
                 [] ->
                     schedule_poll(?POLL_IDLE_MS),
                     {noreply, State};
                 _ ->
                     schedule_message_process(0),
-                    {noreply, State#state{messages = Events}}
+                    {noreply, State#state{messages = Events, last_offset = LastOffset}}
             end;
         Error ->
             ?INFO_MSG("~p poll events error: ~p", [?MODULE, Error]),
             throw({error, Error})
     end;
 
-handle_info(process_messages, #state{messages = Msg, client_ref = ClientRef, cb_module = CbModule, cb_state = CbState} = State) ->
-    case process_events(Msg, ClientRef, CbModule, CbState) of
+handle_info(process_messages, #state{
+    messages = Msgs,
+    dispatch_mode = DispatchMode,
+    client_ref = ClientRef,
+    cb_module = CbModule,
+    cb_state = CbState} = State) ->
+
+    case process_events(DispatchMode, Msgs, batch_offset(DispatchMode, State), ClientRef, CbModule, CbState) of
         {ok, NewCbState} ->
             schedule_poll(0),
-            {noreply, State#state{messages = [], cb_state = NewCbState}};
+            {noreply, State#state{messages = [], last_offset = -1, cb_state = NewCbState}};
         {stop, From, Tag} ->
             handle_stop(From, Tag, State),
             {stop, normal, State};
@@ -114,6 +136,16 @@ code_change(_OldVsn, State, _Extra) ->
 
 %internals
 
+batch_offset(batch, #state{topic_name = T, partition = P, last_offset = O}) ->
+    {T, P, O};
+batch_offset(_, _) ->
+    null.
+
+dispatch_mode_parse(one_by_one) ->
+    {one_by_one, ?DEFAULT_BATCH_SIZE};
+dispatch_mode_parse({batch, MaxBatchSize}) ->
+    {batch, MaxBatchSize}.
+
 schedule_poll(Timeout) ->
     erlang:send_after(Timeout, self(), poll_events).
 
@@ -123,24 +155,53 @@ schedule_message_process(Timeout) ->
 commit_offset(ClientRef, #erlkaf_msg{topic = Topic, partition = Partition, offset = Offset}) ->
     erlkaf_nif:consumer_offset_store(ClientRef, Topic, Partition, Offset).
 
-process_events([H|T] = Msgs, ClientRef, CbModule, CbState) ->
+process_events(one_by_one, Msgs, _LastBatchOffset, ClientRef, CbModule, CbState) ->
+    process_events_one_by_one(Msgs, ClientRef, CbModule, CbState);
+process_events(batch, Msgs, LastBatchOffset, ClientRef, CbModule, CbState) ->
+    process_events_batch(Msgs, LastBatchOffset, ClientRef, CbModule, CbState).
+
+process_events_batch(Msgs, LastBatchOffset, ClientRef, CbModule, CbState) ->
+    case catch CbModule:handle_message(Msgs, CbState) of
+        {ok, NewCbState} ->
+            {Topic, Partition, Offset} = LastBatchOffset,
+            ok = erlkaf_nif:consumer_offset_store(ClientRef, Topic, Partition, Offset),
+            {ok, NewCbState};
+        {error, Reason, NewCbState} ->
+            ?ERROR_MSG("~p:handle_message for batch error: ~p", [CbModule, Reason]),
+            case recv_stop() of
+                false ->
+                    process_events_batch(Msgs, LastBatchOffset, ClientRef, CbModule, NewCbState);
+                StopMsg ->
+                    StopMsg
+            end;
+        Error ->
+            ?ERROR_MSG("~p:handle_message for batch error: ~p", [CbModule, Error]),
+            case recv_stop() of
+                false ->
+                    process_events_batch(Msgs, LastBatchOffset, ClientRef, CbModule, CbState);
+                StopMsg ->
+                    StopMsg
+            end
+    end.
+
+process_events_one_by_one([H|T] = Msgs, ClientRef, CbModule, CbState) ->
     case recv_stop() of
         false ->
             case catch CbModule:handle_message(H, CbState) of
                 {ok, NewCbState} ->
                     ok = commit_offset(ClientRef, H),
-                    process_events(T, ClientRef, CbModule, NewCbState);
+                    process_events_one_by_one(T, ClientRef, CbModule, NewCbState);
                 {error, Reason, NewCbState} ->
                     ?ERROR_MSG("~p:handle_message for: ~p error: ~p", [CbModule, H, Reason]),
-                    process_events(Msgs, ClientRef, CbModule, NewCbState);
+                    process_events_one_by_one(Msgs, ClientRef, CbModule, NewCbState);
                 Error ->
                     ?ERROR_MSG("~p:handle_message for: ~p error: ~p", [CbModule, H, Error]),
-                    process_events(Msgs, ClientRef, CbModule, CbState)
+                    process_events_one_by_one(Msgs, ClientRef, CbModule, CbState)
             end;
         StopMsg ->
             StopMsg
     end;
-process_events([], _ClientRef, _CbModule, CbState) ->
+process_events_one_by_one([], _ClientRef, _CbModule, CbState) ->
     {ok, CbState}.
 
 recv_stop() ->

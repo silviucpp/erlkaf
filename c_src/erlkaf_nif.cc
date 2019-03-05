@@ -88,7 +88,7 @@ static ErlNifFunc nif_funcs[] =
 
     {"consumer_new", 4, enif_consumer_new},
     {"consumer_partition_revoke_completed", 1, enif_consumer_partition_revoke_completed},
-    {"consumer_queue_poll", 1, enif_consumer_queue_poll},
+    {"consumer_queue_poll", 2, enif_consumer_queue_poll},
     {"consumer_queue_cleanup", 1, enif_consumer_queue_cleanup},
     {"consumer_offset_store", 4, enif_consumer_offset_store},
     {"consumer_cleanup", 1, enif_consumer_cleanup}

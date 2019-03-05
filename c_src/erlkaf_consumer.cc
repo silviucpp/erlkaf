@@ -8,7 +8,6 @@
 
 static const char* kThreadOptsId = "librdkafka_consumer_thread_opts";
 static const char* kPollThreadId = "librdkafka_consumer_poll_thread";
-static const uint32_t kMaxConsumeBatchSize = 100;
 
 #include <vector>
 #include <memory>
@@ -344,14 +343,20 @@ ERL_NIF_TERM enif_consumer_queue_poll(ErlNifEnv* env, int argc, const ERL_NIF_TE
     if(!enif_get_resource(env, argv[0], data->res_queue, (void**) &q))
         return make_badarg(env);
 
+    uint32_t max_batch_size;
+
+    if(!enif_get_uint(env, argv[1], &max_batch_size))
+        return make_badarg(env);
+
     std::vector<ERL_NIF_TERM> messages;
-    messages.reserve(kMaxConsumeBatchSize);
+    messages.reserve(max_batch_size);
 
     ERL_NIF_TERM topic = 0;
     ERL_NIF_TERM partition = 0;
     bool first = true;
+    int64_t last_offset = -1;
 
-    while(messages.size() <= kMaxConsumeBatchSize)
+    while(messages.size() < max_batch_size)
     {
         rd_kafka_event_t* event = rd_kafka_queue_poll(q->queue, 0);
 
@@ -379,6 +384,7 @@ ERL_NIF_TERM enif_consumer_queue_poll(ErlNifEnv* env, int argc, const ERL_NIF_TE
             ERL_NIF_TERM value = make_binary(env, reinterpret_cast<const char*>(msg->payload), msg->len);
             ERL_NIF_TERM msg_term = enif_make_tuple6(env, ATOMS.atomMessage, topic, partition, offset, key, value);
 
+            last_offset = msg->offset;
             messages.push_back(msg_term);
         }
 
@@ -386,7 +392,7 @@ ERL_NIF_TERM enif_consumer_queue_poll(ErlNifEnv* env, int argc, const ERL_NIF_TE
     }
 
     ERL_NIF_TERM list = enif_make_list_from_array(env, &messages[0], messages.size());
-    return make_ok_result(env, list);
+    return enif_make_tuple(env, 3, ATOMS.atomOk, list, enif_make_int64(env, last_offset));
 }
 
 ERL_NIF_TERM enif_consumer_offset_store(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])

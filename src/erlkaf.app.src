@@ -3,7 +3,7 @@
     {maintainers, ["Silviu Caragea"]},
     {licenses, ["MIT"]},
     {links,[{"Github","https://github.com/silviucpp/erlkaf"}]},
-    {vsn, "1.1.3"},
+    {vsn, "1.1.4"},
     {registered, []},
     {applications, [
         kernel,

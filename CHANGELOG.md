@@ -1,5 +1,10 @@
 ### Changelog:
 
+##### v1.1.4
+
+- Add support for dispatch_mode topic setting.
+- Based on librdkafka v0.11.6
+
 ##### v1.1.3
 
 - Add support for Trevis CI

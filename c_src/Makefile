@@ -56,6 +56,7 @@ ifeq ($(UNAME_SYS), darwin)
 				-Wl,-U,_enif_make_list_from_array \
 				-Wl,-U,_enif_make_ulong \
 				-Wl,-U,_enif_get_ulong \
+				-Wl,-U,_enif_get_uint \
 				-Wl,-U,_enif_make_list_cell \
 				-Wl,-U,_enif_make_reverse_list
 endif

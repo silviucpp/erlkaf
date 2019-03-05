@@ -16,7 +16,7 @@
 
     consumer_new/4,
     consumer_partition_revoke_completed/1,
-    consumer_queue_poll/1,
+    consumer_queue_poll/2,
     consumer_queue_cleanup/1,
     consumer_offset_store/4,
     consumer_cleanup/1
@@ -56,7 +56,7 @@ consumer_new(_GroupId, _Topics, _ClientConfig, _TopicsConfig) ->
 consumer_partition_revoke_completed(_ClientRef) ->
     ?NOT_LOADED.
 
-consumer_queue_poll(_Queue) ->
+consumer_queue_poll(_Queue, _BatchSize) ->
     ?NOT_LOADED.
 
 consumer_queue_cleanup(_Queue) ->

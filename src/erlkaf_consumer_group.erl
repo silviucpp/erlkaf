@@ -22,6 +22,7 @@
     client_ref,
     cb_module,
     cb_args,
+    dispatch_mode,
     topics_map =#{},
     stats_cb,
     stats = []
@@ -30,14 +31,21 @@
 start_link(ClientId, GroupId, Topics, EkClientConfig, RdkClientConfig, EkTopicConfig, RdkTopicConfig, CbModule, CbArgs) ->
     gen_server:start_link(?MODULE, [ClientId, GroupId, Topics, EkClientConfig, RdkClientConfig, EkTopicConfig, RdkTopicConfig, CbModule, CbArgs], []).
 
-init([ClientId, GroupId, Topics, EkClientConfig, RdkClientConfig, _EkTopicConfig, RdkTopicConfig, CbModule, CbArgs]) ->
+init([ClientId, GroupId, Topics, EkClientConfig, RdkClientConfig, EkTopicConfig, RdkTopicConfig, CbModule, CbArgs]) ->
     process_flag(trap_exit, true),
 
     case erlkaf_nif:consumer_new(GroupId, Topics, RdkClientConfig, RdkTopicConfig) of
         {ok, ClientRef} ->
             ok = erlkaf_cache_client:set(ClientId, undefined, self()),
-            StatsCb =  erlkaf_utils:lookup(stats_callback, EkClientConfig),
-            {ok, #state{client_id = ClientId, client_ref = ClientRef, cb_module = CbModule, cb_args = CbArgs, stats_cb = StatsCb}};
+
+            {ok, #state{
+                client_id = ClientId,
+                client_ref = ClientRef,
+                cb_module = CbModule,
+                cb_args = CbArgs,
+                dispatch_mode = erlkaf_utils:lookup(dispatch_mode, EkTopicConfig, one_by_one),
+                stats_cb = erlkaf_utils:lookup(stats_callback, EkClientConfig)
+            }};
         Error ->
             {stop, Error}
     end.
@@ -62,11 +70,17 @@ handle_info({stats, Stats0}, #state{stats_cb = StatsCb, client_id = ClientId} = 
     end,
     {noreply, State#state{stats = Stats}};
 
-handle_info({assign_partitions, Partitions}, #state{client_ref = Crf, cb_module = CbModule, cb_args = CbState, topics_map = TopicsMap} = State) ->
+handle_info({assign_partitions, Partitions}, #state{
+    client_ref = Crf,
+    cb_module = CbModule,
+    cb_args = CbState,
+    dispatch_mode = DispatchMode,
+    topics_map = TopicsMap} = State) ->
+
     ?INFO_MSG("assign partitions: ~p", [Partitions]),
 
     PartFun = fun({TopicName, Partition, Offset, QueueRef}, Tmap) ->
-        {ok, Pid} = erlkaf_consumer:start_link(Crf, TopicName, Partition, Offset, QueueRef, CbModule, CbState),
+        {ok, Pid} = erlkaf_consumer:start_link(Crf, TopicName, DispatchMode, Partition, Offset, QueueRef, CbModule, CbState),
         maps:put({TopicName, Partition}, Pid, Tmap)
     end,
 

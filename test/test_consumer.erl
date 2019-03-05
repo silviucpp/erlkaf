@@ -38,11 +38,12 @@ init(Topic, Partition, Offset, Args) ->
     ]),
     {ok, #state{}}.
 
-handle_message(#erlkaf_msg{topic = Topic, partition = Partition, offset = Offset}, State) ->
-    io:format("handle_message topic: ~p partition: ~p offset: ~p state: ~p ~n", [
-        Topic,
-        Partition,
-        Offset,
-        State
-    ]),
+handle_message(Msgs, State) ->
+    case Msgs of
+        #erlkaf_msg{topic = Topic, partition = Partition, offset = Offset} ->
+            io:format("handle_message topic: ~p partition: ~p offset: ~p state: ~p ~n", [Topic, Partition, Offset, State]);
+        _ ->
+            io:format("handle_message BATCH count: ~p state: ~p ~n", [length(Msgs), State])
+    end,
+
     {ok, State}.

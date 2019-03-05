@@ -46,6 +46,15 @@ filter_kafka_config([], ErlkafAcc, RdKafkaConf) ->
 
 % topic related configs
 
+is_erlkaf_topic_config(dispatch_mode = K, V) ->
+    case V of
+        one_by_one ->
+            true;
+        {batch, Max} when is_integer(Max) ->
+            true;
+        _ ->
+            throw({error, {options, {K, V}}})
+    end;
 is_erlkaf_topic_config(_, _) ->
     false.
 
