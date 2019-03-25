@@ -1,6 +1,5 @@
 {application, erlkaf, [
     {description, "erlkaf - Erlang Kafka library based on librdkafka"},
-    {maintainers, ["Silviu Caragea"]},
     {licenses, ["MIT"]},
     {links,[{"Github","https://github.com/silviucpp/erlkaf"}]},
     {vsn, "1.1.4"},
