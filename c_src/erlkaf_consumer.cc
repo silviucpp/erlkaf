@@ -6,13 +6,15 @@
 #include "rdkafka.h"
 #include "erlkaf_logger.h"
 
-static const char* kThreadOptsId = "librdkafka_consumer_thread_opts";
-static const char* kPollThreadId = "librdkafka_consumer_poll_thread";
-
 #include <vector>
 #include <memory>
 #include <string.h>
 #include <unistd.h>
+
+namespace {
+
+const char* kThreadOptsId = "librdkafka_consumer_thread_opts";
+const char* kPollThreadId = "librdkafka_consumer_poll_thread";
 
 struct enif_consumer
 {
@@ -30,33 +32,6 @@ struct enif_queue
     rd_kafka_queue_t* queue;
     enif_consumer* consumer;
 };
-
-void enif_queue_free(ErlNifEnv* env, void* obj)
-{
-    UNUSED(env);
-
-    enif_queue* q = static_cast<enif_queue*>(obj);
-
-    if(q->queue)
-        rd_kafka_queue_forward(q->queue, rd_kafka_queue_get_consumer(q->consumer->kf));
-
-    enif_release_resource(q->consumer);
-}
-
-void enif_consumer_free(ErlNifEnv* env, void* obj)
-{
-    UNUSED(env);
-
-    enif_consumer* consumer = static_cast<enif_consumer*>(obj);
-    consumer->running = false;
-
-    if(consumer->thread_opts)
-    {
-        void *result = NULL;
-        enif_thread_join(consumer->thread_id, &result);
-        enif_thread_opts_destroy(consumer->thread_opts);
-    }
-}
 
 enif_queue* enif_new_queue(enif_consumer* consumer, rd_kafka_t* rk, const std::string& topic, int32_t partition)
 {
@@ -105,7 +80,7 @@ ERL_NIF_TERM partition_list_to_nif(ErlNifEnv* env, enif_consumer* consumer, rd_k
     return enif_make_list_from_array(env, items, partitions->cnt);
 }
 
-static void* consumer_poll_thread(void* arg)
+void* consumer_poll_thread(void* arg)
 {
     enif_consumer* consumer = static_cast<enif_consumer*>(arg);
 
@@ -160,7 +135,7 @@ void revoke_partitions(ErlNifEnv* env, enif_consumer* consumer, rd_kafka_t *rk, 
     enif_send(NULL, &consumer->owner, env, enif_make_tuple2(env, ATOMS.atomRevokePartition, list));
 }
 
-static void rebalance_cb (rd_kafka_t *rk, rd_kafka_resp_err_t err, rd_kafka_topic_partition_list_t *partitions, void *opaque)
+void rebalance_cb (rd_kafka_t *rk, rd_kafka_resp_err_t err, rd_kafka_topic_partition_list_t *partitions, void *opaque)
 {
     enif_consumer* consumer = static_cast<enif_consumer*>(opaque);
     ErlNifEnv* env = enif_alloc_env();
@@ -183,7 +158,7 @@ static void rebalance_cb (rd_kafka_t *rk, rd_kafka_resp_err_t err, rd_kafka_topi
     enif_free_env(env);
 }
 
-static int stats_callback(rd_kafka_t *rk, char *json, size_t json_len, void *opaque)
+int stats_callback(rd_kafka_t *rk, char *json, size_t json_len, void *opaque)
 {
     UNUSED(rk);
 
@@ -217,6 +192,58 @@ rd_kafka_topic_partition_list_t* topic_subscribe(ErlNifEnv* env, ERL_NIF_TERM li
     }
 
     return topics.release();
+}
+
+ERL_NIF_TERM get_headers(ErlNifEnv* env, const rd_kafka_message_t* msg)
+{
+    rd_kafka_headers_t* headers = NULL;
+
+    if(rd_kafka_message_headers(msg, &headers) == RD_KAFKA_RESP_ERR_NO_ERROR && headers)
+    {
+        std::vector<ERL_NIF_TERM> array;
+        array.reserve(rd_kafka_header_cnt(headers));
+
+        const char *name;
+        const void *valuep;
+        size_t size;
+        size_t idx = 0;
+
+        while (!rd_kafka_header_get_all(headers, idx++, &name, &valuep, &size))
+            array.push_back(enif_make_tuple2(env, make_binary(env, name, strlen(name)), make_binary(env, reinterpret_cast<const char*>(valuep), size)));
+
+        return enif_make_list_from_array(env, &array[0], array.size());
+    }
+
+    return ATOMS.atomUndefined;
+}
+
+}
+
+void enif_queue_free(ErlNifEnv* env, void* obj)
+{
+    UNUSED(env);
+
+    enif_queue* q = static_cast<enif_queue*>(obj);
+
+    if(q->queue)
+        rd_kafka_queue_forward(q->queue, rd_kafka_queue_get_consumer(q->consumer->kf));
+
+    enif_release_resource(q->consumer);
+}
+
+void enif_consumer_free(ErlNifEnv* env, void* obj)
+{
+    UNUSED(env);
+
+    enif_consumer* consumer = static_cast<enif_consumer*>(obj);
+    consumer->running = false;
+
+    if(consumer->thread_opts)
+    {
+        void *result = NULL;
+        enif_thread_join(consumer->thread_id, &result);
+        enif_thread_opts_destroy(consumer->thread_opts);
+    }
 }
 
 ERL_NIF_TERM enif_consumer_new(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
@@ -382,7 +409,8 @@ ERL_NIF_TERM enif_consumer_queue_poll(ErlNifEnv* env, int argc, const ERL_NIF_TE
             ERL_NIF_TERM key = msg->key == NULL ? ATOMS.atomUndefined : make_binary(env, reinterpret_cast<const char*>(msg->key), msg->key_len);
             ERL_NIF_TERM offset = enif_make_int64(env, msg->offset);
             ERL_NIF_TERM value = make_binary(env, reinterpret_cast<const char*>(msg->payload), msg->len);
-            ERL_NIF_TERM msg_term = enif_make_tuple6(env, ATOMS.atomMessage, topic, partition, offset, key, value);
+            ERL_NIF_TERM headers = get_headers(env, msg);
+            ERL_NIF_TERM msg_term = enif_make_tuple7(env, ATOMS.atomMessage, topic, partition, offset, key, value, headers);
 
             last_offset = msg->offset;
             messages.push_back(msg_term);

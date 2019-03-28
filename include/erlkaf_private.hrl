@@ -1,4 +1,4 @@
-%logs
+% logs
 
 -define(PRINT_MSG(Format, Args),
     io:format(Format, Args)).
@@ -18,7 +18,7 @@
 -define(CRITICAL_MSG(Format, Args),
     lager:critical(Format, Args)).
 
-%erlkaf errors
+% erlkaf errors
 
 -define(ERR_UNDEFINED_CLIENT, <<"undefined client">>).
 -define(ERR_UNDEFINED_CLIENT_PARTITION, <<"undefined client or partition">>).
@@ -76,7 +76,7 @@
 -define(RD_KAFKA_RESP_ERR_INVALID_TYPE, -154).
 -define(RD_KAFKA_RESP_ERR_END, -100).
 
-%broker errors
+% broker errors
 
 -define(RD_KAFKA_RESP_ERR_UNKNOWN, -1).
 -define(RD_KAFKA_RESP_ERR_NO_ERROR, 0).

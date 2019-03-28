@@ -1,5 +1,10 @@
 ### Changelog:
 
+##### v1.1.5
+
+- Add support for headers (requires broker version 0.11.0.0 or later)
+- Code cleanup
+
 ##### v1.1.4
 
 - Add support for dispatch_mode topic setting.

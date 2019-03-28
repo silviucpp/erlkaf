@@ -5,7 +5,7 @@
 -export([
     new/1,
     free/1,
-    enq/5,
+    enq/6,
     deq/1,
     head/1
 ]).
@@ -20,8 +20,8 @@ free(undefined) ->
 free(Queue) ->
     esq:free(Queue).
 
-enq(Queue, TopicName, Partition, Key, Value) ->
-    esq:enq({TopicName, Partition, Key, Value}, Queue).
+enq(Queue, TopicName, Partition, Key, Value, Headers) ->
+    esq:enq({TopicName, Partition, Key, Value, Headers}, Queue).
 
 deq(Queue) ->
     esq:deq(Queue).

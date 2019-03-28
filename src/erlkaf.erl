@@ -17,7 +17,8 @@
     create_topic/3,
 
     produce/4,
-    produce/5
+    produce/5,
+    produce/6
 ]).
 
 -spec start() ->
@@ -108,26 +109,33 @@ create_topic(ClientId, TopicName, TopicConfig) ->
     ok | {error, reason()}.
 
 produce(ClientId, TopicName, Key, Value) ->
-    produce(ClientId, TopicName, ?DEFULT_PARTITIONER, Key, Value).
+    produce(ClientId, TopicName, ?DEFULT_PARTITIONER, Key, Value, undefined).
 
--spec produce(client_id(), binary(), partition(), key(), binary()) ->
+-spec produce(client_id(), binary(), key(), binary(), headers()) ->
     ok | {error, reason()}.
 
-produce(ClientId, TopicName, Partition, Key, Value) ->
+produce(ClientId, TopicName, Key, Value, Headers) ->
+    produce(ClientId, TopicName, ?DEFULT_PARTITIONER, Key, Value, Headers).
+
+-spec produce(client_id(), binary(), partition(), key(), binary(), headers()) ->
+    ok | {error, reason()}.
+
+produce(ClientId, TopicName, Partition, Key, Value, Headers0) ->
     case erlkaf_cache_client:get(ClientId) of
         {ok, ClientRef, ClientPid} ->
-            case erlkaf_nif:produce(ClientRef, TopicName, Partition, Key, Value) of
+            Headers = to_headers(Headers0),
+            case erlkaf_nif:produce(ClientRef, TopicName, Partition, Key, Value, Headers) of
                 ok ->
                     ok;
                 {error, ?RD_KAFKA_RESP_ERR_QUEUE_FULL} ->
-                    case erlkaf_producer:queue_event(ClientPid, TopicName, Partition, Key, Value) of
+                    case erlkaf_producer:queue_event(ClientPid, TopicName, Partition, Key, Value, Headers) of
                         ok ->
                             ok;
                         drop_records ->
-                            ?WARNING_MSG("message: ~p dropped", [{TopicName, Partition, Key, Value}]),
+                            ?WARNING_MSG("message: ~p dropped", [{TopicName, Partition, Key, Value, Headers}]),
                             ok;
                         block_calling_process ->
-                            produce_blocking(ClientRef, TopicName, Partition, Key, Value);
+                            produce_blocking(ClientRef, TopicName, Partition, Key, Value, Headers);
                         Error ->
                             Error
                     end;
@@ -142,13 +150,22 @@ produce(ClientId, TopicName, Partition, Key, Value) ->
 
 %internals
 
-produce_blocking(ClientRef, TopicName, Partition, Key, Value) ->
-    case erlkaf_nif:produce(ClientRef, TopicName, Partition, Key, Value) of
+produce_blocking(ClientRef, TopicName, Partition, Key, Value, Headers) ->
+    case erlkaf_nif:produce(ClientRef, TopicName, Partition, Key, Value, Headers) of
         ok ->
             ok;
         {error, ?RD_KAFKA_RESP_ERR_QUEUE_FULL} ->
             timer:sleep(100),
-            produce_blocking(ClientRef, TopicName, Partition, Key, Value);
+            produce_blocking(ClientRef, TopicName, Partition, Key, Value, Headers);
         Error ->
             Error
     end.
+
+to_headers(undefined) ->
+    undefined;
+to_headers(Headers) when is_list(Headers) ->
+    lists:map(fun({K, V} = R) when is_binary(K) andalso is_binary(V) -> R;
+                 ({K, V}) -> {erlkaf_utils:to_binary(K), erlkaf_utils:to_binary(V)} end,
+    Headers);
+to_headers(V) when is_map(V) ->
+    to_headers(maps:to_list(V)).

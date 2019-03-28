@@ -5,6 +5,8 @@
 #include <functional>
 #include <signal.h>
 
+namespace {
+
 template <typename T> struct set_config_fun
 {
     std::function<rd_kafka_conf_res_t (T *conf, const char *name, const char *value, char *errstr, size_t errstr_size)> set_value;
@@ -78,6 +80,8 @@ bool appy_topic_default_config(rd_kafka_topic_conf_t* config)
         return false;
 
     return true;
+}
+
 }
 
 ERL_NIF_TERM parse_topic_config(ErlNifEnv* env, ERL_NIF_TERM list, rd_kafka_topic_conf_t* conf)

@@ -10,8 +10,10 @@
 #include <string.h>
 #include <memory>
 
-static const char* kThreadOptsId = "librdkafka_producer_thread_opts";
-static const char* kPollThreadId = "librdkafka_producer_poll_thread";
+namespace {
+
+const char* kThreadOptsId = "librdkafka_producer_thread_opts";
+const char* kPollThreadId = "librdkafka_producer_poll_thread";
 
 struct enif_producer
 {
@@ -24,7 +26,7 @@ struct enif_producer
     bool running;
 };
 
-static void* producer_poll_thread(void* arg)
+void* producer_poll_thread(void* arg)
 {
     enif_producer* producer = static_cast<enif_producer*>(arg);
 
@@ -43,28 +45,7 @@ static void* producer_poll_thread(void* arg)
     return NULL;
 }
 
-void enif_producer_free(ErlNifEnv* env, void* obj)
-{
-    UNUSED(env);
-
-    enif_producer* producer = static_cast<enif_producer*>(obj);
-    producer->running = false;
-
-    if(producer->thread_opts)
-    {
-        void *result = NULL;
-        enif_thread_join(producer->thread_id, &result);
-        enif_thread_opts_destroy(producer->thread_opts);
-    }
-
-    if(producer->topics)
-        delete producer->topics;
-
-    if(producer->kf)
-        rd_kafka_destroy(producer->kf);
-}
-
-static void delivery_report_callback (rd_kafka_t* rk, const rd_kafka_message_t* msg, void* data)
+void delivery_report_callback (rd_kafka_t* rk, const rd_kafka_message_t* msg, void* data)
 {
     UNUSED(rk);
     enif_producer* producer = static_cast<enif_producer*>(data);
@@ -86,7 +67,7 @@ static void delivery_report_callback (rd_kafka_t* rk, const rd_kafka_message_t* 
     enif_free_env(env);
 }
 
-static int stats_callback(rd_kafka_t *rk, char *json, size_t json_len, void *opaque)
+int stats_callback(rd_kafka_t *rk, char *json, size_t json_len, void *opaque)
 {
     UNUSED(rk);
 
@@ -100,6 +81,52 @@ static int stats_callback(rd_kafka_t *rk, char *json, size_t json_len, void *opa
     enif_send(NULL, &producer->owner_pid, env, enif_make_tuple2(env, ATOMS.atomStats, stats));
     enif_free_env(env);
     return 0;
+}
+
+bool populate_headers(ErlNifEnv* env, ERL_NIF_TERM headers_term, rd_kafka_headers_t* out)
+{
+    ERL_NIF_TERM head;
+    const ERL_NIF_TERM *items;
+    int arity;
+    ErlNifBinary key;
+    ErlNifBinary value;
+
+    while(enif_get_list_cell(env, headers_term, &head, &headers_term))
+    {
+        if(!enif_get_tuple(env, head, &arity, &items) || arity != 2)
+            return false;
+
+        if (!get_binary(env, items[0], &key) || !get_binary(env, items[1], &value))
+            return false;
+
+        if(rd_kafka_header_add(out, reinterpret_cast<const char*>(key.data), key.size, value.data, value.size) != RD_KAFKA_RESP_ERR_NO_ERROR)
+            return false;
+    }
+
+    return true;
+}
+
+}
+
+void enif_producer_free(ErlNifEnv* env, void* obj)
+{
+    UNUSED(env);
+
+    enif_producer* producer = static_cast<enif_producer*>(obj);
+    producer->running = false;
+
+    if(producer->thread_opts)
+    {
+        void *result = NULL;
+        enif_thread_join(producer->thread_id, &result);
+        enif_thread_opts_destroy(producer->thread_opts);
+    }
+
+    if(producer->topics)
+        delete producer->topics;
+
+    if(producer->kf)
+        rd_kafka_destroy(producer->kf);
 }
 
 ERL_NIF_TERM enif_producer_topic_new(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
@@ -234,16 +261,13 @@ ERL_NIF_TERM enif_produce(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
     ErlNifBinary key;
     ErlNifBinary value;
 
+    scoped_ptr(headers, rd_kafka_headers_t, NULL, rd_kafka_headers_destroy);
+
     if(!enif_get_resource(env, argv[0], data->res_producer, (void**) &producer))
         return make_badarg(env);
 
     if(!get_string(env, argv[1], &topic_name))
         return make_badarg(env);
-
-    rd_kafka_topic_t* topic = producer->topics->GetOrCreateTopic(topic_name);
-
-    if(topic == NULL)
-        return make_error(env, "failed to create topic object");
 
     if(!enif_get_int(env, argv[2], &partition))
         return make_badarg(env);
@@ -259,8 +283,47 @@ ERL_NIF_TERM enif_produce(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
     if (!get_binary(env, argv[4], &value))
         return make_badarg(env);
 
-    if (rd_kafka_produce(topic, partition, RD_KAFKA_MSG_F_COPY, value.data, value.size, key.data, key.size, NULL) != 0)
-        return make_error(env, enif_make_int(env, rd_kafka_last_error()));
+    if(!enif_is_identical(argv[5], ATOMS.atomUndefined))
+    {
+        uint32_t length;
+
+        if(!enif_get_list_length(env, argv[5], &length))
+            return make_badarg(env);
+
+        if(length > 0)
+        {
+            headers.reset(rd_kafka_headers_new(length));
+            if(!populate_headers(env, argv[5], headers.get()))
+                return make_badarg(env);
+        }
+    }
+
+    if(!headers.get())
+    {
+        rd_kafka_topic_t* topic = producer->topics->GetOrCreateTopic(topic_name);
+
+        if(topic == NULL)
+            return make_error(env, "failed to create topic object");
+
+        if (rd_kafka_produce(topic, partition, RD_KAFKA_MSG_F_COPY, value.data, value.size, key.data, key.size, NULL) != 0)
+            return make_error(env, enif_make_int(env, rd_kafka_last_error()));
+    }
+    else
+    {
+        rd_kafka_resp_err_t result = rd_kafka_producev(producer->kf,
+                                                       RD_KAFKA_V_TOPIC(topic_name.c_str()),
+                                                       RD_KAFKA_V_PARTITION(partition),
+                                                       RD_KAFKA_V_MSGFLAGS(RD_KAFKA_MSG_F_COPY),
+                                                       RD_KAFKA_V_VALUE(value.data, value.size),
+                                                       RD_KAFKA_V_KEY(key.data, key.size),
+                                                       RD_KAFKA_V_HEADERS(headers.get()),
+                                                       RD_KAFKA_V_END);
+
+        if(result != RD_KAFKA_RESP_ERR_NO_ERROR)
+            return make_error(env, enif_make_int(env, result));
+        else
+            headers.release();
+    }
 
     return ATOMS.atomOk;
 }

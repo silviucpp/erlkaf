@@ -1,13 +1,9 @@
 
--record(erlkaf_msg, {
-    topic,
-    partition,
-    offset,
-    key,
-    value
-}).
+% default partitioner
 
 -define(DEFULT_PARTITIONER, -1).
+
+% types
 
 -type client_id() :: atom().
 -type reason() :: any().
@@ -23,6 +19,7 @@
 -type overflow_strategy() :: local_disk_queue | block_calling_process | drop_records.
 -type queuing_strategy() :: fifo | lifo.
 -type partitioner() :: random|consistent|consistent_random|murmur2|murmur2_random.
+-type headers() :: undefined | proplists:proplist() | maps:map().
 
 -type topic_option() ::
     {request_required_acks, integer()} |
@@ -108,4 +105,15 @@
     {compression_codec, compression_codec()} |
     {batch_num_messages, integer()} |
     {delivery_report_only_error, boolean()}.
+
+% records
+
+-record(erlkaf_msg, {
+    topic :: binary(),
+    partition ::non_neg_integer(),
+    offset ::integer(),
+    key :: key(),
+    value ::binary(),
+    headers :: headers()
+}).
 
