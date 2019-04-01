@@ -132,7 +132,7 @@ produce(ClientId, TopicName, Partition, Key, Value, Headers0) ->
                         ok ->
                             ok;
                         drop_records ->
-                            ?WARNING_MSG("message: ~p dropped", [{TopicName, Partition, Key, Value, Headers}]),
+                            ?LOG_WARNING("message: ~p dropped", [{TopicName, Partition, Key, Value, Headers}]),
                             ok;
                         block_calling_process ->
                             produce_blocking(ClientRef, TopicName, Partition, Key, Value, Headers);

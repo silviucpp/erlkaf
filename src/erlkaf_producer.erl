@@ -101,7 +101,7 @@ handle_info({delivery_report, DeliveryStatus, Message}, #state{dr_cb = Callback}
         ok ->
             ok;
         Error ->
-            ?ERROR_MSG("~p:delivery_report error: ~p", [Callback, Error])
+            ?LOG_ERROR("~p:delivery_report error: ~p", [Callback, Error])
     end,
     {noreply, State};
 
@@ -112,12 +112,12 @@ handle_info({stats, Stats0}, #state{stats_cb = StatsCb, client_id = ClientId} = 
         ok ->
             ok;
         Error ->
-            ?ERROR_MSG("~p:stats_callback client_id: ~p error: ~p", [StatsCb, ClientId, Error])
+            ?LOG_ERROR("~p:stats_callback client_id: ~p error: ~p", [StatsCb, ClientId, Error])
     end,
     {noreply, State#state{stats = Stats}};
 
 handle_info(Info, State) ->
-    ?ERROR_MSG("received unknown message: ~p", [Info]),
+    ?LOG_ERROR("received unknown message: ~p", [Info]),
     {noreply, State}.
 
 terminate(Reason, #state{client_id = ClientId, ref = ClientRef, pqueue = Queue}) ->
@@ -125,10 +125,10 @@ terminate(Reason, #state{client_id = ClientId, ref = ClientRef, pqueue = Queue})
     case Reason of
         shutdown ->
             ok = erlkaf_nif:producer_cleanup(ClientRef),
-            ?INFO_MSG("wait for producer client ~p to stop...", [ClientId]),
+            ?LOG_INFO("wait for producer client ~p to stop...", [ClientId]),
             receive
                 client_stopped ->
-                    ?INFO_MSG("producer client ~p stopped", [ClientId])
+                    ?LOG_INFO("producer client ~p stopped", [ClientId])
             end;
         _ ->
             ok
@@ -178,7 +178,7 @@ consume_queue(ClientRef, Q, N) ->
                     log_completed(N),
                     ok;
                 Error ->
-                    ?ERROR_MSG("message ~p skipped because of error: ~p", [Msg, Error]),
+                    ?LOG_ERROR("message ~p skipped because of error: ~p", [Msg, Error]),
                     [#{payload := Msg}] = erlkaf_local_queue:deq(Q),
                     consume_queue(ClientRef, Q, N-1)
             end
@@ -187,7 +187,7 @@ consume_queue(ClientRef, Q, N) ->
 log_completed(N) ->
     case N =/= ?MAX_QUEUE_PROCESS_MSG of
         true ->
-            ?INFO_MSG("pushed ~p events from local queue cache", [?MAX_QUEUE_PROCESS_MSG - N]);
+            ?LOG_INFO("pushed ~p events from local queue cache", [?MAX_QUEUE_PROCESS_MSG - N]);
         _ ->
             ok
     end.

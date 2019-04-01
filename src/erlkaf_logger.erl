@@ -35,15 +35,15 @@ log_message(Severity, Name, Fac, Buf) ->
     Message = format_msg(Name, Fac, Buf),
     case Severity of
         ?RD_LOG_LEVEL_DEBUG ->
-            ?DEBUG_MSG(Message, []);
+            ?LOG_DEBUG(Message, []);
         Info when Info == ?RD_LOG_LEVEL_INFO orelse Info == ?RD_LOG_LEVEL_NOTICE ->
-            ?INFO_MSG(Message, []);
+            ?LOG_INFO(Message, []);
         ?RD_LOG_LEVEL_WARNING ->
-            ?WARNING_MSG(Message, []);
+            ?LOG_WARNING(Message, []);
         ?RD_LOG_LEVEL_ERROR ->
-            ?ERROR_MSG(Message, []);
+            ?LOG_ERROR(Message, []);
         _ ->
-            ?CRITICAL_MSG(Message, [])
+            ?LOG_CRITICAL(Message, [])
     end.
 
 format_msg(Name, Fac, Buf) ->

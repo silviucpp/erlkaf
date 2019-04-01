@@ -34,7 +34,7 @@ start_client({ClientId, C}) ->
     case Type of
         producer ->
             ok = erlkaf:create_producer(ClientId, ClientOpts),
-            ?INFO_MSG("producer ~p created", [ClientId]),
+            ?LOG_INFO("producer ~p created", [ClientId]),
             ok = create_topics(ClientId, Topics);
         consumer ->
             GroupId = erlkaf_utils:lookup(group_id, C),
@@ -42,17 +42,17 @@ start_client({ClientId, C}) ->
             CbArgs = erlkaf_utils:lookup(callback_args, C, []),
             TopicConfig = erlkaf_utils:lookup(topic_options, C, []),
             ok = erlkaf:create_consumer_group(ClientId, GroupId, Topics, ClientOpts, TopicConfig, CbModule, CbArgs),
-            ?INFO_MSG("consumer ~p created", [ClientId])
+            ?LOG_INFO("consumer ~p created", [ClientId])
     end.
 
 create_topics(ClientId, [H|T]) ->
     case H of
         {TopicName, TopicOpts} ->
             ok = erlkaf:create_topic(ClientId, TopicName, TopicOpts),
-            ?INFO_MSG("topic ~p created over client: ~p", [TopicName, ClientId]);
+            ?LOG_INFO("topic ~p created over client: ~p", [TopicName, ClientId]);
         TopicName when is_binary(TopicName) ->
             ok = erlkaf:create_topic(ClientId, TopicName),
-            ?INFO_MSG("topic ~p created over client: ~p", [TopicName, ClientId])
+            ?LOG_INFO("topic ~p created over client: ~p", [TopicName, ClientId])
     end,
     create_topics(ClientId, T);
 create_topics(_ClientId, []) ->

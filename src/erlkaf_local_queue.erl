@@ -12,7 +12,7 @@
 
 new(ClientId) ->
     Path = erlkaf_utils:get_priv_path(ClientId),
-    ?INFO_MSG("persistent queue path: ~p", [Path]),
+    ?LOG_INFO("persistent queue path: ~p", [Path]),
     esq:new(Path).
 
 free(undefined) ->

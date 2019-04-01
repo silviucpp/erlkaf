@@ -3,20 +3,24 @@
 -define(PRINT_MSG(Format, Args),
     io:format(Format, Args)).
 
--define(DEBUG_MSG(Format, Args),
+-ifndef(OTP_RELEASE).
+-define(LOG_DEBUG(Format, Args),
     lager:debug(Format, Args)).
 
--define(INFO_MSG(Format, Args),
+-define(LOG_INFO(Format, Args),
     lager:info(Format, Args)).
 
--define(WARNING_MSG(Format, Args),
+-define(LOG_WARNING(Format, Args),
     lager:warning(Format, Args)).
 
--define(ERROR_MSG(Format, Args),
+-define(LOG_ERROR(Format, Args),
     lager:error(Format, Args)).
 
--define(CRITICAL_MSG(Format, Args),
+-define(LOG_CRITICAL(Format, Args),
     lager:critical(Format, Args)).
+-else.
+-include_lib("kernel/include/logger.hrl").
+-endif.
 
 % erlkaf errors
 
