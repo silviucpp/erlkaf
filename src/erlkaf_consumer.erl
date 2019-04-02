@@ -55,7 +55,7 @@ stop(Pid) ->
     end.
 
 init([ClientRef, TopicName, DispatchMode, Partition, Offset, QueueRef, CbModule, CbArgs]) ->
-    ?INFO_MSG("start consumer for: ~p partition: ~p offset: ~p", [TopicName, Partition, Offset]),
+    ?LOG_INFO("start consumer for: ~p partition: ~p offset: ~p", [TopicName, Partition, Offset]),
 
     case catch CbModule:init(TopicName, Partition, Offset, CbArgs) of
         {ok, CbState} ->
@@ -78,11 +78,11 @@ init([ClientRef, TopicName, DispatchMode, Partition, Offset, QueueRef, CbModule,
     end.
 
 handle_call(Request, _From, State) ->
-    ?ERROR_MSG("handle_call unexpected message: ~p", [Request]),
+    ?LOG_ERROR("handle_call unexpected message: ~p", [Request]),
     {reply, ok, State}.
 
 handle_cast(Request, State) ->
-    ?ERROR_MSG("handle_cast unexpected message: ~p", [Request]),
+    ?LOG_ERROR("handle_cast unexpected message: ~p", [Request]),
     {noreply, State}.
 
 handle_info(poll_events, #state{queue_ref = Queue, poll_batch_size = PollBatchSize} = State) ->
@@ -97,7 +97,7 @@ handle_info(poll_events, #state{queue_ref = Queue, poll_batch_size = PollBatchSi
                     {noreply, State#state{messages = Events, last_offset = LastOffset}}
             end;
         Error ->
-            ?INFO_MSG("~p poll events error: ~p", [?MODULE, Error]),
+            ?LOG_INFO("~p poll events error: ~p", [?MODULE, Error]),
             throw({error, Error})
     end;
 
@@ -116,7 +116,7 @@ handle_info(process_messages, #state{
             handle_stop(From, Tag, State),
             {stop, normal, State};
         Error ->
-            ?ERROR_MSG("unexpected response: ~p", [Error]),
+            ?LOG_ERROR("unexpected response: ~p", [Error]),
             {stop, Error, State}
     end;
 
@@ -125,7 +125,7 @@ handle_info({stop, From, Tag}, State) ->
     {stop, normal, State};
 
 handle_info(Info, State) ->
-    ?ERROR_MSG("handle_info unexpected message: ~p", [Info]),
+    ?LOG_ERROR("handle_info unexpected message: ~p", [Info]),
     {noreply, State}.
 
 terminate(_Reason, _State) ->
@@ -167,7 +167,7 @@ process_events_batch(Msgs, LastBatchOffset, ClientRef, CbModule, CbState) ->
             ok = erlkaf_nif:consumer_offset_store(ClientRef, Topic, Partition, Offset),
             {ok, NewCbState};
         {error, Reason, NewCbState} ->
-            ?ERROR_MSG("~p:handle_message for batch error: ~p", [CbModule, Reason]),
+            ?LOG_ERROR("~p:handle_message for batch error: ~p", [CbModule, Reason]),
             case recv_stop() of
                 false ->
                     process_events_batch(Msgs, LastBatchOffset, ClientRef, CbModule, NewCbState);
@@ -175,7 +175,7 @@ process_events_batch(Msgs, LastBatchOffset, ClientRef, CbModule, CbState) ->
                     StopMsg
             end;
         Error ->
-            ?ERROR_MSG("~p:handle_message for batch error: ~p", [CbModule, Error]),
+            ?LOG_ERROR("~p:handle_message for batch error: ~p", [CbModule, Error]),
             case recv_stop() of
                 false ->
                     process_events_batch(Msgs, LastBatchOffset, ClientRef, CbModule, CbState);
@@ -192,10 +192,10 @@ process_events_one_by_one([H|T] = Msgs, ClientRef, CbModule, CbState) ->
                     ok = commit_offset(ClientRef, H),
                     process_events_one_by_one(T, ClientRef, CbModule, NewCbState);
                 {error, Reason, NewCbState} ->
-                    ?ERROR_MSG("~p:handle_message for: ~p error: ~p", [CbModule, H, Reason]),
+                    ?LOG_ERROR("~p:handle_message for: ~p error: ~p", [CbModule, H, Reason]),
                     process_events_one_by_one(Msgs, ClientRef, CbModule, NewCbState);
                 Error ->
-                    ?ERROR_MSG("~p:handle_message for: ~p error: ~p", [CbModule, H, Error]),
+                    ?LOG_ERROR("~p:handle_message for: ~p error: ~p", [CbModule, H, Error]),
                     process_events_one_by_one(Msgs, ClientRef, CbModule, CbState)
             end;
         StopMsg ->
@@ -208,6 +208,6 @@ recv_stop() ->
     receive {stop, _From, _Tag} = Msg -> Msg after 0 -> false end.
 
 handle_stop(From, Tag, #state{topic_name = TopicName, partition = Partition, queue_ref = Queue}) ->
-    ?INFO_MSG("stop consumer for: ~p partition: ~p", [TopicName, Partition]),
+    ?LOG_INFO("stop consumer for: ~p partition: ~p", [TopicName, Partition]),
     ok = erlkaf_nif:consumer_queue_cleanup(Queue),
     From ! {stopped, Tag}.

@@ -66,7 +66,7 @@ handle_info({stats, Stats0}, #state{stats_cb = StatsCb, client_id = ClientId} = 
         ok ->
             ok;
         Error ->
-            ?ERROR_MSG("~p:stats_callback client_id: ~p error: ~p", [StatsCb, ClientId, Error])
+            ?LOG_ERROR("~p:stats_callback client_id: ~p error: ~p", [StatsCb, ClientId, Error])
     end,
     {noreply, State#state{stats = Stats}};
 
@@ -77,7 +77,7 @@ handle_info({assign_partitions, Partitions}, #state{
     dispatch_mode = DispatchMode,
     topics_map = TopicsMap} = State) ->
 
-    ?INFO_MSG("assign partitions: ~p", [Partitions]),
+    ?LOG_INFO("assign partitions: ~p", [Partitions]),
 
     PartFun = fun({TopicName, Partition, Offset, QueueRef}, Tmap) ->
         {ok, Pid} = erlkaf_consumer:start_link(Crf, TopicName, DispatchMode, Partition, Offset, QueueRef, CbModule, CbState),
@@ -88,14 +88,14 @@ handle_info({assign_partitions, Partitions}, #state{
     {noreply, State#state{topics_map = NewTopicMap}};
 
 handle_info({revoke_partitions, Partitions}, #state{client_ref = ClientRef, topics_map = TopicsMap} = State) ->
-    ?INFO_MSG("revoke partitions: ~p", [Partitions]),
+    ?LOG_INFO("revoke partitions: ~p", [Partitions]),
     Pids = get_pids(TopicsMap, Partitions),
     ok = stop_consumers(Pids),
     ok = erlkaf_nif:consumer_partition_revoke_completed(ClientRef),
     {noreply, State#state{topics_map = #{}}};
 
 handle_info({'EXIT', FromPid, Reason} , State) when Reason =/= normal ->
-    ?WARNING_MSG("consumer ~p died with reason: ~p. restart consumer group ...", [FromPid, Reason]),
+    ?LOG_WARNING("consumer ~p died with reason: ~p. restart consumer group ...", [FromPid, Reason]),
     {stop, {error, Reason}, State};
 
 handle_info(_Info, State) ->
@@ -105,13 +105,13 @@ terminate(_Reason, #state{topics_map = TopicsMap, client_ref = ClientRef, client
     stop_consumers(maps:values(TopicsMap)),
     ok = erlkaf_nif:consumer_cleanup(ClientRef),
 
-    ?INFO_MSG("wait for consumer client ~p to stop...", [ClientId]),
+    ?LOG_INFO("wait for consumer client ~p to stop...", [ClientId]),
 
     receive
         client_stopped ->
-            ?INFO_MSG("client ~p stopped", [ClientId])
+            ?LOG_INFO("client ~p stopped", [ClientId])
         after 180000 ->
-            ?ERROR_MSG("wait for client ~p stop timeout", [ClientId])
+            ?LOG_ERROR("wait for client ~p stop timeout", [ClientId])
     end.
 
 code_change(_OldVsn, State, _Extra) ->
