@@ -1,10 +1,11 @@
 #ifndef ERLKAF_C_SRC_ERLKAF_LOGGER_H_
 #define ERLKAF_C_SRC_ERLKAF_LOGGER_H_
 
-#include "rdkafka.h"
 #include "erlkaf_nif.h"
 
 #include <string>
+
+typedef struct rd_kafka_s rd_kafka_t;
 
 enum kRdLogLevel {
     kRdLogLevelEmergency = 0,

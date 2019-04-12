@@ -5,6 +5,7 @@
 #include "erlkaf_config.h"
 #include "rdkafka.h"
 #include "erlkaf_logger.h"
+#include "queuemanager.h"
 
 #include <vector>
 #include <memory>
@@ -25,10 +26,12 @@ struct enif_consumer
     ErlNifResourceType* res_queue;
     bool running;
     bool stop_feedback;
+    QueueManager* qm_;
 };
 
 struct enif_queue
 {
+    int32_t partition;
     rd_kafka_queue_t* queue;
     enif_consumer* consumer;
 };
@@ -39,9 +42,10 @@ enif_queue* enif_new_queue(enif_consumer* consumer, rd_kafka_t* rk, const std::s
     ASSERT(partition_queue);
 
     enif_keep_resource(consumer);
-    rd_kafka_queue_forward(partition_queue, NULL);
+    consumer->qm_->add(partition, partition_queue);
 
     enif_queue* q = static_cast<enif_queue*>(enif_alloc_resource(consumer->res_queue, sizeof(enif_queue)));
+    q->partition = partition;
     q->queue = partition_queue;
     q->consumer = consumer;
     return q;
@@ -98,6 +102,9 @@ void* consumer_poll_thread(void* arg)
             usleep(50000);
         }
     }
+
+    //make sure queues are forwarded back on the main queue before closing
+    consumer->qm_->clear_all();
 
     rd_kafka_consumer_close(consumer->kf);
     rd_kafka_destroy(consumer->kf);
@@ -224,10 +231,7 @@ void enif_queue_free(ErlNifEnv* env, void* obj)
     UNUSED(env);
 
     enif_queue* q = static_cast<enif_queue*>(obj);
-
-    if(q->queue)
-        rd_kafka_queue_forward(q->queue, rd_kafka_queue_get_consumer(q->consumer->kf));
-
+    q->consumer->qm_->remove(q->partition);
     enif_release_resource(q->consumer);
 }
 
@@ -244,6 +248,9 @@ void enif_consumer_free(ErlNifEnv* env, void* obj)
         enif_thread_join(consumer->thread_id, &result);
         enif_thread_opts_destroy(consumer->thread_opts);
     }
+
+    if(consumer->qm_)
+    	delete consumer->qm_;
 }
 
 ERL_NIF_TERM enif_consumer_new(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
@@ -316,8 +323,7 @@ ERL_NIF_TERM enif_consumer_new(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv
     consumer->kf = rk.release();
     consumer->thread_opts = enif_thread_opts_create(const_cast<char*>(kThreadOptsId));
     consumer->res_queue = data->res_queue;
-
-    enif_keep_resource(data->res_queue);
+    consumer->qm_ = new QueueManager(consumer->kf);
 
     if (enif_thread_create(const_cast<char*>(kPollThreadId), &consumer->thread_id, consumer_poll_thread, consumer.get(), consumer->thread_opts) != 0)
         return make_error(env, "failed to create consumer thread");
@@ -337,12 +343,7 @@ ERL_NIF_TERM enif_consumer_queue_cleanup(ErlNifEnv* env, int argc, const ERL_NIF
     if(!enif_get_resource(env, argv[0], data->res_queue, (void**) &q))
         return make_badarg(env);
 
-    if(q->queue)
-    {
-        rd_kafka_queue_forward(q->queue, rd_kafka_queue_get_consumer(q->consumer->kf));
-        q->queue = NULL;
-    }
-
+    q->consumer->qm_->remove(q->partition);
     return ATOMS.atomOk;
 }
 

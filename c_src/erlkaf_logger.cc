@@ -1,8 +1,7 @@
 #include "erlkaf_logger.h"
+#include "rdkafka.h"
 #include "nif_utils.h"
 #include "macros.h"
-
-#include <string.h>
 
 static ErlNifPid log_pid = {0};
 

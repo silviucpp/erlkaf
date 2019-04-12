@@ -1,6 +1,7 @@
 #include "erlkaf_config.h"
 #include "nif_utils.h"
 #include "erlkaf_nif.h"
+#include "rdkafka.h"
 
 #include <functional>
 #include <signal.h>

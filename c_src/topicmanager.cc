@@ -1,4 +1,5 @@
 #include "topicmanager.h"
+#include "rdkafka.h"
 
 TopicManager::TopicManager(rd_kafka_t *rk) : rk_(rk)
 {
