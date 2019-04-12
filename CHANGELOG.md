@@ -1,5 +1,11 @@
 ### Changelog:
 
+##### v1.1.6
+
+- Fixed memory leaks on the consumer
+- Fixed a segmentation fault caused when init handler is throwing exception on consumer
+- Refactoring the entire consumer part
+
 ##### v1.1.5
 
 - Add support for headers (requires broker version 0.11.0.0 or later)
