@@ -30,7 +30,9 @@ bool QueueManager::remove(rd_kafka_queue_t* queue)
         return false;
 
     //forward the queue back to the main queue
-    rd_kafka_queue_forward(*it, rd_kafka_queue_get_consumer(rk_));
+    rd_kafka_queue_t* main_queue = rd_kafka_queue_get_consumer(rk_);
+    rd_kafka_queue_forward(*it, main_queue);
+    rd_kafka_queue_destroy(main_queue);
     queues_.erase(it);
     return true;
 }
@@ -42,7 +44,11 @@ void QueueManager::clear_all()
     //forwards all queues back on the main queue
 
     for(auto it = queues_.begin(); it != queues_.end(); ++ it)
-        rd_kafka_queue_forward(*it, rd_kafka_queue_get_consumer(rk_));
+    {
+        rd_kafka_queue_t* main_queue = rd_kafka_queue_get_consumer(rk_);
+        rd_kafka_queue_forward(*it, main_queue);
+        rd_kafka_queue_destroy(main_queue);
+    }
 
     queues_.clear();
 }
