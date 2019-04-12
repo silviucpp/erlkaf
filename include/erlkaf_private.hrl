@@ -3,7 +3,6 @@
 -define(PRINT_MSG(Format, Args),
     io:format(Format, Args)).
 
--ifndef(OTP_RELEASE).
 -define(LOG_DEBUG(Format, Args),
     lager:debug(Format, Args)).
 
@@ -18,9 +17,6 @@
 
 -define(LOG_CRITICAL(Format, Args),
     lager:critical(Format, Args)).
--else.
--include_lib("kernel/include/logger.hrl").
--endif.
 
 % erlkaf errors
 
