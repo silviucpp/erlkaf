@@ -42,7 +42,7 @@ enif_queue* enif_new_queue(enif_consumer* consumer, rd_kafka_t* rk, const std::s
     ASSERT(partition_queue);
 
     enif_keep_resource(consumer);
-    consumer->qm_->add(partition, partition_queue);
+    consumer->qm_->add(partition_queue);
 
     enif_queue* q = static_cast<enif_queue*>(enif_alloc_resource(consumer->res_queue, sizeof(enif_queue)));
     q->partition = partition;
@@ -231,7 +231,10 @@ void enif_queue_free(ErlNifEnv* env, void* obj)
     UNUSED(env);
 
     enif_queue* q = static_cast<enif_queue*>(obj);
-    q->consumer->qm_->remove(q->partition);
+
+    if(q->queue)
+        q->consumer->qm_->remove(q->queue);
+
     enif_release_resource(q->consumer);
 }
 
@@ -343,7 +346,9 @@ ERL_NIF_TERM enif_consumer_queue_cleanup(ErlNifEnv* env, int argc, const ERL_NIF
     if(!enif_get_resource(env, argv[0], data->res_queue, (void**) &q))
         return make_badarg(env);
 
-    q->consumer->qm_->remove(q->partition);
+    q->consumer->qm_->remove(q->queue);
+    q->queue = NULL;
+
     return ATOMS.atomOk;
 }
 

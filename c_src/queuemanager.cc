@@ -11,26 +11,26 @@ QueueManager::~QueueManager()
     ASSERT(queues_.empty());
 }
 
-void QueueManager::add(int32_t partition, rd_kafka_queue_t* queue)
+void QueueManager::add(rd_kafka_queue_t* queue)
 {
     CritScope ss(&crt_);
-    ASSERT(queues_.find(partition) == queues_.end());
+    ASSERT(queues_.find(queue) == queues_.end());
 
     //remove the queue forwarding on the main queue.
     rd_kafka_queue_forward(queue, NULL);
-    queues_[partition] = queue;
+    queues_.insert(queue);
 }
 
-bool QueueManager::remove(int32_t partition)
+bool QueueManager::remove(rd_kafka_queue_t* queue)
 {
     CritScope ss(&crt_);
-    auto it = queues_.find(partition);
+    auto it = queues_.find(queue);
 
     if(it == queues_.end())
         return false;
 
     //forward the queue back to the main queue
-    rd_kafka_queue_forward(it->second, rd_kafka_queue_get_consumer(rk_));
+    rd_kafka_queue_forward(*it, rd_kafka_queue_get_consumer(rk_));
     queues_.erase(it);
     return true;
 }
@@ -42,7 +42,7 @@ void QueueManager::clear_all()
     //forwards all queues back on the main queue
 
     for(auto it = queues_.begin(); it != queues_.end(); ++ it)
-        rd_kafka_queue_forward(it->second, rd_kafka_queue_get_consumer(rk_));
+        rd_kafka_queue_forward(*it, rd_kafka_queue_get_consumer(rk_));
 
     queues_.clear();
 }
