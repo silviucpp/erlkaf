@@ -33,6 +33,7 @@ bool QueueManager::remove(rd_kafka_queue_t* queue)
     rd_kafka_queue_t* main_queue = rd_kafka_queue_get_consumer(rk_);
     rd_kafka_queue_forward(*it, main_queue);
     rd_kafka_queue_destroy(main_queue);
+    rd_kafka_queue_destroy(*it);
     queues_.erase(it);
     return true;
 }
