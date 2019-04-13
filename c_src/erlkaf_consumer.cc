@@ -31,7 +31,6 @@ struct enif_consumer
 
 struct enif_queue
 {
-    int32_t partition;
     rd_kafka_queue_t* queue;
     enif_consumer* consumer;
 };
@@ -45,7 +44,6 @@ enif_queue* enif_new_queue(enif_consumer* consumer, rd_kafka_t* rk, const std::s
     consumer->qm_->add(partition_queue);
 
     enif_queue* q = static_cast<enif_queue*>(enif_alloc_resource(consumer->res_queue, sizeof(enif_queue)));
-    q->partition = partition;
     q->queue = partition_queue;
     q->consumer = consumer;
     return q;
