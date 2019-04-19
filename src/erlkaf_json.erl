@@ -10,7 +10,7 @@ encode(Val) ->
     jsone:encode(Val, [{float_format, [{decimals, 4}, compact]}]).
 
 decode(Val) ->
-    jsone:decode(Val, [{object_format, proplist}]).
+    jsone:decode(Val, [{object_format, map}]).
 
 try_decode(Val) ->
-    jsone:try_decode(Val, [{object_format, proplist}]).
+    jsone:try_decode(Val, [{object_format, map}]).

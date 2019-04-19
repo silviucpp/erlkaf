@@ -73,7 +73,7 @@ stop_client(ClientId) ->
     erlkaf_manager:stop_client(ClientId).
 
 -spec get_stats(client_id()) ->
-    {ok, list()} | {error, reason()}.
+    {ok, map()} | {error, reason()}.
 
 get_stats(ClientId) ->
     case erlkaf_cache_client:get(ClientId) of

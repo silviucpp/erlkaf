@@ -8,7 +8,7 @@
 -callback handle_message(#erlkaf_msg{}, state()) ->
     {ok, state()} | {error, reason(), state()}.
 
--callback stats_callback(client_id(), list()) ->
+-callback stats_callback(client_id(), map()) ->
     ok.
 
 -optional_callbacks([
