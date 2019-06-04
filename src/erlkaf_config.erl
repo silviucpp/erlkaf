@@ -64,8 +64,6 @@ to_librdkafka_topic_config(request_timeout_ms, V) ->
     {<<"request.timeout.ms">>, erlkaf_utils:to_binary(V)};
 to_librdkafka_topic_config(message_timeout_ms, V) ->
     {<<"message.timeout.ms">>, erlkaf_utils:to_binary(V)};
-to_librdkafka_topic_config(queuing_strategy, V) ->
-    {<<"queuing.strategy">>, erlkaf_utils:to_binary(V)};
 to_librdkafka_topic_config(partitioner, V) ->
     {<<"partitioner">>, erlkaf_utils:to_binary(V)};
 to_librdkafka_topic_config(compression_codec, V) ->
@@ -80,8 +78,6 @@ to_librdkafka_topic_config(offset_store_path, V) ->
     {<<"offset.store.path">>, erlkaf_utils:to_binary(V)};
 to_librdkafka_topic_config(offset_store_sync_interval_ms, V) ->
     {<<"offset.store.sync.interval.ms">>, erlkaf_utils:to_binary(V)};
-to_librdkafka_topic_config(offset_store_method, V) ->
-    {<<"offset.store.method">>, erlkaf_utils:to_binary(V)};
 to_librdkafka_topic_config(K, V) ->
     throw({error, {options, {K, V}}}).
 
@@ -147,8 +143,10 @@ to_librdkafka_config(broker_address_ttl, V) ->
     {<<"broker.address.ttl">>, erlkaf_utils:to_binary(V)};
 to_librdkafka_config(broker_address_family, V) ->
     {<<"broker.address.family">>, erlkaf_utils:to_binary(V)};
-to_librdkafka_config(reconnect_backoff_jitter_ms, V) ->
-    {<<"reconnect.backoff.jitter.ms">>, erlkaf_utils:to_binary(V)};
+to_librdkafka_config(reconnect_backoff_ms, V) ->
+    {<<"reconnect.backoff.ms">>, erlkaf_utils:to_binary(V)};
+to_librdkafka_config(reconnect_backoff_max_ms, V) ->
+    {<<"reconnect.backoff.max.ms">>, erlkaf_utils:to_binary(V)};
 to_librdkafka_config(statistics_interval_ms, V) ->
     {<<"statistics.interval.ms">>, erlkaf_utils:to_binary(V)};
 to_librdkafka_config(log_level, V) ->
@@ -207,6 +205,8 @@ to_librdkafka_config(heartbeat_interval_ms, V) ->
     {<<"heartbeat.interval.ms">>, erlkaf_utils:to_binary(V)};
 to_librdkafka_config(coordinator_query_interval_ms, V) ->
     {<<"coordinator.query.interval.ms">>, erlkaf_utils:to_binary(V)};
+to_librdkafka_config(max_poll_interval_ms, V) ->
+    {<<"max.poll.interval.ms">>, erlkaf_utils:to_binary(V)};
 to_librdkafka_config(auto_commit_interval_ms, V) ->
     {<<"auto.commit.interval.ms">>, erlkaf_utils:to_binary(V)};
 to_librdkafka_config(queued_min_messages, V) ->
@@ -223,10 +223,12 @@ to_librdkafka_config(fetch_min_bytes, V) ->
     {<<"fetch.min.bytes">>, erlkaf_utils:to_binary(V)};
 to_librdkafka_config(fetch_error_backoff_ms, V) ->
     {<<"fetch.error.backoff.ms">>, erlkaf_utils:to_binary(V)};
-to_librdkafka_config(offset_store_method, V) ->
-    {<<"offset.store.method">>, erlkaf_utils:to_binary(V)};
 to_librdkafka_config(check_crcs, V) ->
     {<<"check.crcs">>, erlkaf_utils:to_binary(V)};
+to_librdkafka_config(enable_idempotence, V) ->
+    {<<"enable.idempotence">>, erlkaf_utils:to_binary(V)};
+to_librdkafka_config(enable_gapless_guarantee, V) ->
+    {<<"enable.gapless.guarantee">>, erlkaf_utils:to_binary(V)};
 to_librdkafka_config(queue_buffering_max_messages, V) ->
     {<<"queue.buffering.max.messages">>, erlkaf_utils:to_binary(V)};
 to_librdkafka_config(queue_buffering_max_kbytes, V) ->

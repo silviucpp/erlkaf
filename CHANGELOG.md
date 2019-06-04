@@ -1,5 +1,12 @@
 ### Changelog:
 
+##### v1.1.7 
+
+- Based on librdkafka v1.0.1
+- Removed configs: `queuing_strategy`, `offset_store_method`, `reconnect_backoff_jitter_ms`
+- Added new configs: `reconnect_backoff_ms`, `reconnect_backoff_max_ms`, `max_poll_interval_ms`, `enable_idempotence`, `enable_gapless_guarantee`
+- `get_stats` decodes json to maps instead of proplists
+
 ##### v1.1.6
 
 - Fixed memory leaks on the consumer
