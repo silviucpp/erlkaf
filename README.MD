@@ -24,7 +24,7 @@ using `enif_send`.
 On Ubuntu make sure you have installed :
 
 ```sh
-sudo apt-get install libsasl2-dev liblz4-dev zstd
+sudo apt-get install libsasl2-dev liblz4-dev libzstd-dev
 ```
 
 Add `erlkaf` as a dependency to your project. The library works with `rebar`, `rebar3` or `hex.pm`
