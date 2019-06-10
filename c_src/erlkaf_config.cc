@@ -77,9 +77,6 @@ bool appy_kafka_default_config(rd_kafka_conf_t* config)
 
 bool appy_topic_default_config(rd_kafka_topic_conf_t* config)
 {
-    if(rd_kafka_topic_conf_set(config, "produce.offset.report", "true", NULL, 0) != RD_KAFKA_CONF_OK)
-        return false;
-
     return true;
 }
 
