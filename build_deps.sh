@@ -48,7 +48,7 @@ function BuildLib()
 
 	case $OS in
         Darwin)
-            brew install openssl lz4
+            brew install openssl lz4 zstd
             OPENSSL_ROOT_DIR=$(brew --prefix openssl)
             export CPPFLAGS=-I$OPENSSL_ROOT_DIR/include/
             export LDFLAGS=-L$OPENSSL_ROOT_DIR/lib

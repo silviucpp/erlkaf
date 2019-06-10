@@ -72,4 +72,5 @@ LDFLAGS += -L ../deps/librdkafka/src \
            -lssl \
            -lcrypto \
            -lstdc++ \
-           -llz4
+           -llz4 \
+           -lzstd
