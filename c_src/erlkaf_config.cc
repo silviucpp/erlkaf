@@ -2,6 +2,7 @@
 #include "nif_utils.h"
 #include "erlkaf_nif.h"
 #include "rdkafka.h"
+#include "macros.h"
 
 #include <functional>
 #include <signal.h>
@@ -77,6 +78,7 @@ bool appy_kafka_default_config(rd_kafka_conf_t* config)
 
 bool appy_topic_default_config(rd_kafka_topic_conf_t* config)
 {
+    UNUSED(config);
     return true;
 }
 
