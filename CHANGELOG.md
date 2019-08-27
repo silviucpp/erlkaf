@@ -1,5 +1,10 @@
 ### Changelog:
 
+##### v1.1.8
+
+- Add zstd into the deps list
+- Remove deprecated config `produce.offset.report`
+
 ##### v1.1.7 
 
 - Based on librdkafka v1.0.1
