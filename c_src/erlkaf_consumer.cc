@@ -54,7 +54,8 @@ ERL_NIF_TERM partition_list_to_nif(ErlNifEnv* env, enif_consumer* consumer, rd_k
     if(!partitions)
         return enif_make_list(env, 0);
 
-    ERL_NIF_TERM items[partitions->cnt];
+    std::vector<ERL_NIF_TERM> items;
+    items.reserve(partitions->cnt);
 
     for (int i = 0 ; i < partitions->cnt ; i++)
     {
@@ -71,15 +72,15 @@ ERL_NIF_TERM partition_list_to_nif(ErlNifEnv* env, enif_consumer* consumer, rd_k
             ERL_NIF_TERM offset_term = enif_make_int64(env, obj.offset);
 
             enif_release_resource(queue);
-            items[i] = enif_make_tuple4(env, topic_name_term, partition_term, offset_term, queue_term);
+            items.push_back(enif_make_tuple4(env, topic_name_term, partition_term, offset_term, queue_term));
         }
         else
         {
-            items[i] = enif_make_tuple2(env, make_binary(env, topic.c_str(), topic.length()), enif_make_int(env, obj.partition));
+            items.push_back(enif_make_tuple2(env, make_binary(env, topic.c_str(), topic.length()), enif_make_int(env, obj.partition)));
         }
     }
 
-    return enif_make_list_from_array(env, items, partitions->cnt);
+    return enif_make_list_from_array(env, items.data(), items.size());
 }
 
 void* consumer_poll_thread(void* arg)
@@ -216,7 +217,7 @@ ERL_NIF_TERM get_headers(ErlNifEnv* env, const rd_kafka_message_t* msg)
         while (!rd_kafka_header_get_all(headers, idx++, &name, &valuep, &size))
             array.push_back(enif_make_tuple2(env, make_binary(env, name, strlen(name)), make_binary(env, reinterpret_cast<const char*>(valuep), size)));
 
-        return enif_make_list_from_array(env, &array[0], array.size());
+        return enif_make_list_from_array(env, array.data(), array.size());
     }
 
     return ATOMS.atomUndefined;
@@ -423,7 +424,7 @@ ERL_NIF_TERM enif_consumer_queue_poll(ErlNifEnv* env, int argc, const ERL_NIF_TE
         rd_kafka_event_destroy(event);
     }
 
-    ERL_NIF_TERM list = enif_make_list_from_array(env, &messages[0], messages.size());
+    ERL_NIF_TERM list = enif_make_list_from_array(env, messages.data(), messages.size());
     return enif_make_tuple(env, 3, ATOMS.atomOk, list, enif_make_int64(env, last_offset));
 }
 
