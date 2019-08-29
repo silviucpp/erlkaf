@@ -6,6 +6,7 @@
 
 #include <functional>
 #include <signal.h>
+#include <string>
 
 namespace {
 
@@ -65,7 +66,7 @@ bool appy_kafka_default_config(rd_kafka_conf_t* config)
         return false;
 
 #ifdef SIGIO
-    //quick termination
+    // quick termination
     char tmp[128];
     snprintf(tmp, sizeof(tmp), "%i", SIGIO);
 
@@ -82,7 +83,7 @@ bool appy_topic_default_config(rd_kafka_topic_conf_t* config)
     return true;
 }
 
-}
+}  // namespace
 
 ERL_NIF_TERM parse_topic_config(ErlNifEnv* env, ERL_NIF_TERM list, rd_kafka_topic_conf_t* conf)
 {

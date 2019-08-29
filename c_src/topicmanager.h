@@ -1,5 +1,5 @@
-#ifndef ERLKAF_C_SRC_TOPICMANAGER_H_
-#define ERLKAF_C_SRC_TOPICMANAGER_H_
+#ifndef C_SRC_TOPICMANAGER_H_
+#define C_SRC_TOPICMANAGER_H_
 
 #include "macros.h"
 #include "critical_section.h"
@@ -22,14 +22,13 @@ public:
     rd_kafka_topic_t* GetOrCreateTopic(const std::string& name);
 
 private:
-
-    DISALLOW_COPY_AND_ASSIGN(TopicManager);
-
     void Cleanup();
 
     CriticalSection crt_;
     std::map<std::string, rd_kafka_topic_t*> topics_;
     rd_kafka_t* rk_;
+
+    DISALLOW_COPY_AND_ASSIGN(TopicManager);
 };
 
-#endif
+#endif  // C_SRC_TOPICMANAGER_H_

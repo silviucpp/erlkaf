@@ -9,6 +9,7 @@
 
 #include <string.h>
 #include <memory>
+#include <string>
 
 namespace {
 
@@ -106,7 +107,7 @@ bool populate_headers(ErlNifEnv* env, ERL_NIF_TERM headers_term, rd_kafka_header
     return true;
 }
 
-}
+}  // namespace
 
 void enif_producer_free(ErlNifEnv* env, void* obj)
 {
@@ -138,7 +139,7 @@ ERL_NIF_TERM enif_producer_topic_new(ErlNifEnv* env, int argc, const ERL_NIF_TER
 
     erlkaf_data* data = static_cast<erlkaf_data*>(enif_priv_data(env));
 
-    if(!enif_get_resource(env, argv[0], data->res_producer, (void**) &producer))
+    if(!enif_get_resource(env, argv[0], data->res_producer,  reinterpret_cast<void**>(&producer)))
         return make_badarg(env);
 
     if(!get_string(env, argv[1], &topic_name))
@@ -224,7 +225,7 @@ ERL_NIF_TERM enif_producer_set_owner(ErlNifEnv* env, int argc, const ERL_NIF_TER
 
     enif_producer* producer;
 
-    if(!enif_get_resource(env, argv[0], data->res_producer, (void**) &producer))
+    if(!enif_get_resource(env, argv[0], data->res_producer,  reinterpret_cast<void**>(&producer)))
         return make_badarg(env);
 
     if(!enif_get_local_pid(env, argv[1], &producer->owner_pid))
@@ -240,7 +241,7 @@ ERL_NIF_TERM enif_producer_cleanup(ErlNifEnv* env, int argc, const ERL_NIF_TERM 
     erlkaf_data* data = static_cast<erlkaf_data*>(enif_priv_data(env));
     enif_producer* producer;
 
-    if(!enif_get_resource(env, argv[0], data->res_producer, (void**) &producer))
+    if(!enif_get_resource(env, argv[0], data->res_producer,  reinterpret_cast<void**>(&producer)))
         return make_badarg(env);
 
     producer->stop_feedback = true;
@@ -263,7 +264,7 @@ ERL_NIF_TERM enif_produce(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
 
     scoped_ptr(headers, rd_kafka_headers_t, NULL, rd_kafka_headers_destroy);
 
-    if(!enif_get_resource(env, argv[0], data->res_producer, (void**) &producer))
+    if(!enif_get_resource(env, argv[0], data->res_producer,  reinterpret_cast<void**>(&producer)))
         return make_badarg(env);
 
     if(!get_string(env, argv[1], &topic_name))

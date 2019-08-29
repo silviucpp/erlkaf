@@ -8,6 +8,7 @@
 #include "queuemanager.h"
 
 #include <vector>
+#include <string>
 #include <memory>
 #include <string.h>
 #include <unistd.h>
@@ -93,16 +94,16 @@ void* consumer_poll_thread(void* arg)
 
         if(msg)
         {
-            //because communication between nif and erlang it's based on async messages might be a small window
-            //between starting of revoking partitions (queued are forwarded back on the main queue) and when actual we revoked them
-            //when we get the messages here. we drop all this messages as time they have no impact because offset is not changed.
-            //we are sleeping here as well to not consume lot of cpu
+            // because communication between nif and erlang it's based on async messages might be a small window
+            // between starting of revoking partitions (queued are forwarded back on the main queue) and when actual we revoked them
+            // when we get the messages here. we drop all this messages as time they have no impact because offset is not changed.
+            // we are sleeping here as well to not consume lot of cpu
             rd_kafka_message_destroy(msg);
             usleep(50000);
         }
     }
 
-    //make sure queues are forwarded back on the main queue before closing
+    // make sure queues are forwarded back on the main queue before closing
     consumer->qm_->clear_all();
 
     rd_kafka_consumer_close(consumer->kf);
@@ -223,7 +224,7 @@ ERL_NIF_TERM get_headers(ErlNifEnv* env, const rd_kafka_message_t* msg)
     return ATOMS.atomUndefined;
 }
 
-}
+}  // namespace
 
 void enif_queue_free(ErlNifEnv* env, void* obj)
 {
@@ -252,7 +253,7 @@ void enif_consumer_free(ErlNifEnv* env, void* obj)
     }
 
     if(consumer->qm_)
-    	delete consumer->qm_;
+        delete consumer->qm_;
 }
 
 ERL_NIF_TERM enif_consumer_new(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
@@ -342,7 +343,7 @@ ERL_NIF_TERM enif_consumer_queue_cleanup(ErlNifEnv* env, int argc, const ERL_NIF
 
     enif_queue* q;
 
-    if(!enif_get_resource(env, argv[0], data->res_queue, (void**) &q))
+    if(!enif_get_resource(env, argv[0], data->res_queue, reinterpret_cast<void**>(&q)))
         return make_badarg(env);
 
     q->consumer->qm_->remove(q->queue);
@@ -358,7 +359,7 @@ ERL_NIF_TERM enif_consumer_partition_revoke_completed(ErlNifEnv* env, int argc, 
     erlkaf_data* data = static_cast<erlkaf_data*>(enif_priv_data(env));
     enif_consumer* c;
 
-    if(!enif_get_resource(env, argv[0], data->res_consumer, (void**) &c))
+    if(!enif_get_resource(env, argv[0], data->res_consumer, reinterpret_cast<void**>(&c)))
         return make_badarg(env);
 
     rd_kafka_assign(c->kf, NULL);
@@ -372,7 +373,7 @@ ERL_NIF_TERM enif_consumer_queue_poll(ErlNifEnv* env, int argc, const ERL_NIF_TE
     erlkaf_data* data = static_cast<erlkaf_data*>(enif_priv_data(env));
     enif_queue* q;
 
-    if(!enif_get_resource(env, argv[0], data->res_queue, (void**) &q))
+    if(!enif_get_resource(env, argv[0], data->res_queue, reinterpret_cast<void**>(&q)))
         return make_badarg(env);
 
     uint32_t max_batch_size;
@@ -439,7 +440,7 @@ ERL_NIF_TERM enif_consumer_offset_store(ErlNifEnv* env, int argc, const ERL_NIF_
     erlkaf_data* data = static_cast<erlkaf_data*>(enif_priv_data(env));
     enif_consumer* c;
 
-    if(!enif_get_resource(env, argv[0], data->res_consumer, (void**) &c))
+    if(!enif_get_resource(env, argv[0], data->res_consumer, reinterpret_cast<void**>(&c)))
         return make_badarg(env);
 
     if(!get_string(env, argv[1], &topic_name))
@@ -468,7 +469,7 @@ ERL_NIF_TERM enif_consumer_cleanup(ErlNifEnv* env, int argc, const ERL_NIF_TERM 
     erlkaf_data* data = static_cast<erlkaf_data*>(enif_priv_data(env));
     enif_consumer* consumer;
 
-    if(!enif_get_resource(env, argv[0], data->res_consumer, (void**) &consumer))
+    if(!enif_get_resource(env, argv[0], data->res_consumer, reinterpret_cast<void**>(&consumer)))
         return make_badarg(env);
 
     consumer->stop_feedback = true;

@@ -1,5 +1,5 @@
-#ifndef ERLKAF_C_SRC_ERLKAF_CONSUMER_H_
-#define ERLKAF_C_SRC_ERLKAF_CONSUMER_H_
+#ifndef C_SRC_ERLKAF_CONSUMER_H_
+#define C_SRC_ERLKAF_CONSUMER_H_
 
 #include "erl_nif.h"
 
@@ -12,4 +12,4 @@ ERL_NIF_TERM enif_consumer_queue_cleanup(ErlNifEnv* env, int argc, const ERL_NIF
 ERL_NIF_TERM enif_consumer_offset_store(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[]);
 ERL_NIF_TERM enif_consumer_cleanup(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[]);
 
-#endif
+#endif  // C_SRC_ERLKAF_CONSUMER_H_

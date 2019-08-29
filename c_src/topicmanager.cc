@@ -1,10 +1,7 @@
 #include "topicmanager.h"
 #include "rdkafka.h"
 
-TopicManager::TopicManager(rd_kafka_t *rk) : rk_(rk)
-{
-
-}
+TopicManager::TopicManager(rd_kafka_t *rk) : rk_(rk) { }
 
 TopicManager::~TopicManager()
 {
@@ -43,8 +40,8 @@ void TopicManager::Cleanup()
     topics_.clear();
 }
 
-//this methods is never called after cleanup so it's safe to partially protect it
-//and avoid useless locks
+// this methods is never called after cleanup so it's safe to partially protect it
+// and avoid useless locks
 
 rd_kafka_topic_t* TopicManager::GetOrCreateTopic(const std::string& name)
 {

@@ -1,5 +1,5 @@
-#ifndef ERLKAF_C_SRC_CRITICAL_SECTION_H_
-#define ERLKAF_C_SRC_CRITICAL_SECTION_H_
+#ifndef C_SRC_CRITICAL_SECTION_H_
+#define C_SRC_CRITICAL_SECTION_H_
 
 #include "erl_nif.h"
 #include "macros.h"
@@ -15,9 +15,9 @@ public:
     void Leave() {enif_mutex_unlock(mutex_);}
 
 private:
+    ErlNifMutex *mutex_;
 
     DISALLOW_COPY_AND_ASSIGN(CriticalSection);
-    ErlNifMutex *mutex_;
 };
 
 class CritScope
@@ -28,9 +28,9 @@ public:
     ~CritScope() {pcrit_->Leave();}
 
 private:
+    CriticalSection *pcrit_;
 
     DISALLOW_COPY_AND_ASSIGN(CritScope);
-    CriticalSection *pcrit_;
 };
 
-#endif
+#endif  // C_SRC_CRITICAL_SECTION_H_

@@ -1,5 +1,5 @@
-#ifndef ERLKAF_C_SRC_QUEUEMANAGER_H_
-#define ERLKAF_C_SRC_QUEUEMANAGER_H_
+#ifndef C_SRC_QUEUEMANAGER_H_
+#define C_SRC_QUEUEMANAGER_H_
 
 #include "macros.h"
 #include "critical_section.h"
@@ -22,11 +22,11 @@ public:
 
 private:
 
-    DISALLOW_COPY_AND_ASSIGN(QueueManager);
-
     CriticalSection crt_;
     rd_kafka_t* rk_;
     std::set<rd_kafka_queue_t*> queues_;
+
+    DISALLOW_COPY_AND_ASSIGN(QueueManager);
 };
 
-#endif
+#endif  // C_SRC_QUEUEMANAGER_H_

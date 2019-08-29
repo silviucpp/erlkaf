@@ -1,5 +1,5 @@
-#ifndef ERLKAF_C_SRC_NIF_UTILS_H_
-#define ERLKAF_C_SRC_NIF_UTILS_H_
+#ifndef C_SRC_NIF_UTILS_H_
+#define C_SRC_NIF_UTILS_H_
 
 #include <stdint.h>
 #include <string>
@@ -18,4 +18,4 @@ bool get_binary(ErlNifEnv* env, ERL_NIF_TERM term, ErlNifBinary* bin);
 bool get_string(ErlNifEnv *env, ERL_NIF_TERM term, std::string* var);
 bool get_boolean(ERL_NIF_TERM term, bool* val);
 
-#endif
+#endif  // C_SRC_NIF_UTILS_H_

@@ -1,5 +1,5 @@
-#ifndef ERLKAF_C_SRC_ERLKAF_NIF_H_
-#define ERLKAF_C_SRC_ERLKAF_NIF_H_
+#ifndef C_SRC_ERLKAF_NIF_H_
+#define C_SRC_ERLKAF_NIF_H_
 
 #include "erl_nif.h"
 
@@ -30,4 +30,4 @@ struct erlkaf_data
 
 extern atoms ATOMS;
 
-#endif
+#endif  // C_SRC_ERLKAF_NIF_H_

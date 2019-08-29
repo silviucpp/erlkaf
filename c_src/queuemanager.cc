@@ -1,10 +1,7 @@
 #include "queuemanager.h"
 #include "rdkafka.h"
 
-QueueManager::QueueManager(rd_kafka_t *rk) : rk_(rk)
-{
-
-}
+QueueManager::QueueManager(rd_kafka_t *rk) : rk_(rk) { }
 
 QueueManager::~QueueManager()
 {
@@ -16,7 +13,7 @@ void QueueManager::add(rd_kafka_queue_t* queue)
     CritScope ss(&crt_);
     ASSERT(queues_.find(queue) == queues_.end());
 
-    //remove the queue forwarding on the main queue.
+    // remove the queue forwarding on the main queue.
     rd_kafka_queue_forward(queue, NULL);
     queues_.insert(queue);
 }
@@ -29,7 +26,7 @@ bool QueueManager::remove(rd_kafka_queue_t* queue)
     if(it == queues_.end())
         return false;
 
-    //forward the queue back to the main queue
+    // forward the queue back to the main queue
     rd_kafka_queue_t* main_queue = rd_kafka_queue_get_consumer(rk_);
     rd_kafka_queue_forward(*it, main_queue);
     rd_kafka_queue_destroy(main_queue);
@@ -42,9 +39,9 @@ void QueueManager::clear_all()
 {
     CritScope ss(&crt_);
 
-    //forwards all queues back on the main queue
+    // forwards all queues back on the main queue
 
-    for(auto it = queues_.begin(); it != queues_.end(); ++ it)
+    for(auto it = queues_.begin(); it != queues_.end(); ++it)
     {
         rd_kafka_queue_t* main_queue = rd_kafka_queue_get_consumer(rk_);
         rd_kafka_queue_forward(*it, main_queue);

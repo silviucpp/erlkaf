@@ -1,5 +1,5 @@
-#ifndef ERLKAF_C_SRC_ERLKAF_LOGGER_H_
-#define ERLKAF_C_SRC_ERLKAF_LOGGER_H_
+#ifndef C_SRC_ERLKAF_LOGGER_H_
+#define C_SRC_ERLKAF_LOGGER_H_
 
 #include "erlkaf_nif.h"
 
@@ -23,4 +23,4 @@ ERL_NIF_TERM nif_set_logger_pid(ErlNifEnv* env, int argc, const ERL_NIF_TERM arg
 
 void log_message(const rd_kafka_t *rk, kRdLogLevel level, const std::string& msg);
 
-#endif
+#endif  // C_SRC_ERLKAF_LOGGER_H_
