@@ -1,5 +1,9 @@
 ### Changelog:
 
+##### v1.1.9
+
+- Fix hex package
+
 ##### v1.1.8
 
 - Add zstd into the deps list
