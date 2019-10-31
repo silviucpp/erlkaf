@@ -245,6 +245,8 @@ to_librdkafka_config(batch_num_messages, V) ->
     {<<"batch.num.messages">>, erlkaf_utils:to_binary(V)};
 to_librdkafka_config(delivery_report_only_error, V) ->
     {<<"delivery.report.only.error">>, erlkaf_utils:to_binary(V)};
+to_librdkafka_config(plugin_library_paths, V) ->
+    {<<"plugin.library.paths">>, erlkaf_utils:to_binary(V)};
 to_librdkafka_config(K, V) ->
     throw({error, {options, {K, V}}}).
 

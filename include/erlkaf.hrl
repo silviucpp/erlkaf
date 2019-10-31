@@ -103,7 +103,8 @@
     {retry_backoff_ms, integer()} |
     {compression_codec, compression_codec()} |
     {batch_num_messages, integer()} |
-    {delivery_report_only_error, boolean()}.
+    {delivery_report_only_error, boolean()} |
+    {plugin_library_paths, binary()}.
 
 % records
 
