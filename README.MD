@@ -2,7 +2,6 @@
 [![Build Status](https://travis-ci.org/silviucpp/erlkaf.svg?branch=master)](https://travis-ci.org/silviucpp/erlkaf)
 ![GitHub](https://img.shields.io/github/license/silviucpp/erlkaf)
 ![Hex.pm](https://img.shields.io/hexpm/v/erlkaf)
-![Maintenance](https://img.shields.io/maintenance/yes/2019)
 
 *Erlang kafka driver based on [librdkafka][1]*
 
