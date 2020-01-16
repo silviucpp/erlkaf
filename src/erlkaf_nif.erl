@@ -13,6 +13,7 @@
     producer_set_owner/2,
     producer_topic_new/3,
     produce/6,
+    get_metadata/1,
 
     consumer_new/4,
     consumer_partition_revoke_completed/1,
@@ -48,6 +49,9 @@ producer_topic_new(_ClientRef, _TopicName, _TopicConfig) ->
     ?NOT_LOADED.
 
 produce(_ClientRef, _TopicRef, _Partition, _Key, _Value, _Headers) ->
+    ?NOT_LOADED.
+
+get_metadata(_ClientRef) ->
     ?NOT_LOADED.
 
 consumer_new(_GroupId, _Topics, _ClientConfig, _TopicsConfig) ->

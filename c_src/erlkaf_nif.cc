@@ -13,6 +13,16 @@ const char kAtomTrue[] = "true";
 const char kAtomFalse[] = "false";
 const char kAtomBadArg[] = "badarg";
 const char kAtomOptions[] = "options";
+const char kAtomBrokers[] = "brokers";
+const char kAtomTopics[] = "topics";
+const char kAtomPartitions[] = "partitions";
+const char kAtomId[] = "id";
+const char kAtomHost[] = "host";
+const char kAtomPort[] = "port";
+const char kAtomName[] = "name";
+const char kAtomLeader[] = "leader";
+const char kAtomReplicas[] = "replicas";
+const char kAtomIsrs[] = "isrs";
 const char kAtomMessage[] = "erlkaf_msg";
 const char kAtomDeliveryReport[] = "delivery_report";
 const char kAtomLogEvent[] = "log_message";
@@ -42,6 +52,16 @@ int on_nif_load(ErlNifEnv* env, void** priv_data, ERL_NIF_TERM load_info)
     ATOMS.atomFalse = make_atom(env, kAtomFalse);
     ATOMS.atomOptions = make_atom(env, kAtomOptions);
     ATOMS.atomBadArg = make_atom(env, kAtomBadArg);
+    ATOMS.atomBrokers = make_atom(env, kAtomBrokers);
+    ATOMS.atomTopics = make_atom(env, kAtomTopics);
+    ATOMS.atomPartitions = make_atom(env, kAtomPartitions);
+    ATOMS.atomId = make_atom(env, kAtomId);
+    ATOMS.atomHost = make_atom(env, kAtomHost);
+    ATOMS.atomPort = make_atom(env, kAtomPort);
+    ATOMS.atomName = make_atom(env, kAtomName);
+    ATOMS.atomLeader = make_atom(env, kAtomLeader);
+    ATOMS.atomReplicas = make_atom(env, kAtomReplicas);
+    ATOMS.atomIsrs = make_atom(env, kAtomIsrs);
     ATOMS.atomMessage = make_atom(env, kAtomMessage);
     ATOMS.atomDeliveryReport = make_atom(env, kAtomDeliveryReport);
     ATOMS.atomLogEvent = make_atom(env, kAtomLogEvent);
@@ -95,6 +115,7 @@ static ErlNifFunc nif_funcs[] =
     {"producer_topic_new", 3, enif_producer_topic_new},
     {"producer_cleanup", 1, enif_producer_cleanup},
     {"produce", 6, enif_produce},
+    {"get_metadata", 1, enif_get_metadata, ERL_NIF_DIRTY_JOB_IO_BOUND},
 
     {"consumer_new", 4, enif_consumer_new},
     {"consumer_partition_revoke_completed", 1, enif_consumer_partition_revoke_completed},
