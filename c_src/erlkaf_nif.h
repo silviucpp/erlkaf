@@ -13,6 +13,16 @@ struct atoms
     ERL_NIF_TERM atomBadArg;
     ERL_NIF_TERM atomOptions;
     ERL_NIF_TERM atomMessage;
+    ERL_NIF_TERM atomBrokers;
+    ERL_NIF_TERM atomTopics;
+    ERL_NIF_TERM atomPartitions;
+    ERL_NIF_TERM atomId;
+    ERL_NIF_TERM atomHost;
+    ERL_NIF_TERM atomPort;
+    ERL_NIF_TERM atomName;
+    ERL_NIF_TERM atomLeader;
+    ERL_NIF_TERM atomReplicas;
+    ERL_NIF_TERM atomIsrs;
     ERL_NIF_TERM atomDeliveryReport;
     ERL_NIF_TERM atomLogEvent;
     ERL_NIF_TERM atomAssignPartition;

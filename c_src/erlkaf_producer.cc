@@ -250,6 +250,102 @@ ERL_NIF_TERM enif_producer_cleanup(ErlNifEnv* env, int argc, const ERL_NIF_TERM 
     return ATOMS.atomOk;
 }
 
+ERL_NIF_TERM enif_get_metadata(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
+{
+    UNUSED(argc);
+
+    erlkaf_data* data = static_cast<erlkaf_data*>(enif_priv_data(env));
+
+    enif_producer* producer;
+
+    if(!enif_get_resource(env, argv[0], data->res_producer,  reinterpret_cast<void**>(&producer)))
+        return make_badarg(env);
+
+    const struct rd_kafka_metadata *metadata;
+    rd_kafka_resp_err_t err;
+
+    /* Fetch metadata */
+    err = rd_kafka_metadata(producer->kf, 1, NULL, &metadata, 5000);
+    if (err != RD_KAFKA_RESP_ERR_NO_ERROR) {
+        return make_error(env, "failed to get metadata");
+    }
+
+    ERL_NIF_TERM metadata_map = enif_make_new_map(env);
+    ERL_NIF_TERM broker_arr[metadata->broker_cnt];
+
+    for (int i = 0 ; i < metadata->broker_cnt ; i++) {
+        ERL_NIF_TERM broker_map = enif_make_new_map(env);
+        ERL_NIF_TERM id_term = enif_make_int(env, metadata->brokers[i].id);
+        ERL_NIF_TERM host_term = make_binary(env, metadata->brokers[i].host, strlen(metadata->brokers[i].host));
+        ERL_NIF_TERM port_term = enif_make_int64(env, metadata->brokers[i].port);
+        enif_make_map_put(env, broker_map, ATOMS.atomId, id_term, &broker_map);
+        enif_make_map_put(env, broker_map, ATOMS.atomHost, host_term, &broker_map);
+        enif_make_map_put(env, broker_map, ATOMS.atomPort, port_term, &broker_map);
+        broker_arr[i] = broker_map;
+    }
+
+    ERL_NIF_TERM broker_list = enif_make_list_from_array(env, broker_arr, metadata->broker_cnt);
+    enif_make_map_put(env, metadata_map, ATOMS.atomBrokers, broker_list, &metadata_map);
+
+    ERL_NIF_TERM topic_arr[metadata->topic_cnt];
+
+    for (int i = 0 ; i < metadata->topic_cnt ; i++) {
+        const struct rd_kafka_metadata_topic *t = &metadata->topics[i];
+        if (t->err) {
+            if (t->err == RD_KAFKA_RESP_ERR_LEADER_NOT_AVAILABLE)
+                return make_error(env, "failed to get topic info");
+        }
+        ERL_NIF_TERM topic_map = enif_make_new_map(env);
+        ERL_NIF_TERM topic_name_term = make_binary(env, t->topic, strlen(t->topic));
+        enif_make_map_put(env, topic_map, ATOMS.atomName, topic_name_term, &topic_map);
+
+        ERL_NIF_TERM partition_arr[t->partition_cnt];
+
+        for (int j = 0 ; j < t->partition_cnt ; j++) {
+            const struct rd_kafka_metadata_partition *p;
+            p = &t->partitions[j];
+
+            if (p->err)
+                return make_error(env, "failed to get partition info");
+
+            ERL_NIF_TERM partition_map = enif_make_new_map(env);
+            ERL_NIF_TERM id_term = enif_make_int(env, p->id);
+            ERL_NIF_TERM leader_term = enif_make_int(env, p->leader);
+
+            ERL_NIF_TERM replica_arr[p->replica_cnt];
+            for (int k = 0 ; k < p->replica_cnt ; k++) {
+                ERL_NIF_TERM replica_term = enif_make_int(env, p->replicas[k]);
+                replica_arr[k] = replica_term;
+            }
+
+            ERL_NIF_TERM replica_list = enif_make_list_from_array(env, replica_arr, p->replica_cnt);
+
+            ERL_NIF_TERM isr_arr[p->isr_cnt];
+            for (int k = 0 ; k < p->isr_cnt ; k++) {
+                ERL_NIF_TERM isr_term = enif_make_int(env, p->isrs[k]);
+                isr_arr[k] = isr_term;
+            }
+
+            ERL_NIF_TERM isr_list = enif_make_list_from_array(env, isr_arr, p->isr_cnt);
+            enif_make_map_put(env, partition_map, ATOMS.atomId, id_term, &partition_map);
+            enif_make_map_put(env, partition_map, ATOMS.atomLeader, leader_term, &partition_map);
+            enif_make_map_put(env, partition_map, ATOMS.atomReplicas, replica_list, &partition_map);
+            enif_make_map_put(env, partition_map, ATOMS.atomIsrs, isr_list, &partition_map);
+            partition_arr[j] = partition_map;
+        }
+        ERL_NIF_TERM partition_list = enif_make_list_from_array(env, partition_arr, t->partition_cnt);
+        enif_make_map_put(env, topic_map, ATOMS.atomPartitions, partition_list, &topic_map);
+        topic_arr[i] = topic_map;
+    }
+
+    ERL_NIF_TERM topic_list = enif_make_list_from_array(env, topic_arr, metadata->topic_cnt);
+    enif_make_map_put(env, metadata_map, ATOMS.atomTopics, topic_list, &metadata_map);
+
+    rd_kafka_metadata_destroy(metadata);
+
+    return enif_make_tuple2(env, ATOMS.atomOk, metadata_map);
+}
+
 ERL_NIF_TERM enif_produce(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
 {
     UNUSED(argc);
