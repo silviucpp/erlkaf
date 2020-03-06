@@ -215,6 +215,9 @@ handle_stop(From, Tag, #state{topic_name = TopicName, partition = Partition, que
 
 exponential_backoff(0) ->
     1000;
+exponential_backoff(4000) ->
+    timer:sleep(4000),
+    4000;
 exponential_backoff(Backoff) ->
     timer:sleep(Backoff),
     Backoff * 2.
