@@ -1,9 +1,11 @@
 ### Changelog:
 
-##### v2.0.0
+##### v1.2.0
 
 - Based on librdkafka v1.3.0
 - Add new configs `isolation_level` and `plugin_library_paths`
+- Set message_timeout_ms to 0
+- Implemented exponential backoff retry policy on consumer
 
 ##### v1.1.9
 
