@@ -1,5 +1,10 @@
 ### Changelog:
 
+##### v2.0.0
+
+- Based on librdkafka v1.3.0
+- Add new configs `isolation_level` and `plugin_library_paths`
+
 ##### v1.1.9
 
 - Fix hex package

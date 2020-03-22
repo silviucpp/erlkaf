@@ -225,6 +225,8 @@ to_librdkafka_config(fetch_error_backoff_ms, V) ->
     {<<"fetch.error.backoff.ms">>, erlkaf_utils:to_binary(V)};
 to_librdkafka_config(check_crcs, V) ->
     {<<"check.crcs">>, erlkaf_utils:to_binary(V)};
+to_librdkafka_config(isolation_level, V) ->
+    {<<"isolation.level">>, erlkaf_utils:to_binary(V)};
 to_librdkafka_config(enable_idempotence, V) ->
     {<<"enable.idempotence">>, erlkaf_utils:to_binary(V)};
 to_librdkafka_config(enable_gapless_guarantee, V) ->

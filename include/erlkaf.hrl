@@ -92,6 +92,7 @@
     {fetch_max_bytes, integer()} |
     {fetch_min_bytes, integer()} |
     {fetch_error_backoff_ms, integer()} |
+    {isolation_level, binary()} |
     {check_crcs, boolean()} |
     {enable_idempotence, boolean()} |
     {enable_gapless_guarantee, boolean()} |
