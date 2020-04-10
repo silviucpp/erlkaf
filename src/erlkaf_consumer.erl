@@ -156,11 +156,11 @@ commit_offset(ClientRef, #erlkaf_msg{topic = Topic, partition = Partition, offse
     erlkaf_nif:consumer_offset_store(ClientRef, Topic, Partition, Offset).
 
 process_events(one_by_one, Msgs, _LastBatchOffset, ClientRef, CbModule, CbState) ->
-    process_events_one_by_one(Msgs, ClientRef, CbModule, CbState);
+    process_events_one_by_one(Msgs, ClientRef, 0, CbModule, CbState);
 process_events(batch, Msgs, LastBatchOffset, ClientRef, CbModule, CbState) ->
-    process_events_batch(Msgs, LastBatchOffset, ClientRef, CbModule, CbState).
+    process_events_batch(Msgs, LastBatchOffset, ClientRef, 0, CbModule, CbState).
 
-process_events_batch(Msgs, LastBatchOffset, ClientRef, CbModule, CbState) ->
+process_events_batch(Msgs, LastBatchOffset, ClientRef, Backoff, CbModule, CbState) ->
     case catch CbModule:handle_message(Msgs, CbState) of
         {ok, NewCbState} ->
             {Topic, Partition, Offset} = LastBatchOffset,
@@ -170,7 +170,7 @@ process_events_batch(Msgs, LastBatchOffset, ClientRef, CbModule, CbState) ->
             ?LOG_ERROR("~p:handle_message for batch error: ~p", [CbModule, Reason]),
             case recv_stop() of
                 false ->
-                    process_events_batch(Msgs, LastBatchOffset, ClientRef, CbModule, NewCbState);
+                    process_events_batch(Msgs, LastBatchOffset, ClientRef, exponential_backoff(Backoff), CbModule, NewCbState);
                 StopMsg ->
                     StopMsg
             end;
@@ -178,30 +178,30 @@ process_events_batch(Msgs, LastBatchOffset, ClientRef, CbModule, CbState) ->
             ?LOG_ERROR("~p:handle_message for batch error: ~p", [CbModule, Error]),
             case recv_stop() of
                 false ->
-                    process_events_batch(Msgs, LastBatchOffset, ClientRef, CbModule, CbState);
+                    process_events_batch(Msgs, LastBatchOffset, ClientRef, exponential_backoff(Backoff), CbModule, CbState);
                 StopMsg ->
                     StopMsg
             end
     end.
 
-process_events_one_by_one([H|T] = Msgs, ClientRef, CbModule, CbState) ->
+process_events_one_by_one([H|T] = Msgs, ClientRef, Backoff, CbModule, CbState) ->
     case recv_stop() of
         false ->
             case catch CbModule:handle_message(H, CbState) of
                 {ok, NewCbState} ->
                     ok = commit_offset(ClientRef, H),
-                    process_events_one_by_one(T, ClientRef, CbModule, NewCbState);
+                    process_events_one_by_one(T, ClientRef, 0, CbModule, NewCbState);
                 {error, Reason, NewCbState} ->
                     ?LOG_ERROR("~p:handle_message for: ~p error: ~p", [CbModule, H, Reason]),
-                    process_events_one_by_one(Msgs, ClientRef, CbModule, NewCbState);
+                    process_events_one_by_one(Msgs, ClientRef, exponential_backoff(Backoff), CbModule, NewCbState);
                 Error ->
                     ?LOG_ERROR("~p:handle_message for: ~p error: ~p", [CbModule, H, Error]),
-                    process_events_one_by_one(Msgs, ClientRef, CbModule, CbState)
+                    process_events_one_by_one(Msgs, ClientRef, exponential_backoff(Backoff), CbModule, CbState)
             end;
         StopMsg ->
             StopMsg
     end;
-process_events_one_by_one([], _ClientRef, _CbModule, CbState) ->
+process_events_one_by_one([], _ClientRef, _Backoff, _CbModule, CbState) ->
     {ok, CbState}.
 
 recv_stop() ->
@@ -211,3 +211,12 @@ handle_stop(From, Tag, #state{topic_name = TopicName, partition = Partition, que
     ?LOG_INFO("stop consumer for: ~p partition: ~p", [TopicName, Partition]),
     ok = erlkaf_nif:consumer_queue_cleanup(Queue),
     From ! {stopped, Tag}.
+
+exponential_backoff(0) ->
+    500;
+exponential_backoff(4000) ->
+    timer:sleep(4000),
+    4000;
+exponential_backoff(Backoff) ->
+    timer:sleep(Backoff),
+    Backoff * 2.

@@ -79,6 +79,9 @@ bool appy_kafka_default_config(rd_kafka_conf_t* config)
 
 bool appy_topic_default_config(rd_kafka_topic_conf_t* config)
 {
+    if(rd_kafka_topic_conf_set(config, "message.timeout.ms", "0", NULL, 0) != RD_KAFKA_CONF_OK)
+        return false;
+
     UNUSED(config);
     return true;
 }

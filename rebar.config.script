@@ -1,8 +1,8 @@
 IsRebar3 = erlang:function_exported(rebar3, main, 1),
 
 Rebar2Deps = [
-    {lager, ".*", {git, "https://github.com/erlang-lager/lager.git", {tag, "3.6.7"}}},
-    {jsone, ".*", {git, "https://github.com/sile/jsone.git", {tag, "1.4.7"}}},
+    {lager, ".*", {git, "https://github.com/erlang-lager/lager.git", {tag, "3.8.0"}}},
+    {jsone, ".*", {git, "https://github.com/sile/jsone.git", {tag, "1.5.2"}}},
     {esq, ".*", {git, "https://github.com/fogfish/esq.git", {tag, "2.0.4"}}}
 ],
 
