@@ -4,6 +4,7 @@
 #include "erlkaf_logger.h"
 #include "erlkaf_producer.h"
 #include "erlkaf_consumer.h"
+#include "queuecallbacksdispatcher.h"
 
 const char kAtomOk[] = "ok";
 const char kAtomUndefined[] = "undefined";
@@ -52,6 +53,8 @@ int on_nif_load(ErlNifEnv* env, void** priv_data, ERL_NIF_TERM load_info)
     erlkaf_data* data = static_cast<erlkaf_data*>(enif_alloc(sizeof(erlkaf_data)));
     open_resources(env, data);
 
+    data->notifier_ = new QueueCallbacksDispatcher();
+
     *priv_data = data;
     return 0;
 }
@@ -61,6 +64,10 @@ void on_nif_unload(ErlNifEnv* env, void* priv_data)
     UNUSED(env);
 
     erlkaf_data* data = static_cast<erlkaf_data*>(priv_data);
+
+    if(data->notifier_)
+        delete data->notifier_;
+
     enif_free(data);
 }
 
@@ -69,9 +76,12 @@ int on_nif_upgrade(ErlNifEnv* env, void** priv, void** old_priv, ERL_NIF_TERM in
     UNUSED(old_priv);
     UNUSED(info);
 
+    erlkaf_data* old_data = static_cast<erlkaf_data*>(*old_priv);
     erlkaf_data* data = static_cast<erlkaf_data*>(enif_alloc(sizeof(erlkaf_data)));
     open_resources(env, data);
+    data->notifier_ = old_data->notifier_;
 
+    old_data->notifier_ = nullptr;
     *priv = data;
     return 0;
 }

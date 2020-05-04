@@ -6,44 +6,35 @@
 #include "erlkaf_config.h"
 #include "erlkaf_logger.h"
 #include "rdkafka.h"
+#include "queuecallbacksdispatcher.h"
 
 #include <string.h>
 #include <memory>
 #include <string>
+#include <future>
 
 namespace {
-
-const char* kThreadOptsId = "librdkafka_producer_thread_opts";
-const char* kPollThreadId = "librdkafka_producer_poll_thread";
 
 struct enif_producer
 {
     rd_kafka_t* kf;
     TopicManager* topics;
-    ErlNifThreadOpts* thread_opts;
-    ErlNifTid thread_id;
     ErlNifPid owner_pid;
-    bool stop_feedback;
-    bool running;
+    std::future<bool>* closed_future;
 };
 
-void* producer_poll_thread(void* arg)
+bool cleanup_producer(enif_producer* producer, bool stop_feedback)
 {
-    enif_producer* producer = static_cast<enif_producer*>(arg);
-
-    while (producer->running)
-        rd_kafka_poll(producer->kf, 100);
-
     rd_kafka_flush(producer->kf, 30000);
 
-    if(producer->stop_feedback)
+    if(stop_feedback)
     {
         ErlNifEnv* env = enif_alloc_env();
         enif_send(NULL, &producer->owner_pid, env, ATOMS.atomClientStopped);
         enif_free_env(env);
     }
 
-    return NULL;
+    return true;
 }
 
 void delivery_report_callback (rd_kafka_t* rk, const rd_kafka_message_t* msg, void* data)
@@ -114,13 +105,17 @@ void enif_producer_free(ErlNifEnv* env, void* obj)
     UNUSED(env);
 
     enif_producer* producer = static_cast<enif_producer*>(obj);
-    producer->running = false;
 
-    if(producer->thread_opts)
+    if(producer->closed_future)
     {
-        void *result = NULL;
-        enif_thread_join(producer->thread_id, &result);
-        enif_thread_opts_destroy(producer->thread_opts);
+        producer->closed_future->get();
+        delete producer->closed_future;
+    }
+    else
+    {
+        erlkaf_data* data = static_cast<erlkaf_data*>(enif_priv_data(env));
+        data->notifier_->remove(producer->kf);
+        cleanup_producer(producer, false);
     }
 
     if(producer->topics)
@@ -202,13 +197,10 @@ ERL_NIF_TERM enif_producer_new(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv
     config.release();
 
     producer->topics = new TopicManager(rk.get());
-    producer->running = true;
-    producer->stop_feedback = false;
     producer->kf = rk.release();
-    producer->thread_opts = enif_thread_opts_create(const_cast<char*>(kThreadOptsId));
+    producer->closed_future = nullptr;
 
-    if (enif_thread_create(const_cast<char*>(kPollThreadId), &producer->thread_id, producer_poll_thread, producer.get(), producer->thread_opts) != 0)
-        return make_error(env, "failed to create producer thread");
+    data->notifier_->watch(producer->kf, false);
 
     ERL_NIF_TERM term = enif_make_resource(env, producer.get());
     enif_release_resource(producer.get());
@@ -244,8 +236,8 @@ ERL_NIF_TERM enif_producer_cleanup(ErlNifEnv* env, int argc, const ERL_NIF_TERM 
     if(!enif_get_resource(env, argv[0], data->res_producer,  reinterpret_cast<void**>(&producer)))
         return make_badarg(env);
 
-    producer->stop_feedback = true;
-    producer->running = false;
+    data->notifier_->remove(producer->kf);
+    producer->closed_future = new std::future<bool>(std::async(std::launch::async, cleanup_producer, producer, true));
 
     return ATOMS.atomOk;
 }

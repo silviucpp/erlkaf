@@ -3,6 +3,8 @@
 
 #include "erl_nif.h"
 
+class QueueCallbacksDispatcher;
+
 struct atoms
 {
     ERL_NIF_TERM atomOk;
@@ -26,6 +28,7 @@ struct erlkaf_data
     ErlNifResourceType* res_producer;
     ErlNifResourceType* res_consumer;
     ErlNifResourceType* res_queue;
+    QueueCallbacksDispatcher* notifier_;
 };
 
 extern atoms ATOMS;

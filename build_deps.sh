@@ -14,6 +14,14 @@ LIBRDKAFKA_BRANCH=master
 LIBRDKAFKA_REV=4ffe54b4f59ee5ae3767f9f25dc14651a3384d62
 LIBRDKAFKA_SUCCESS=src/librdkafka.a
 
+# https://github.com/cameron314/concurrentqueue.git
+
+CQ_DESTINATION=concurrentqueue
+CQ_REPO=https://github.com/cameron314/concurrentqueue.git
+CQ_BRANCH=master
+CQ_REV=cff1001582db67e357d5f77c31e73566003311f2
+CQ_SUCCESS=concurrentqueue.h
+
 fail_check()
 {
     "$@"
@@ -76,3 +84,4 @@ BuildLibrary()
 }
 
 CheckoutLib $LIBRDKAFKA_REPO $LIBRDKAFKA_REV $LIBRDKAFKA_BRANCH $LIBRDKAFKA_DESTINATION $LIBRDKAFKA_SUCCESS
+CheckoutLib $CQ_REPO $CQ_REV $CQ_BRANCH $CQ_DESTINATION $CQ_SUCCESS
