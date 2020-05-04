@@ -31,6 +31,7 @@ void QueueCallbacksDispatcher::watch(rd_kafka_t* instance, bool is_consumer)
 
     rd_kafka_queue_t* queue = is_consumer ? rd_kafka_queue_get_consumer(instance): rd_kafka_queue_get_main(instance);
     rd_kafka_queue_cb_event_enable(queue, consumers_event_callback, this);
+    rd_kafka_queue_destroy(queue);
 }
 
 bool QueueCallbacksDispatcher::remove(rd_kafka_t* instance)
@@ -51,6 +52,7 @@ bool QueueCallbacksDispatcher::remove(rd_kafka_t* instance)
 
     rd_kafka_queue_t* queue = is_consumer ? rd_kafka_queue_get_consumer(instance): rd_kafka_queue_get_main(instance);
     rd_kafka_queue_cb_event_enable(queue, NULL, nullptr);
+    rd_kafka_queue_destroy(queue);
     return true;
 }
 
