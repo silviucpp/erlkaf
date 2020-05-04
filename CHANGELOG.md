@@ -1,5 +1,10 @@
 ### Changelog:
 
+##### v1.2.1
+
+- Redesign the callback system. Instead using one thread per consumer/producer that polls for new events, now it's 
+using one single thread for all producers and consumers that's notified when new events are available.
+
 ##### v1.2.0
 
 - Based on librdkafka v1.3.0
