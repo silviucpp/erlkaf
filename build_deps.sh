@@ -1,18 +1,20 @@
 #!/usr/bin/env bash
 
+ROOT=$(pwd)
 DEPS_LOCATION=deps
-DESTINATION=librdkafka
+OS=$(uname -s)
+KERNEL=$(echo $(lsb_release -ds 2>/dev/null || cat /etc/*release 2>/dev/null | head -n1 | awk '{print $1;}') | awk '{print $1;}')
+CPUS=`getconf _NPROCESSORS_ONLN 2>/dev/null || sysctl -n hw.ncpu`
 
-if [ -f "$DEPS_LOCATION/$DESTINATION/src/librdkafka.a" ]; then
-    echo "librdkafka fork already exist. delete $DEPS_LOCATION/$DESTINATION for a fresh checkout."
-    exit 0
-fi
+# https://github.com/edenhill/librdkafka.git
 
-REPO=https://github.com/edenhill/librdkafka.git
-BRANCH=master
-REV=4ffe54b4f59ee5ae3767f9f25dc14651a3384d62
+LIBRDKAFKA_DESTINATION=librdkafka
+LIBRDKAFKA_REPO=https://github.com/edenhill/librdkafka.git
+LIBRDKAFKA_BRANCH=master
+LIBRDKAFKA_REV=4ffe54b4f59ee5ae3767f9f25dc14651a3384d62
+LIBRDKAFKA_SUCCESS=src/librdkafka.a
 
-function fail_check
+fail_check()
 {
     "$@"
     local status=$?
@@ -22,48 +24,55 @@ function fail_check
     fi
 }
 
-function DownloadLib()
+CheckoutLib()
 {
-	echo "repo=$REPO rev=$REV branch=$BRANCH"
+    if [ -f "$DEPS_LOCATION/$4/$5" ]; then
+        echo "$4 fork already exist. delete $DEPS_LOCATION/$4 for a fresh checkout ..."
+    else
+        #repo rev branch destination
 
-	mkdir -p $DEPS_LOCATION
-	pushd $DEPS_LOCATION
+        echo "repo=$1 rev=$2 branch=$3"
 
-	if [ ! -d "$DESTINATION" ]; then
-	    fail_check git clone -b $BRANCH $REPO $DESTINATION
+        mkdir -p $DEPS_LOCATION
+        pushd $DEPS_LOCATION
+
+        if [ ! -d "$4" ]; then
+            fail_check git clone -b $3 $1 $4
+        fi
+
+        pushd $4
+        fail_check git checkout $2
+        BuildLibrary $4
+        popd
+        popd
     fi
-
-	pushd $DESTINATION
-	fail_check git checkout $REV
-	popd
-	popd
 }
 
-function BuildLib()
+BuildLibrary()
 {
-	pushd $DEPS_LOCATION
-	pushd $DESTINATION
+    unset CFLAGS
+    unset CXXFLAGS
 
-    OS=$(uname -s)
+    case $1 in
+        $LIBRDKAFKA_DESTINATION)
+            case $OS in
+                Darwin)
+                    brew install openssl lz4 zstd
+                    OPENSSL_ROOT_DIR=$(brew --prefix openssl)
+                    export CPPFLAGS=-I$OPENSSL_ROOT_DIR/include/
+                    export LDFLAGS=-L$OPENSSL_ROOT_DIR/lib
+                    ;;
+            esac
 
-	case $OS in
-        Darwin)
-            brew install openssl lz4 zstd
-            OPENSSL_ROOT_DIR=$(brew --prefix openssl)
-            export CPPFLAGS=-I$OPENSSL_ROOT_DIR/include/
-            export LDFLAGS=-L$OPENSSL_ROOT_DIR/lib
+            fail_check ./configure
+            fail_check make -j $(CPUS)
+
+            rm src/*.dylib
+            rm src/*.so
+            ;;
+        *)
             ;;
     esac
-
-    fail_check ./configure
-    fail_check make
-
-    rm src/*.dylib
-    rm src/*.so
-
-	popd
-	popd
 }
 
-DownloadLib
-BuildLib
+CheckoutLib $LIBRDKAFKA_REPO $LIBRDKAFKA_REV $LIBRDKAFKA_BRANCH $LIBRDKAFKA_DESTINATION $LIBRDKAFKA_SUCCESS
