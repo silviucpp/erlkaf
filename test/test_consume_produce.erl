@@ -10,6 +10,7 @@
 
     % api
 
+    create/0,
     create/1,
     produce/2,
     produce/3,
@@ -30,24 +31,26 @@
 % stats_callback is defined in both erlkaf_consumer_callbacks and erlkaf_producer_callbacks
 % -behaviour(erlkaf_producer_callbacks).
 
-create(BootstrapServer) ->
+create() ->
+    create(undefined).
+
+create(BootstrapServers) ->
     erlkaf:start(),
 
     % create consumer
 
     GroupId = atom_to_binary(?MODULE, latin1),
-    ConsumerConfig = [{bootstrap_servers, BootstrapServer}],
+    ConsumerConfig = append_bootstrap(BootstrapServers, []),
     TopicConf = [{auto_offset_reset, smallest}],
 
     ok = erlkaf:create_consumer_group(client_consumer, GroupId, [?TOPIC], ConsumerConfig, TopicConf, ?MODULE, []),
 
     % create producer
 
-    ProducerConfig = [
-        {bootstrap_servers, BootstrapServer},
+    ProducerConfig = append_bootstrap(BootstrapServers, [
         {delivery_report_only_error, true},
         {delivery_report_callback, ?MODULE}
-    ],
+    ]),
     ok = erlkaf:create_producer(?PRODUCER_CLIENT, ProducerConfig),
     ok = erlkaf:create_topic(?PRODUCER_CLIENT, ?TOPIC, [{request_required_acks, 1}]),
     ok.
@@ -82,3 +85,10 @@ delivery_report(DeliveryStatus, Message) ->
 
 stats_callback(ClientId, Stats) ->
     io:format("### producer -> stats_callback: ~p stats:~p ~n", [ClientId, length(Stats)]).
+
+% internals
+
+append_bootstrap(undefined, V) ->
+    V;
+append_bootstrap(BootstrapServer, V) ->
+    [{bootstrap_servers, BootstrapServer} | V].
