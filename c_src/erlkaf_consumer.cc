@@ -54,6 +54,7 @@ bool cleanup_consumer(enif_consumer* consumer, bool stop_feedback)
 
     rd_kafka_consumer_close(consumer->kf);
     rd_kafka_destroy(consumer->kf);
+    consumer->kf = nullptr;
 
     if(stop_feedback)
     {
@@ -230,7 +231,7 @@ void enif_consumer_free(ErlNifEnv* env, void* obj)
         consumer->closed_future->get();
         delete consumer->closed_future;
     }
-    else
+    else if(consumer->kf)
     {
         erlkaf_data* data = static_cast<erlkaf_data*>(enif_priv_data(env));
         data->notifier_->remove(consumer->kf);

@@ -111,7 +111,7 @@ void enif_producer_free(ErlNifEnv* env, void* obj)
         producer->closed_future->get();
         delete producer->closed_future;
     }
-    else
+    else if(producer->kf)
     {
         erlkaf_data* data = static_cast<erlkaf_data*>(enif_priv_data(env));
         data->notifier_->remove(producer->kf);
