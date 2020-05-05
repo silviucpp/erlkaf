@@ -84,7 +84,7 @@ update_stats(State, Partition, Value) ->
                     MsgPerSec = (MsgRecv+1)/DiffSec,
                     BytesPerSec = (BytesRecv + byte_size(Value))/DiffSec,
 
-                    ?INFO_MSG("##partition: ~p recv msg/s: ~p | bytes/s: ~s ~n", [Partition, MsgPerSec, format_size(BytesPerSec)]),
+                    ?LOG_INFO("##partition: ~p recv msg/s: ~p | bytes/s: ~s ~n", [Partition, MsgPerSec, format_size(BytesPerSec)]),
 
                     State#state{msg_recv = 0, bytes_recv = 0, last_ts = Now};
                 _ ->
