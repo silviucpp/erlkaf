@@ -60,7 +60,7 @@ handle_call({start_producer, ClientId, ErlkafConfig, LibRdkafkaConfig}, _From, S
     end;
 
 handle_call({start_consumer_group, ClientId, GroupId, Topics, ClientConfig, TopicConfig, CbModule, CbArgs}, _From, State) ->
-    case  internal_start_consumer(ClientId, GroupId, Topics, ClientConfig, TopicConfig, CbModule, CbArgs) of
+    case internal_start_consumer(ClientId, GroupId, Topics, ClientConfig, TopicConfig, CbModule, CbArgs) of
         {ok, _Pid} ->
             {reply, ok, State};
         Error ->
