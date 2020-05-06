@@ -42,8 +42,13 @@ create(BootstrapServers) ->
     GroupId = atom_to_binary(?MODULE, latin1),
     ConsumerConfig = append_bootstrap(BootstrapServers, []),
     TopicConf = [{auto_offset_reset, smallest}],
+    ConsumerTopics = [
+        {?TOPIC, [
+            {callback_module, ?MODULE}
+        ]}
+    ],
 
-    ok = erlkaf:create_consumer_group(client_consumer, GroupId, [?TOPIC], ConsumerConfig, TopicConf, ?MODULE, []),
+    ok = erlkaf:create_consumer_group(client_consumer, GroupId, ConsumerTopics, ConsumerConfig, TopicConf),
 
     % create producer
 

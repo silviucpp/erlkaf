@@ -34,7 +34,13 @@ start(erlkaf) ->
             ConsumerConfig = [{bootstrap_servers, <<?BROKER_HOST/binary, ":", (integer_to_binary(?BROKER_PORT))/binary>>}],
             TopicConf = [{auto_offset_reset, smallest}],
             GroupId = <<"erlkaf_consumer_benchmark">>,
-            ok = erlkaf:create_consumer_group(client_consumer, GroupId, [?TOPIC], ConsumerConfig, TopicConf, ?MODULE, []);
+            ConsumerTopics = [
+                {?TOPIC, [
+                    {callback_module, ?MODULE}
+                ]}
+            ],
+
+            ok = erlkaf:create_consumer_group(client_consumer, GroupId, ConsumerTopics, ConsumerConfig, TopicConf);
         _ ->
             ok
     end;

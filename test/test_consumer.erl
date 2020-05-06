@@ -2,7 +2,13 @@
 
 -include("erlkaf.hrl").
 
--define(TOPICS, [<<"benchmark">>]).
+-define(TOPICS, [
+    {<<"benchmark">>, [
+        {callback_module, ?MODULE},
+        {callback_args, []}, % default [] (you can skip it)
+        {dispatch_mode, one_by_one} % default one_by_one (you can skip it)
+    ]}
+]).
 
 -export([
     create_consumer/0,
@@ -20,14 +26,13 @@ create_consumer() ->
     GroupId = <<"erlkaf_consumer">>,
 
     ClientConfig = [
-        {bootstrap_servers, "172.17.3.163:9092"}
+        {bootstrap_servers, <<"172.17.33.123:9092">>}
     ],
 
     TopicConf = [
         {auto_offset_reset, smallest}
     ],
-
-    ok = erlkaf:create_consumer_group(client_consumer, GroupId, ?TOPICS, ClientConfig, TopicConf, ?MODULE, []).
+    ok = erlkaf:create_consumer_group(client_consumer, GroupId, ?TOPICS, ClientConfig, TopicConf).
 
 init(Topic, Partition, Offset, Args) ->
     io:format("init topic: ~p partition: ~p offset: ~p args: ~p ~n", [

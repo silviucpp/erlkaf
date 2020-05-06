@@ -55,7 +55,7 @@ Example of a configuration file (for `sys.config`):
 {erlkaf, [
 
     {global_client_options, [
-        {bootstrap_servers, "broker1.com:9092,broker2.com:9092"},
+        {bootstrap_servers, <<"broker1.com:9092,broker2.com:9092">>},
     ]},
 
     {clients, [
@@ -136,7 +136,7 @@ create_producer() ->
     erlkaf:start(),
 
     ProducerConfig = [
-        {bootstrap_servers, "broker1:9092"},
+        {bootstrap_servers, <<"broker1:9092">>},
         {delivery_report_only_error, false},
         {delivery_report_callback, ?MODULE}
     ],
@@ -209,7 +209,7 @@ create_consumer() ->
     erlkaf:start(),
     ClientId = client_consumer,
     GroupId = <<"erlkaf_consumer">>,
-    ClientCfg = [{bootstrap_servers, "broker1:9092"}],
+    ClientCfg = [{bootstrap_servers, <<"broker1:9092">>}],
     TopicConf = [{auto_offset_reset, smallest}],
     ok = erlkaf:create_consumer_group(ClientId, GroupId, ?TOPICS, ClientCfg, TopicConf).
 
