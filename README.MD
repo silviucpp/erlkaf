@@ -25,11 +25,11 @@ using `enif_send`.
 
 Version 2.0.0 contains a major rewrite of the consumer groups in order to be able to scale when you have lot of topics:
  
-- In version 1.x each consumer group or producer created one dedicated native thread for delivering the callbacks. Starting 2.0.0 no matter 
-how many producers or consumer groups you created, one single thread will be used to deliver the callbacks. 
+- In version 1.x each consumer group or producer is creating one dedicated native thread that's used to deliver the callbacks. Starting 2.0.0 no matter 
+how many producers or consumer groups you have, one single thread will be used to deliver the callbacks. 
 
-- In version 1.x each consumer group could handle a list of topics but it couldn't specify a callback for each topic. Now the callbacks settings moved
-into the topics list. More details into [Changelog](https://raw.githubusercontent.com/silviucpp/erlkaf/master/CHANGELOG.md).
+- In version 1.x each consumer group can handle a list of topics but you cannot specify a callback for each topic. Now the callbacks settings moved
+into the topics list. This breaks the backward compatibility for the API and config. More details into [Changelog][3].
 
 ### User guide
 
@@ -249,3 +249,4 @@ The list of all available properties of client and topics are described [here][2
 
 [1]:https://github.com/edenhill/librdkafka
 [2]:https://github.com/silviucpp/erlkaf/blob/master/CONFIGURATION.md
+[3]:https://github.com/silviucpp/erlkaf/blob/master/CHANGELOG.md
