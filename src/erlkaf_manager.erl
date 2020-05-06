@@ -10,7 +10,7 @@
 
     start_link/0,
     start_producer/3,
-    start_consumer_group/7,
+    start_consumer_group/5,
     stop_client/1,
     create_topic/3,
 
@@ -34,8 +34,8 @@ start_link() ->
 start_producer(ClientId, ErlkafConfig, LibRdkafkaConfig) ->
     erlkaf_utils:safe_call(?MODULE, {start_producer, ClientId, ErlkafConfig, LibRdkafkaConfig}).
 
-start_consumer_group(ClientId, GroupId, Topics, ClientConfig, TopicConfig, CbModule, CbArgs) ->
-    erlkaf_utils:safe_call(?MODULE, {start_consumer_group, ClientId, GroupId, Topics, ClientConfig, TopicConfig, CbModule, CbArgs}).
+start_consumer_group(ClientId, GroupId, Topics, ClientConfig, DefaultTopicsConfig) ->
+    erlkaf_utils:safe_call(?MODULE, {start_consumer_group, ClientId, GroupId, Topics, ClientConfig, DefaultTopicsConfig}).
 
 stop_client(ClientId) ->
     erlkaf_utils:safe_call(?MODULE, {stop_client, ClientId}, infinity).
@@ -59,8 +59,8 @@ handle_call({start_producer, ClientId, ErlkafConfig, LibRdkafkaConfig}, _From, S
             {reply, Error, State}
     end;
 
-handle_call({start_consumer_group, ClientId, GroupId, Topics, ClientConfig, TopicConfig, CbModule, CbArgs}, _From, State) ->
-    case internal_start_consumer(ClientId, GroupId, Topics, ClientConfig, TopicConfig, CbModule, CbArgs) of
+handle_call({start_consumer_group, ClientId, GroupId, Topics, ClientConfig, DefaultTopicsConfig}, _From, State) ->
+    case internal_start_consumer(ClientId, GroupId, Topics, ClientConfig, DefaultTopicsConfig) of
         {ok, _Pid} ->
             {reply, ok, State};
         Error ->
@@ -103,15 +103,20 @@ internal_start_producer(ClientId, ErlkafConfig, LibRdkafkaConfig) ->
             {error, ?ERR_ALREADY_EXISTING_CLIENT}
     end.
 
-internal_start_consumer(ClientId, GroupId, Topics, ClientConfig, TopicConfig, CbModule, CbArgs) ->
+internal_start_consumer(ClientId, GroupId, Topics, ClientConfig, DefaultTopicsConfig) ->
     case erlkaf_cache_client:get(ClientId) of
         undefined ->
-            case erlkaf_config:convert_kafka_config(ClientConfig) of
-                {ok, EkClientConfig, RdkClientConfig} ->
-                    case erlkaf_config:convert_topic_config(TopicConfig) of
-                        {ok, EkTopicConfig, RdkTopicConfig} ->
-                            Args = [ClientId, GroupId, Topics, EkClientConfig, RdkClientConfig, EkTopicConfig, RdkTopicConfig, CbModule, CbArgs],
-                            erlkaf_sup:add_client(ClientId, erlkaf_consumer_group, Args);
+            case valid_consumer_topics(Topics) of
+                ok ->
+                    case erlkaf_config:convert_kafka_config(ClientConfig) of
+                        {ok, EkClientConfig, RdkClientConfig} ->
+                            case erlkaf_config:convert_topic_config(DefaultTopicsConfig) of
+                                {ok, EkTopicConfig, RdkTopicConfig} ->
+                                    Args = [ClientId, GroupId, Topics, EkClientConfig, RdkClientConfig, EkTopicConfig, RdkTopicConfig],
+                                    erlkaf_sup:add_client(ClientId, erlkaf_consumer_group, Args);
+                                Error ->
+                                    Error
+                            end;
                         Error ->
                             Error
                     end;
@@ -129,3 +134,19 @@ internal_stop_client(ClientId) ->
         _ ->
             {error, ?ERR_UNDEFINED_CLIENT}
     end.
+
+valid_consumer_topics([H|T]) ->
+    case H of
+        {K, V} when is_binary(K) and is_list(V) ->
+            Mod = erlkaf_utils:lookup(callback_module, V),
+            case Mod =/= undefined andalso is_atom(Mod) of
+                true ->
+                    valid_consumer_topics(T);
+                _ ->
+                    {error, {invalid_topic, H}}
+            end;
+        _ ->
+            {error, {invalid_topic, H}}
+    end;
+valid_consumer_topics([]) ->
+    ok.

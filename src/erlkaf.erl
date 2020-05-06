@@ -9,7 +9,7 @@
     stop/0,
 
     create_producer/2,
-    create_consumer_group/7,
+    create_consumer_group/5,
     stop_client/1,
     get_stats/1,
 
@@ -58,13 +58,13 @@ create_producer(ClientId, ClientConfig) ->
             Error
     end.
 
--spec create_consumer_group(client_id(), binary(), [binary()], [client_option()], [topic_option()], atom(), any()) ->
+-spec create_consumer_group(client_id(), binary(), [binary()], [client_option()], [topic_option()]) ->
     ok | {error, reason()}.
 
-create_consumer_group(ClientId, GroupId, Topics, ClientConfig, TopicConfig, CbModule, CbArgs) ->
+create_consumer_group(ClientId, GroupId, Topics, ClientConfig0, DefaultTopicsConfig) ->
     GlobalClientOpts = erlkaf_utils:get_env(global_client_options, []),
-    Config = erlkaf_utils:append_props(ClientConfig, GlobalClientOpts),
-    erlkaf_manager:start_consumer_group(ClientId, GroupId, Topics, Config, TopicConfig, CbModule, CbArgs).
+    ClientConfig = erlkaf_utils:append_props(ClientConfig0, GlobalClientOpts),
+    erlkaf_manager:start_consumer_group(ClientId, GroupId, Topics, ClientConfig, DefaultTopicsConfig).
 
 -spec stop_client(client_id()) ->
     ok | {error, reason()}.

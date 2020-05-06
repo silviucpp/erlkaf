@@ -9,7 +9,7 @@
 -behaviour(gen_server).
 
 -export([
-    start_link/8,
+    start_link/6,
     stop/1,
 
     % gen_server
@@ -35,8 +35,8 @@
     last_offset = -1
 }).
 
-start_link(ClientRef, TopicName, DispatchMode, Partition, Offset, QueueRef, CbModule, CbArgs) ->
-    gen_server:start_link(?MODULE, [ClientRef, TopicName, DispatchMode, Partition, Offset, QueueRef, CbModule, CbArgs], []).
+start_link(ClientRef, TopicName, Partition, Offset, QueueRef, TopicSettings) ->
+    gen_server:start_link(?MODULE, [ClientRef, TopicName, Partition, Offset, QueueRef, TopicSettings], []).
 
 stop(Pid) ->
     case erlang:is_process_alive(Pid) of
@@ -54,8 +54,12 @@ stop(Pid) ->
             {error, not_alive}
     end.
 
-init([ClientRef, TopicName, DispatchMode, Partition, Offset, QueueRef, CbModule, CbArgs]) ->
+init([ClientRef, TopicName, Partition, Offset, QueueRef, TopicSettings]) ->
     ?LOG_INFO("start consumer for: ~p partition: ~p offset: ~p", [TopicName, Partition, Offset]),
+
+    CbModule = erlkaf_utils:lookup(callback_module, TopicSettings),
+    CbArgs = erlkaf_utils:lookup(callback_args, TopicSettings, []),
+    DispatchMode = erlkaf_utils:lookup(dispatch_mode, TopicSettings, one_by_one),
 
     case catch CbModule:init(TopicName, Partition, Offset, CbArgs) of
         {ok, CbState} ->
@@ -74,6 +78,7 @@ init([ClientRef, TopicName, DispatchMode, Partition, Offset, QueueRef, CbModule,
                 dispatch_mode = DpMode
             }};
         Error ->
+            ?LOG_ERROR("~p:init for topic: ~p failed with: ~p", [CbModule, TopicName, Error]),
             {stop, Error}
     end.
 

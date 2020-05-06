@@ -38,10 +38,8 @@ start_client({ClientId, C}) ->
             ok = create_topics(ClientId, Topics);
         consumer ->
             GroupId = erlkaf_utils:lookup(group_id, C),
-            CbModule = erlkaf_utils:lookup(callback_module, C),
-            CbArgs = erlkaf_utils:lookup(callback_args, C, []),
-            TopicConfig = erlkaf_utils:lookup(topic_options, C, []),
-            ok = erlkaf:create_consumer_group(ClientId, GroupId, Topics, ClientOpts, TopicConfig, CbModule, CbArgs),
+            DefaultTopicsConfig = erlkaf_utils:lookup(topic_options, C, []),
+            ok = erlkaf:create_consumer_group(ClientId, GroupId, Topics, ClientOpts, DefaultTopicsConfig),
             ?LOG_INFO("consumer ~p created", [ClientId])
     end.
 

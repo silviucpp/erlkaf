@@ -21,6 +21,16 @@ will return immediately. The `librdkafka` driver use it's own thread pool for ma
 has it's own thread from where is sending async the events (delivery reports, logs, statistics) to erlang 
 using `enif_send`.
 
+### Upgrading from v1.X to v2.0.0
+
+Version 2.0.0 contains a major rewrite of the consumer groups in order to be able to scale when you have lot of topics:
+ 
+- In version 1.x each consumer group or producer created one dedicated native thread for delivering the callbacks. Starting 2.0.0 no matter 
+how many producers or consumer groups you created, one single thread will be used to deliver the callbacks. 
+
+- In version 1.x each consumer group could handle a list of topics but it couldn't specify a callback for each topic. Now the callbacks settings moved
+into the topics list. More details into [Changelog](https://raw.githubusercontent.com/silviucpp/erlkaf/master/CHANGELOG.md).
+
 ### User guide
 
 On Ubuntu make sure you have installed :
@@ -67,9 +77,13 @@ Example of a configuration file (for `sys.config`):
             {type, consumer},
 
             {group_id, <<"erlkaf_consumer">>},
-            {callback_module, test_consumer},
-            {callback_args, []},
-            {topics, [<<"benchmark">>]},
+            {topics, [
+                {<<"benchmark">>, [
+                    {callback_module, module_topic1},
+                    {callback_args, []},
+                    {dispatch_mode, one_by_one}
+                ]}
+            ]},
             {topic_options, [
                 {auto_offset_reset, smallest}
             ]},
@@ -173,7 +187,13 @@ basically the event for the same message will be triggered again but with the ne
 
 -include("erlkaf.hrl").
 
--define(TOPICS, [<<"benchmark">>]).
+-define(TOPICS, [
+    {<<"benchmark">>, [
+       {callback_module, ?MODULE},
+       {callback_args, []}, % default [] (you can skip it)
+       {dispatch_mode, one_by_one} % default one_by_one (you can skip it)
+   ]}
+]).
 
 -export([
     create_consumer/0,
@@ -191,7 +211,7 @@ create_consumer() ->
     GroupId = <<"erlkaf_consumer">>,
     ClientCfg = [{bootstrap_servers, "broker1:9092"}],
     TopicConf = [{auto_offset_reset, smallest}],
-    ok = erlkaf:create_consumer_group(ClientId, GroupId, ?TOPICS, ClientCfg, TopicConf, ?MODULE, []).
+    ok = erlkaf:create_consumer_group(ClientId, GroupId, ?TOPICS, ClientCfg, TopicConf).
 
 init(Topic, Partition, Offset, Args) ->
     io:format("init topic: ~p partition: ~p offset: ~p args: ~p ~n", [
@@ -217,7 +237,7 @@ You can call those like:
 ```erlang
 ok = test_consumer:create_consumer().
 ```
-  
+
 ### Statistics
 
 In order to get statistics you can register the `stats_callback` callback which is called every `statistics_interval_ms` (default 0 which means
