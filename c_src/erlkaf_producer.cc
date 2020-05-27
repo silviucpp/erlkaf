@@ -181,10 +181,11 @@ ERL_NIF_TERM enif_producer_new(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv
     erlkaf_data* data = static_cast<erlkaf_data*>(enif_priv_data(env));
 
     scoped_ptr(producer, enif_producer, static_cast<enif_producer*>(enif_alloc_resource(data->res_producer, sizeof(enif_producer))), enif_release_resource);
-    memset(producer.get(), 0, sizeof(enif_producer));
 
     if(!producer.get())
         return make_error(env, "failed to alloc producer");
+
+    memset(producer.get(), 0, sizeof(enif_producer));
 
     rd_kafka_conf_set_opaque(config.get(), producer.get());
 
