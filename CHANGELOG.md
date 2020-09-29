@@ -1,5 +1,11 @@
 ### Changelog:
 
+#### v2.0.1
+
+- Fix OTP 23 build
+- Fix for https://github.com/silviucpp/erlkaf/issues/21
+- Fix memory access
+
 #### v2.0.0
 
 - Redesign the callback system. Instead using one thread per consumer/producer that polls for new events, now it's 
