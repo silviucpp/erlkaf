@@ -456,7 +456,7 @@ ERL_NIF_TERM enif_consumer_cleanup(ErlNifEnv* env, int argc, const ERL_NIF_TERM 
     if(!enif_get_resource(env, argv[0], data->res_consumer, reinterpret_cast<void**>(&consumer)))
         return make_badarg(env);
 
-	consumer->running = false;
+    consumer->running = false;
     data->notifier_->remove(consumer->kf);
     consumer->closed_future = new std::future<bool>(std::async(std::launch::async, cleanup_consumer, consumer, true));
 
