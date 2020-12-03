@@ -1,7 +1,7 @@
 # erlkaf
 [![Build Status](https://travis-ci.org/silviucpp/erlkaf.svg?branch=master)](https://travis-ci.org/silviucpp/erlkaf)
 ![GitHub](https://img.shields.io/github/license/silviucpp/erlkaf)
-![Hex.pm](https://img.shields.io/hexpm/v/erlkaf)
+[![Hex.pm](https://img.shields.io/hexpm/v/erlkaf)](https://hex.pm/packages/erlkaf)
 
 *Erlang kafka driver based on [librdkafka][1]*
 
@@ -41,7 +41,7 @@ sudo apt-get install libsasl2-dev liblz4-dev libzstd-dev
 
 Add `erlkaf` as a dependency to your project. The library works with `rebar`, `rebar3` or `hex.pm`
 
-```
+```erlang
 {deps, [
   {erlkaf, ".*", {git, "https://github.com/silviucpp/erlkaf.git", "master"}},
 }.
