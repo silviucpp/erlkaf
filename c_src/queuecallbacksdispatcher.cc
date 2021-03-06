@@ -63,7 +63,7 @@ void QueueCallbacksDispatcher::signal(rd_kafka_t* instance)
 
 void QueueCallbacksDispatcher::process_callbacks()
 {
-    rd_kafka_t* obj;
+    rd_kafka_t* obj = nullptr;
 
     while (running_)
     {
