@@ -21,7 +21,7 @@ matrix:
       otp_release: 20.3
 
     - os: linux
-      dist: trusty
+      dist: xenial
       otp_release: 19.3
 
     - os: osx
