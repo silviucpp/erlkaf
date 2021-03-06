@@ -4,9 +4,12 @@ language: erlang
 matrix:
 
   include:
+    - os: linux
+      dist: focal
+      otp_release: 23.1.2
 
     - os: linux
-      dist: xenial
+      dist: bionic
       otp_release: 22.3
 
     - os: linux
@@ -18,10 +21,11 @@ matrix:
       otp_release: 20.3
 
     - os: linux
-      dist: xenial
+      dist: trusty
       otp_release: 19.3
 
     - os: osx
+      osx_image: xcode12.2
       language: generic
 
 before_script:
