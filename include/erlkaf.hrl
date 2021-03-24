@@ -43,6 +43,7 @@
     {metadata_max_age_ms, integer()} |
     {topic_metadata_refresh_fast_interval_ms, integer()} |
     {topic_metadata_refresh_sparse, boolean()} |
+    {topic_metadata_propagation_max_ms, non_neg_integer()} |
     {topic_blacklist, binary()} |
     {socket_timeout_ms, integer()} |
     {socket_send_buffer_bytes, integer()} |
@@ -56,6 +57,7 @@
     {reconnect_backoff_max_ms, integer()} |
     {statistics_interval_ms, integer()} |
     {log_level, integer()} |
+    {enable_random_seed, boolean()} |
     {log_connection_close, boolean()} |
     {api_version_request, boolean()} |
     {api_version_fallback_ms, integer()} |
@@ -92,6 +94,7 @@
     {fetch_max_bytes, integer()} |
     {fetch_min_bytes, integer()} |
     {fetch_error_backoff_ms, integer()} |
+    {allow_auto_create_topics, boolean()} |
     {isolation_level, binary()} |
     {check_crcs, boolean()} |
     {enable_idempotence, boolean()} |
@@ -104,8 +107,10 @@
     {retry_backoff_ms, integer()} |
     {compression_codec, compression_codec()} |
     {batch_num_messages, integer()} |
+    {batch_size, non_neg_integer()} |
     {delivery_report_only_error, boolean()} |
-    {plugin_library_paths, binary()}.
+    {plugin_library_paths, binary()} |
+    {sticky_partitioning_linger_ms, non_neg_integer()}.
 
 % records
 

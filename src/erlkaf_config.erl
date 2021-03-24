@@ -116,6 +116,8 @@ to_librdkafka_config(topic_metadata_refresh_fast_interval_ms, V) ->
     {<<"topic.metadata.refresh.fast.interval.ms">>, erlkaf_utils:to_binary(V)};
 to_librdkafka_config(topic_metadata_refresh_sparse, V) ->
     {<<"topic.metadata.refresh.sparse">>, erlkaf_utils:to_binary(V)};
+to_librdkafka_config(topic_metadata_propagation_max_ms, V) ->
+    {<<"topic.metadata.propagation.max.ms">>, erlkaf_utils:to_binary(V)};
 to_librdkafka_config(topic_blacklist, V) ->
     {<<"topic.blacklist">>, erlkaf_utils:to_binary(V)};
 to_librdkafka_config(socket_timeout_ms, V) ->
@@ -142,6 +144,8 @@ to_librdkafka_config(statistics_interval_ms, V) ->
     {<<"statistics.interval.ms">>, erlkaf_utils:to_binary(V)};
 to_librdkafka_config(log_level, V) ->
     {<<"log_level">>, erlkaf_utils:to_binary(V)};
+to_librdkafka_config(enable_random_seed, V) ->
+    {<<"enable.random.seed">>, erlkaf_utils:to_binary(V)};
 to_librdkafka_config(log_connection_close, V) ->
     {<<"log.connection.close">>, erlkaf_utils:to_binary(V)};
 to_librdkafka_config(api_version_request, V) ->
@@ -214,6 +218,8 @@ to_librdkafka_config(fetch_min_bytes, V) ->
     {<<"fetch.min.bytes">>, erlkaf_utils:to_binary(V)};
 to_librdkafka_config(fetch_error_backoff_ms, V) ->
     {<<"fetch.error.backoff.ms">>, erlkaf_utils:to_binary(V)};
+to_librdkafka_config(allow_auto_create_topics, V) ->
+    {<<"allow.auto.create.topics">>, erlkaf_utils:to_binary(V)};
 to_librdkafka_config(check_crcs, V) ->
     {<<"check.crcs">>, erlkaf_utils:to_binary(V)};
 to_librdkafka_config(isolation_level, V) ->
@@ -236,10 +242,14 @@ to_librdkafka_config(compression_codec, V) ->
     {<<"compression.codec">>, erlkaf_utils:to_binary(V)};
 to_librdkafka_config(batch_num_messages, V) ->
     {<<"batch.num.messages">>, erlkaf_utils:to_binary(V)};
+to_librdkafka_config(batch_size, V) ->
+    {<<"batch.size">>, erlkaf_utils:to_binary(V)};
 to_librdkafka_config(delivery_report_only_error, V) ->
     {<<"delivery.report.only.error">>, erlkaf_utils:to_binary(V)};
 to_librdkafka_config(plugin_library_paths, V) ->
     {<<"plugin.library.paths">>, erlkaf_utils:to_binary(V)};
+to_librdkafka_config(sticky_partitioning_linger_ms, V) ->
+    {<<"sticky.partitioning.linger.ms">>, erlkaf_utils:to_binary(V)};
 to_librdkafka_config(K, V) ->
     throw({error, {options, {K, V}}}).
 

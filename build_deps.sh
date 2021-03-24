@@ -11,7 +11,7 @@ CPUS=`getconf _NPROCESSORS_ONLN 2>/dev/null || sysctl -n hw.ncpu`
 LIBRDKAFKA_DESTINATION=librdkafka
 LIBRDKAFKA_REPO=https://github.com/edenhill/librdkafka.git
 LIBRDKAFKA_BRANCH=master
-LIBRDKAFKA_REV=4ffe54b4f59ee5ae3767f9f25dc14651a3384d62
+LIBRDKAFKA_REV=1a722553638bba85dbda5050455f7b9a5ef302de
 LIBRDKAFKA_SUCCESS=src/librdkafka.a
 
 # https://github.com/cameron314/concurrentqueue.git

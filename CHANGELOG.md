@@ -1,5 +1,10 @@
 ### Changelog:
 
+#### v2.0.2
+
+- Based on librdkafka v1.6.1
+
+
 #### v2.0.1
 
 - Fix OTP 23 build
