@@ -2,8 +2,8 @@
 
 #### v2.0.2
 
-- Based on librdkafka v1.6.1
-
+- Upgrade to librdkafka v1.6.1
+- Add more supported configs from librdkafka.
 
 #### v2.0.1
 
