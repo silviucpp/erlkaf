@@ -29,9 +29,11 @@
     {auto_offset_reset, offset_reset()} |
     {partitioner, partitioner()} |
     {offset_store_path, binary()} |
-    {offset_store_sync_interval_ms, integer()}.
+    {offset_store_sync_interval_ms, integer()}|
+    {consume_callback_max_messages, non_neg_integer()}.
 
 -type client_option() ::
+    {builtin_features, binary()} |
     {client_id, binary()} |
     {bootstrap_servers, binary()} |
     {message_max_bytes, integer()} |
@@ -56,10 +58,14 @@
     {reconnect_backoff_ms, integer()} |
     {reconnect_backoff_max_ms, integer()} |
     {statistics_interval_ms, integer()} |
+    {enabled_events, non_neg_integer()} |
     {log_level, integer()} |
+    {log_queue, boolean()} |
+    {log_thread_name, binary()} |
     {enable_random_seed, boolean()} |
     {log_connection_close, boolean()} |
     {api_version_request, boolean()} |
+    {api_version_request_timeout_ms,  non_neg_integer()} |
     {api_version_fallback_ms, integer()} |
     {broker_version_fallback, boolean()} |
     {security_protocol, security_protocol()} |
@@ -68,11 +74,15 @@
     {ssl_sigalgs_list, binary()} |
     {ssl_key_location, binary()} |
     {ssl_key_password, binary()} |
+    {ssl_key_pem, binary()} |
     {ssl_certificate_location, binary()} |
+    {ssl_certificate_pem, binary()} |
     {ssl_ca_location, binary()} |
     {ssl_crl_location, binary()} |
     {ssl_keystore_location, binary()} |
     {ssl_keystore_password, binary()} |
+    {enable_ssl_certificate_verification, boolean()} |
+    {ssl_endpoint_identification_algorithm, binary()} |
     {sasl_mechanisms, binary()} |
     {sasl_kerberos_service_name, binary()} |
     {sasl_kerberos_principal, binary()} |
@@ -81,9 +91,13 @@
     {sasl_kerberos_min_time_before_relogin, integer()} |
     {sasl_username, binary()} |
     {sasl_password, binary()} |
+    {sasl_oauthbearer_config, binary()} |
+    {enable_sasl_oauthbearer_unsecure_jwt, boolean()} |
+    {group_instance_id, binary()} |
     {session_timeout_ms, integer()} |
     {partition_assignment_strategy, partition_assignment_strategy()} |
     {heartbeat_interval_ms, integer()} |
+    {group_protocol_type, binary()} |
     {coordinator_query_interval_ms, integer()} |
     {max_poll_interval_ms, integer()} |
     {auto_commit_interval_ms, integer()} |
@@ -95,6 +109,9 @@
     {fetch_min_bytes, integer()} |
     {fetch_error_backoff_ms, integer()} |
     {allow_auto_create_topics, boolean()} |
+    {client_rack, binary()} |
+    {transactional_id, binary()} |
+    {transaction_timeout_ms, non_neg_integer()} |
     {isolation_level, binary()} |
     {check_crcs, boolean()} |
     {enable_idempotence, boolean()} |
@@ -105,6 +122,7 @@
     {queue_buffering_overflow_strategy, overflow_strategy()} |
     {message_send_max_retries, integer()} |
     {retry_backoff_ms, integer()} |
+    {queue_buffering_backpressure_threshold, non_neg_integer()} |
     {compression_codec, compression_codec()} |
     {batch_num_messages, integer()} |
     {batch_size, non_neg_integer()} |

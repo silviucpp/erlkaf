@@ -69,6 +69,8 @@ to_librdkafka_topic_config(offset_store_path, V) ->
     {<<"offset.store.path">>, erlkaf_utils:to_binary(V)};
 to_librdkafka_topic_config(offset_store_sync_interval_ms, V) ->
     {<<"offset.store.sync.interval.ms">>, erlkaf_utils:to_binary(V)};
+to_librdkafka_topic_config(consume_callback_max_messages, V) ->
+    {<<"consume.callback.max.messages">>, erlkaf_utils:to_binary(V)};
 to_librdkafka_topic_config(K, V) ->
     throw({error, {options, {K, V}}}).
 
@@ -92,6 +94,8 @@ is_erlkaf_config(queue_buffering_overflow_strategy = K, V) ->
 is_erlkaf_config(_, _) ->
     false.
 
+to_librdkafka_config(builtin_features, V) ->
+    {<<"builtin_features">>, erlkaf_utils:to_binary(V)};
 to_librdkafka_config(debug, V) ->
     {<<"debug">>, erlkaf_utils:to_binary(V)};
 to_librdkafka_config(client_id, V) ->
@@ -142,14 +146,22 @@ to_librdkafka_config(reconnect_backoff_max_ms, V) ->
     {<<"reconnect.backoff.max.ms">>, erlkaf_utils:to_binary(V)};
 to_librdkafka_config(statistics_interval_ms, V) ->
     {<<"statistics.interval.ms">>, erlkaf_utils:to_binary(V)};
+to_librdkafka_config(enabled_events, V) ->
+    {<<"enabled.events">>, erlkaf_utils:to_binary(V)};
 to_librdkafka_config(log_level, V) ->
     {<<"log_level">>, erlkaf_utils:to_binary(V)};
+to_librdkafka_config(log_queue, V) ->
+    {<<"log.queue">>, erlkaf_utils:to_binary(V)};
+to_librdkafka_config(log_thread_name, V) ->
+    {<<"log.thread.name">>, erlkaf_utils:to_binary(V)};
 to_librdkafka_config(enable_random_seed, V) ->
     {<<"enable.random.seed">>, erlkaf_utils:to_binary(V)};
 to_librdkafka_config(log_connection_close, V) ->
     {<<"log.connection.close">>, erlkaf_utils:to_binary(V)};
 to_librdkafka_config(api_version_request, V) ->
     {<<"api.version.request">>, erlkaf_utils:to_binary(V)};
+to_librdkafka_config(api_version_request_timeout_ms, V) ->
+    {<<"api.version.request.timeout.ms">>, erlkaf_utils:to_binary(V)};
 to_librdkafka_config(api_version_fallback_ms, V) ->
     {<<"api.version.fallback.ms">>, erlkaf_utils:to_binary(V)};
 to_librdkafka_config(broker_version_fallback, V) ->
@@ -166,8 +178,12 @@ to_librdkafka_config(ssl_key_location, V) ->
     {<<"ssl.key.location">>, erlkaf_utils:to_binary(V)};
 to_librdkafka_config(ssl_key_password, V) ->
     {<<"ssl.key.password">>, erlkaf_utils:to_binary(V)};
+to_librdkafka_config(ssl_key_pem, V) ->
+    {<<"ssl.key.pem">>, erlkaf_utils:to_binary(V)};
 to_librdkafka_config(ssl_certificate_location, V) ->
     {<<"ssl.certificate.location">>, erlkaf_utils:to_binary(V)};
+to_librdkafka_config(ssl_certificate_pem, V) ->
+    {<<"ssl.certificate.pem">>, erlkaf_utils:to_binary(V)};
 to_librdkafka_config(ssl_ca_location, V) ->
     {<<"ssl.ca.location">>, erlkaf_utils:to_binary(V)};
 to_librdkafka_config(ssl_crl_location, V) ->
@@ -176,6 +192,10 @@ to_librdkafka_config(ssl_keystore_location, V) ->
     {<<"ssl.keystore.location">>, erlkaf_utils:to_binary(V)};
 to_librdkafka_config(ssl_keystore_password, V) ->
     {<<"ssl.keystore.password">>, erlkaf_utils:to_binary(V)};
+to_librdkafka_config(enable_ssl_certificate_verification, V) ->
+    {<<"enable.ssl.certificate.verification">>, erlkaf_utils:to_binary(V)};
+to_librdkafka_config(ssl_endpoint_identification_algorithm, V) ->
+    {<<"ssl.endpoint.identification.algorithm">>, erlkaf_utils:to_binary(V)};
 to_librdkafka_config(sasl_mechanisms, V) ->
     {<<"sasl.mechanisms">>, erlkaf_utils:to_binary(V)};
 to_librdkafka_config(sasl_kerberos_service_name, V) ->
@@ -192,12 +212,20 @@ to_librdkafka_config(sasl_username, V) ->
     {<<"sasl.username">>, erlkaf_utils:to_binary(V)};
 to_librdkafka_config(sasl_password, V) ->
     {<<"sasl.password">>, erlkaf_utils:to_binary(V)};
+to_librdkafka_config(sasl_oauthbearer_config, V) ->
+    {<<"sasl.oauthbearer.config">>, erlkaf_utils:to_binary(V)};
+to_librdkafka_config(enable_sasl_oauthbearer_unsecure_jwt, V) ->
+    {<<"enable.sasl.oauthbearer.unsecure.jwt">>, erlkaf_utils:to_binary(V)};
+to_librdkafka_config(group_instance_id, V) ->
+    {<<"group.instance.id">>, erlkaf_utils:to_binary(V)};
 to_librdkafka_config(session_timeout_ms, V) ->
     {<<"session.timeout.ms">>, erlkaf_utils:to_binary(V)};
 to_librdkafka_config(partition_assignment_strategy, V) ->
     {<<"partition.assignment.strategy">>, erlkaf_utils:to_binary(V)};
 to_librdkafka_config(heartbeat_interval_ms, V) ->
     {<<"heartbeat.interval.ms">>, erlkaf_utils:to_binary(V)};
+to_librdkafka_config(group_protocol_type, V) ->
+    {<<"group.protocol.type">>, erlkaf_utils:to_binary(V)};
 to_librdkafka_config(coordinator_query_interval_ms, V) ->
     {<<"coordinator.query.interval.ms">>, erlkaf_utils:to_binary(V)};
 to_librdkafka_config(max_poll_interval_ms, V) ->
@@ -220,6 +248,12 @@ to_librdkafka_config(fetch_error_backoff_ms, V) ->
     {<<"fetch.error.backoff.ms">>, erlkaf_utils:to_binary(V)};
 to_librdkafka_config(allow_auto_create_topics, V) ->
     {<<"allow.auto.create.topics">>, erlkaf_utils:to_binary(V)};
+to_librdkafka_config(client_rack, V) ->
+    {<<"client.rack">>, erlkaf_utils:to_binary(V)};
+to_librdkafka_config(transactional_id, V) ->
+    {<<"transactional.id">>, erlkaf_utils:to_binary(V)};
+to_librdkafka_config(transaction_timeout_ms, V) ->
+    {<<"transaction.timeout.ms">>, erlkaf_utils:to_binary(V)};
 to_librdkafka_config(check_crcs, V) ->
     {<<"check.crcs">>, erlkaf_utils:to_binary(V)};
 to_librdkafka_config(isolation_level, V) ->
@@ -238,6 +272,8 @@ to_librdkafka_config(message_send_max_retries, V) ->
     {<<"message.send.max.retries">>, erlkaf_utils:to_binary(V)};
 to_librdkafka_config(retry_backoff_ms, V) ->
     {<<"retry.backoff.ms">>, erlkaf_utils:to_binary(V)};
+to_librdkafka_config(queue_buffering_backpressure_threshold, V) ->
+    {<<"queue.buffering.backpressure.threshold">>, erlkaf_utils:to_binary(V)};
 to_librdkafka_config(compression_codec, V) ->
     {<<"compression.codec">>, erlkaf_utils:to_binary(V)};
 to_librdkafka_config(batch_num_messages, V) ->
