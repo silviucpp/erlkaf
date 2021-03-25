@@ -65,6 +65,9 @@ bool appy_kafka_default_config(rd_kafka_conf_t* config)
     if(rd_kafka_conf_set(config, "enable.partition.eof", "false", NULL, 0) != RD_KAFKA_CONF_OK)
         return false;
 
+    if(rd_kafka_conf_set(config, "allow.auto.create.topics", "true", NULL, 0) != RD_KAFKA_CONF_OK)
+        return false;
+
 #ifdef SIGIO
     // quick termination
     char tmp[128];
