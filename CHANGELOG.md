@@ -1,5 +1,8 @@
 ### Changelog:
 
+#### v2.0.3
+
+- Upgrade to lager v3.9.2 (works on OTP 24)
 #### v2.0.2
 
 - Upgrade to librdkafka v1.6.1

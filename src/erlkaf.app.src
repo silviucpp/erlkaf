@@ -2,7 +2,7 @@
     {description, "erlkaf - Erlang Kafka library based on librdkafka"},
     {licenses, ["MIT"]},
     {links,[{"Github","https://github.com/silviucpp/erlkaf"}]},
-    {vsn, "2.0.2"},
+    {vsn, "2.0.3"},
     {registered, []},
     {applications, [
         kernel,
