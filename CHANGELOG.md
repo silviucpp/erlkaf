@@ -1,5 +1,9 @@
 ### Changelog:
 
+#### v2.0.3
+
+- Add support for poll_idle_ms topic setting.
+
 #### v2.0.2
 
 - Upgrade to librdkafka v1.6.1
