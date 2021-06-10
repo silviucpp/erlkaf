@@ -16,18 +16,6 @@ matrix:
       dist: bionic
       otp_release: 22.3
 
-    - os: linux
-      dist: xenial
-      otp_release: 21.3
-
-    - os: linux
-      dist: xenial
-      otp_release: 20.3
-
-    - os: linux
-      dist: xenial
-      otp_release: 19.3
-
     - os: osx
       osx_image: xcode12.2
       language: generic
