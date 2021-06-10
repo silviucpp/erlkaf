@@ -2,6 +2,7 @@
 
 #### v2.0.3
 
+- Upgrade to lager v3.9.2 (works on OTP 24)
 - Add support for poll_idle_ms topic setting.
 
 #### v2.0.2
