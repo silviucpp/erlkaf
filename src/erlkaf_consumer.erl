@@ -3,7 +3,7 @@
 -include("erlkaf.hrl").
 -include("erlkaf_private.hrl").
 
--define(POLL_IDLE_MS, 1000).
+-define(DEFAULT_POLL_IDLE_MS, 1000).
 -define(DEFAULT_BATCH_SIZE, 100).
 
 -behaviour(gen_server).
@@ -30,6 +30,7 @@
     cb_module,
     cb_state,
     poll_batch_size,
+    poll_idle_ms,
     dispatch_mode,
     messages = [],
     last_offset = -1
@@ -60,6 +61,7 @@ init([ClientRef, TopicName, Partition, Offset, QueueRef, TopicSettings]) ->
     CbModule = erlkaf_utils:lookup(callback_module, TopicSettings),
     CbArgs = erlkaf_utils:lookup(callback_args, TopicSettings, []),
     DispatchMode = erlkaf_utils:lookup(dispatch_mode, TopicSettings, one_by_one),
+    PollIdleMs = erlkaf_utils:lookup(poll_idle_ms, TopicSettings, ?DEFAULT_POLL_IDLE_MS),
 
     case catch CbModule:init(TopicName, Partition, Offset, CbArgs) of
         {ok, CbState} ->
@@ -75,6 +77,7 @@ init([ClientRef, TopicName, Partition, Offset, QueueRef, TopicSettings]) ->
                 cb_module = CbModule,
                 cb_state = CbState,
                 poll_batch_size = PollBatchSize,
+                poll_idle_ms = PollIdleMs,
                 dispatch_mode = DpMode
             }};
         Error ->
@@ -90,12 +93,12 @@ handle_cast(Request, State) ->
     ?LOG_ERROR("handle_cast unexpected message: ~p", [Request]),
     {noreply, State}.
 
-handle_info(poll_events, #state{queue_ref = Queue, poll_batch_size = PollBatchSize} = State) ->
+handle_info(poll_events, #state{queue_ref = Queue, poll_batch_size = PollBatchSize, poll_idle_ms = PollIdleMs} = State) ->
     case erlkaf_nif:consumer_queue_poll(Queue, PollBatchSize) of
         {ok, Events, LastOffset} ->
             case Events of
                 [] ->
-                    schedule_poll(?POLL_IDLE_MS),
+                    schedule_poll(PollIdleMs),
                     {noreply, State};
                 _ ->
                     schedule_message_process(0),
