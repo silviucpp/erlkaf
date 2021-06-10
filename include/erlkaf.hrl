@@ -31,6 +31,7 @@
     {offset_store_path, binary()} |
     {offset_store_sync_interval_ms, integer()} |
     {consume_callback_max_messages, non_neg_integer()} |
+    {poll_idle_ms, non_neg_integer()} |
     {dispatch_mode, one_by_one | {batch, non_neg_integer()}}.
 
 -type client_option() ::
