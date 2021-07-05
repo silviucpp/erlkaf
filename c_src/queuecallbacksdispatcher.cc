@@ -18,7 +18,7 @@ namespace  {
 
 QueueCallbacksDispatcher::QueueCallbacksDispatcher():
     running_(true),
-    poll_timeout_(-1)
+    poll_timeout_us_(-1)
 {
     thread_callbacks_ = std::thread(&QueueCallbacksDispatcher::process_callbacks, this);
 }
@@ -33,8 +33,8 @@ QueueCallbacksDispatcher::~QueueCallbacksDispatcher()
 
 void QueueCallbacksDispatcher::watch(rd_kafka_t* instance, bool is_consumer)
 {
-     char buffer[256];
-     size_t buffer_size = sizeof(buffer);
+    char buffer[256];
+    size_t buffer_size = sizeof(buffer);
 
     const rd_kafka_conf_t* conf = rd_kafka_conf(instance);
     rd_kafka_conf_get(conf, "max.poll.interval.ms", buffer, &buffer_size);
@@ -43,7 +43,7 @@ void QueueCallbacksDispatcher::watch(rd_kafka_t* instance, bool is_consumer)
 
     {
         CritScope ss(&crt_);
-        objects_[instance] = item(is_consumer, max_poll_interval_ms);
+        objects_[instance] = item(is_consumer, max_poll_interval_ms, now_ms());
 
         // poll timeout is the minimum value of all instances
 
@@ -53,7 +53,7 @@ void QueueCallbacksDispatcher::watch(rd_kafka_t* instance, bool is_consumer)
                 max_poll_interval_ms = it.second.max_poll_interval_ms;
         }
 
-        poll_timeout_ = static_cast<int64_t>(max_poll_interval_ms);
+        poll_timeout_us_ = static_cast<int64_t>(max_poll_interval_ms*1000);
     }
 
     rd_kafka_queue_t* queue = is_consumer ? rd_kafka_queue_get_consumer(instance): rd_kafka_queue_get_main(instance);
@@ -88,11 +88,11 @@ bool QueueCallbacksDispatcher::remove(rd_kafka_t* instance)
                     max_poll_interval_ms = it.second.max_poll_interval_ms;
             }
 
-            poll_timeout_ = static_cast<int64_t>(max_poll_interval_ms);
+            poll_timeout_us_ = static_cast<int64_t>(max_poll_interval_ms*1000);
         }
         else
         {
-            poll_timeout_ = -1;
+            poll_timeout_us_ = -1;
         }
     }
 
@@ -113,7 +113,7 @@ void QueueCallbacksDispatcher::process_callbacks()
 
     while (running_)
     {
-        if(events_.wait_dequeue_timed(obj, poll_timeout_) == false)
+        if(events_.wait_dequeue_timed(obj, poll_timeout_us_) == false)
         {
             uint64_t now = now_ms();
             CritScope ss(&crt_);
