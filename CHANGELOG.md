@@ -1,5 +1,9 @@
 ### Changelog:
 
+#### v2.0.4
+
+- Fix for processing messages that takes longer than max_poll_interval_ms
+
 #### v2.0.3
 
 - Upgrade to lager v3.9.2 (works on OTP 24)
