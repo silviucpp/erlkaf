@@ -23,7 +23,7 @@ public:
 
 private:
 
-    void check_max_poll_interval_ms(uint64_t now);
+    int64_t check_max_poll_interval_ms(uint64_t now);
     void do_poll(rd_kafka_t* obj, bool is_consumer);
 
     struct item {
@@ -41,7 +41,6 @@ private:
     std::thread thread_callbacks_;
 
     bool running_;
-    int64_t poll_timeout_us_;
     moodycamel::BlockingConcurrentQueue<rd_kafka_t*> events_;
     std::unordered_map<rd_kafka_t*, item> objects_;
 
