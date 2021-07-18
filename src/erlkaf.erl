@@ -112,12 +112,7 @@ create_topic(ClientId, TopicName, TopicConfig) ->
 get_metadata(ClientId) ->
     case erlkaf_cache_client:get(ClientId) of
         {ok, ClientRef, _ClientPid} ->
-            case erlkaf_nif:get_metadata(ClientRef) of
-                {ok, res} ->
-                    res;
-                Error ->
-                    Error
-            end;
+            erlkaf_nif:get_metadata(ClientRef);
         undefined ->
             {error, ?ERR_UNDEFINED_CLIENT};
         Error ->
