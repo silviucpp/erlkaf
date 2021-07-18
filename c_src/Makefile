@@ -52,6 +52,8 @@ ifeq ($(UNAME_SYS), darwin)
 				-Wl,-U,_enif_make_resource \
 				-Wl,-U,_enif_make_string_len \
 				-Wl,-U,_enif_make_tuple \
+				-Wl,-U,_enif_make_new_map \
+				-Wl,-U,_enif_make_map_put \
 				-Wl,-U,_enif_make_list \
 				-Wl,-U,_enif_make_list_from_array \
 				-Wl,-U,_enif_make_ulong \

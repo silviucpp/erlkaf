@@ -18,7 +18,9 @@
 
     produce/4,
     produce/5,
-    produce/6
+    produce/6,
+
+    get_metadata/1
 ]).
 
 -spec start() ->
@@ -103,6 +105,18 @@ create_topic(ClientId, TopicName, TopicConfig) ->
             end;
         _ ->
             {error, ?ERR_UNDEFINED_CLIENT}
+    end.
+
+-spec get_metadata(client_id()) ->
+    {ok, map()} | {error, reason()}.
+get_metadata(ClientId) ->
+    case erlkaf_cache_client:get(ClientId) of
+        {ok, ClientRef, _ClientPid} ->
+            erlkaf_nif:get_metadata(ClientRef);
+        undefined ->
+            {error, ?ERR_UNDEFINED_CLIENT};
+        Error ->
+            Error
     end.
 
 -spec produce(client_id(), binary(), key(), binary()) ->
