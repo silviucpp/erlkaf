@@ -1,5 +1,10 @@
 ### Changelog:
 
+#### v2.0.5
+
+- Bug fixing https://github.com/silviucpp/erlkaf/issues/31
+- Add API to Ggt metadata from Kafka broker with dirty IO bound nif
+
 #### v2.0.4
 
 - Fix for processing messages that takes longer than max_poll_interval_ms
