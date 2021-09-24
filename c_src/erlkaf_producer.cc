@@ -7,6 +7,7 @@
 #include "erlkaf_logger.h"
 #include "rdkafka.h"
 #include "queuecallbacksdispatcher.h"
+#include "erlkaf_message.h"
 
 #include <string.h>
 #include <memory>
@@ -44,18 +45,7 @@ void delivery_report_callback (rd_kafka_t* rk, const rd_kafka_message_t* msg, vo
     ErlNifEnv* env = enif_alloc_env();
 
     ERL_NIF_TERM status = msg->err == 0 ? ATOMS.atomOk : make_error(env, rd_kafka_err2str(msg->err));
-    ERL_NIF_TERM key = msg->key == NULL ? ATOMS.atomUndefined : make_binary(env, reinterpret_cast<const char*>(msg->key), msg->key_len);
-    const char* topic_name = rd_kafka_topic_name(msg->rkt);
-
-    ERL_NIF_TERM term = enif_make_tuple6(env,
-                                         ATOMS.atomMessage,
-                                         make_binary(env, topic_name, strlen(topic_name)),
-                                         enif_make_int(env, msg->partition),
-                                         enif_make_int64(env, msg->offset),
-                                         key,
-                                         make_binary(env, reinterpret_cast<const char*>(msg->payload), msg->len));
-
-    enif_send(NULL, &producer->owner_pid, env, enif_make_tuple3(env, ATOMS.atomDeliveryReport, status, term));
+    enif_send(NULL, &producer->owner_pid, env, enif_make_tuple3(env, ATOMS.atomDeliveryReport, status, make_message_nif(env, msg)));
     enif_free_env(env);
 }
 
