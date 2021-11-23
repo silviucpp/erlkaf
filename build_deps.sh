@@ -65,8 +65,8 @@ BuildLibrary()
         $LIBRDKAFKA_DESTINATION)
             case $OS in
                 Darwin)
-                    brew install openssl lz4 zstd
-                    OPENSSL_ROOT_DIR=$(brew --prefix openssl)
+                    brew install openssl@1.1 lz4 zstd
+                    OPENSSL_ROOT_DIR=$(brew --prefix openssl@1.1)
                     export CPPFLAGS=-I$OPENSSL_ROOT_DIR/include/
                     export LDFLAGS=-L$OPENSSL_ROOT_DIR/lib
                     ;;

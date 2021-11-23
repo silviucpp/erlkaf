@@ -26,7 +26,7 @@ before_script:
 - if [[ $TRAVIS_OS_NAME == linux ]]; then sudo apt-get install -y libsasl2-dev liblz4-dev libzstd-dev || true ; fi
 
 - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then brew update; fi
-- if [[ $TRAVIS_OS_NAME == osx ]]; then brew install erlang openssl lz4 zstd || true; fi
+- if [[ $TRAVIS_OS_NAME == osx ]]; then brew install erlang openssl@1.1 lz4 zstd || true; fi
 
 - curl https://s3.amazonaws.com/rebar3/rebar3 --output rebar3 && chmod +x rebar3
 
