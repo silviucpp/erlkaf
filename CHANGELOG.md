@@ -1,9 +1,14 @@
 ### Changelog:
 
+#### v2.0.6
+
+- Fix for message headers into delivery reports (#37)
+- On Mac OS use openssl@1.1
+
 #### v2.0.5
 
 - Bug fixing https://github.com/silviucpp/erlkaf/issues/31
-- Add API to Ggt metadata from Kafka broker with dirty IO bound nif
+- Add API to get metadata from Kafka broker with dirty IO bound nif
 
 #### v2.0.4
 
