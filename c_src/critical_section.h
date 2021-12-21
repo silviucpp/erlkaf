@@ -8,7 +8,7 @@ class CriticalSection
 {
 public:
 
-    CriticalSection() { mutex_ = enif_mutex_create("erlkaf_critical_section");}
+    CriticalSection() { mutex_ = enif_mutex_create(const_cast<char*>("erlkaf_critical_section"));}
     ~CriticalSection() {enif_mutex_destroy(mutex_);}
 
     void Enter() {enif_mutex_lock(mutex_);}
