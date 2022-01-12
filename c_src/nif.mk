@@ -6,7 +6,13 @@ BASEDIR := $(abspath $(CURDIR)/..)
 
 C_SRC_DIR = $(CURDIR)
 C_SRC_ENV ?= $(C_SRC_DIR)/env.mk
-C_SRC_OUTPUT ?= $(REBAR_BARE_COMPILER_OUTPUT_DIR)/./priv/$(PROJECT_NIF_NAME).so
+
+# fix for rebar3 and elixir 1.13.1
+ifndef REBAR_BARE_COMPILER_OUTPUT_DIR
+	C_SRC_OUTPUT ?= $(REBAR_BARE_COMPILER_OUTPUT_DIR)/priv/$(PROJECT_NIF_NAME).so
+else 
+	C_SRC_OUTPUT ?= $(CURDIR)/../priv/$(PROJECT_NIF_NAME).so
+endif
 
 #regenerate all the time the env.mk
 ifneq ($(wildcard $(C_SRC_DIR)),)
