@@ -12,6 +12,7 @@ ifndef REBAR_BARE_COMPILER_OUTPUT_DIR
 	C_SRC_OUTPUT ?= $(CURDIR)/../priv/$(PROJECT_NIF_NAME).so
 else 
 	C_SRC_OUTPUT ?= $(REBAR_BARE_COMPILER_OUTPUT_DIR)/priv/$(PROJECT_NIF_NAME).so
+	BASEDIR = $(REBAR_BARE_COMPILER_OUTPUT_DIR)
 endif
 
 #regenerate all the time the env.mk
