@@ -9,9 +9,9 @@ C_SRC_ENV ?= $(C_SRC_DIR)/env.mk
 
 # fix for rebar3 and elixir 1.13.1
 ifndef REBAR_BARE_COMPILER_OUTPUT_DIR
-	C_SRC_OUTPUT ?= $(REBAR_BARE_COMPILER_OUTPUT_DIR)/priv/$(PROJECT_NIF_NAME).so
-else 
 	C_SRC_OUTPUT ?= $(CURDIR)/../priv/$(PROJECT_NIF_NAME).so
+else 
+	C_SRC_OUTPUT ?= $(REBAR_BARE_COMPILER_OUTPUT_DIR)/priv/$(PROJECT_NIF_NAME).so
 endif
 
 #regenerate all the time the env.mk
