@@ -1,5 +1,10 @@
 ### Changelog:
 
+#### v2.0.7
+
+- Fix compilation error under elixir 1.13
+- Fix crash when running under a debug compiled VM (https://github.com/silviucpp/erlkaf/issues/40)
+
 #### v2.0.6
 
 - Fix for message headers into delivery reports (#37)
