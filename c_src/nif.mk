@@ -4,9 +4,15 @@
 CURDIR := $(shell pwd)
 BASEDIR := $(abspath $(CURDIR)/..)
 
+ifndef REBAR_BARE_COMPILER_OUTPUT_DIR
+	PRIV_DIR ?= $(BASEDIR)/priv
+else
+	PRIV_DIR ?= $(REBAR_BARE_COMPILER_OUTPUT_DIR)/priv
+endif
+
 C_SRC_DIR = $(CURDIR)
 C_SRC_ENV ?= $(C_SRC_DIR)/env.mk
-C_SRC_OUTPUT ?= $(CURDIR)/../priv/$(PROJECT_NIF_NAME).so
+C_SRC_OUTPUT ?= $(PRIV_DIR)/$(PROJECT_NIF_NAME).so
 
 #regenerate all the time the env.mk
 ifneq ($(wildcard $(C_SRC_DIR)),)
@@ -68,7 +74,7 @@ COMPILE_C = $(c_verbose) $(CC) $(CFLAGS) $(CPPFLAGS) -c
 COMPILE_CPP = $(cpp_verbose) $(CXX) $(CXXFLAGS) $(CPPFLAGS) -c
 
 $(C_SRC_OUTPUT): $(OBJECTS)
-	@mkdir -p $(BASEDIR)/priv/
+	@mkdir -p $(PRIV_DIR)/
 	$(link_verbose) $(CC) $(OBJECTS) $(LDFLAGS) -o $(C_SRC_OUTPUT)
 
 %.o: %.c
