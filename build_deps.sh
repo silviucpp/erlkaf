@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 ROOT=$(pwd)
-DEPS_LOCATION=deps
+DEPS_LOCATION=_build/deps
 OS=$(uname -s)
 KERNEL=$(echo $(lsb_release -ds 2>/dev/null || cat /etc/*release 2>/dev/null | head -n1 | awk '{print $1;}') | awk '{print $1;}')
 CPUS=`getconf _NPROCESSORS_ONLN 2>/dev/null || sysctl -n hw.ncpu`
@@ -73,7 +73,7 @@ BuildLibrary()
             esac
 
             fail_check ./configure
-            fail_check make -j $(CPUS)
+            fail_check make -j $CPUS
 
             rm src/*.dylib
             rm src/*.so

@@ -37,9 +37,9 @@ UNAME_SYS = $(shell echo $(UNAME_SYS_ORG) | tr A-Z a-z)
 
 ifeq ($(UNAME_SYS), darwin)
     CC ?= cc
-	CFLAGS ?= -O3 -std=c99 -arch x86_64 -finline-functions -Wall
-	CXXFLAGS ?= -O3 -arch x86_64  -Wall
-    LDFLAGS ?= -arch x86_64
+	CFLAGS ?= -O3 -std=c99 -finline-functions -Wall
+	CXXFLAGS ?= -O3 -Wall
+    LDFLAGS ?=
 else ifeq ($(UNAME_SYS), freebsd)
 	CC ?= cc
 	CFLAGS ?= -O3 -std=c99 -finline-functions -Wall

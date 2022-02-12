@@ -4,8 +4,14 @@ PROJECT_NIF_NAME=erlkaf_nif
 include nif.mk
 
 ifeq ($(UNAME_SYS), darwin)
-    CXXFLAGS += -I/usr/local/opt/openssl/include
-    LDFLAGS  += -L/usr/local/opt/openssl/lib \
+	OPENSSL_ROOT := $(shell brew --prefix openssl@1.1)
+	LZ4_ROOT := $(shell brew --prefix lz4)
+	ZSTD_ROOT := $(shell brew --prefix zstd)
+
+    CXXFLAGS += -I$(OPENSSL_ROOT)/include
+    LDFLAGS  += -L$(OPENSSL_ROOT)/lib \
+    			-L$(LZ4_ROOT)/lib \
+    			-L$(ZSTD_ROOT)/lib \
                 -L/usr/local/lib
 
 	LDFLAGS +=  -Wl,-U,_enif_alloc \
@@ -64,11 +70,11 @@ ifeq ($(UNAME_SYS), darwin)
 endif
 
 CXXFLAGS += -DNDEBUG \
-            -I ../deps/librdkafka/src \
-            -I ../deps \
+            -I ../_build/deps/librdkafka/src \
+            -I ../_build/deps \
 			-g -Wextra -Werror -Wno-missing-field-initializers -fno-exceptions -fno-rtti -std=c++11
 
-LDFLAGS += -L ../deps/librdkafka/src \
+LDFLAGS += -L ../_build/deps/librdkafka/src \
            -lrdkafka \
            -lsasl2 \
            -lz \
