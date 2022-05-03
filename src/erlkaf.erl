@@ -60,7 +60,7 @@ create_producer(ClientId, ClientConfig) ->
             Error
     end.
 
--spec create_consumer_group(client_id(), binary(), [binary()], [client_option()], [topic_option()]) ->
+-spec create_consumer_group(client_id(), binary(), [topic()], [client_option()], [topic_option()]) ->
     ok | {error, reason()}.
 
 create_consumer_group(ClientId, GroupId, Topics, ClientConfig0, DefaultTopicsConfig) ->
