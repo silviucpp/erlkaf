@@ -18,6 +18,12 @@
 -type overflow_strategy() :: local_disk_queue | block_calling_process | drop_records.
 -type partitioner() :: random|consistent|consistent_random|murmur2|murmur2_random.
 -type headers() :: undefined | proplists:proplist() | maps:map().
+-type callback_module() :: {callback_module, atom()}.
+-type callback_args() :: {callback_args, [any()]}.
+-type dispatch_mode() :: one_by_one | {batch, non_neg_integer()}.
+-type callback_dispatch_mode() :: {dispatch_mode, dispatch_mode()}.
+-type callback_options() :: callback_module() | callback_args() | callback_dispatch_mode().
+-type topic() :: {binary(), [callback_options()]}.
 
 -type topic_option() ::
     {request_required_acks, integer()} |
