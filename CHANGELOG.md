@@ -1,5 +1,10 @@
 ### Changelog:
 
+#### v2.0.9
+
+- Fix build with OTP 25
+- Fix create_consumer_group spec (https://github.com/silviucpp/erlkaf/pull/45)
+
 #### v2.0.8
 
 - Improve build scripts

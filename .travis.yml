@@ -5,16 +5,16 @@ matrix:
 
   include:
     - os: linux
-      dist: focal
-      otp_release: 24.0.2
-
-    - os: linux
-      dist: focal
-      otp_release: 23.1.2
-
-    - os: linux
       dist: bionic
-      otp_release: 22.3
+      otp_release: 23.3.1
+
+    - os: linux
+      dist: focal
+      otp_release: 24.3.1
+
+    - os: linux
+      dist: focal
+      otp_release: 25.0
 
     - os: osx
       osx_image: xcode12.2
