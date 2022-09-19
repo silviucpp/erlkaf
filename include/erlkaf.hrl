@@ -1,7 +1,7 @@
 
 % default partitioner
 
--define(DEFULT_PARTITIONER, -1).
+-define(DEFAULT_PARTITIONER, -1).
 
 % types
 
@@ -9,7 +9,7 @@
 -type reason() :: any().
 -type state() :: any().
 -type key() :: undefined | binary().
--type partition() :: ?DEFULT_PARTITIONER | integer().
+-type partition() :: ?DEFAULT_PARTITIONER | integer().
 -type partition_assignment_strategy() :: range |roundrobin.
 -type compression_codec() :: none | gzip | snappy | lz4 | inherit.
 -type offset_reset() :: smallest | earliest | beginning | largest | latest.
