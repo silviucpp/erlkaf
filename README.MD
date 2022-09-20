@@ -238,6 +238,11 @@ You can call those like:
 ok = test_consumer:create_consumer().
 ```
 
+### Error messages
+
+We forward all rdkafka errors to the calling application. To translate the received error, please use `get_readable_error/1` on the returned error to get a translated message
+
+
 ### Statistics
 
 In order to get statistics you can register the `stats_callback` callback which is called every `statistics_interval_ms` (default 0 which means
