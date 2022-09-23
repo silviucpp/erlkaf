@@ -56,6 +56,7 @@
     {topic_metadata_propagation_max_ms, non_neg_integer()} |
     {topic_blacklist, binary()} |
     {debug, binary()} |
+    {connections_max_idle_ms, integer()} |
     {socket_timeout_ms, integer()} |
     {socket_send_buffer_bytes, integer()} |
     {socket_receive_buffer_bytes, integer()} |

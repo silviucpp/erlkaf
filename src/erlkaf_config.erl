@@ -98,6 +98,8 @@ to_librdkafka_config(builtin_features, V) ->
     {<<"builtin_features">>, erlkaf_utils:to_binary(V)};
 to_librdkafka_config(debug, V) ->
     {<<"debug">>, erlkaf_utils:to_binary(V)};
+to_librdkafka_config(connections_max_idle_ms, V) ->
+    {<<"connections.max.idle.ms">>, erlkaf_utils:to_binary(V)};
 to_librdkafka_config(client_id, V) ->
     {<<"client.id">>, erlkaf_utils:to_binary(V)};
 to_librdkafka_config(bootstrap_servers, V) ->
