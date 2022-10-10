@@ -30,6 +30,9 @@ const char kAtomAssignPartition[] = "assign_partitions";
 const char kAtomRevokePartition[] = "revoke_partitions";
 const char kAtomStats[] = "stats";
 const char kAtomClientStopped[] = "client_stopped";
+const char kAtomNotAvailable[] = "not_available";
+const char kAtomCreateTime[] = "create_time";
+const char kAtomLogAppendTime[] = "log_append_time";
 
 atoms ATOMS;
 
@@ -69,6 +72,9 @@ int on_nif_load(ErlNifEnv* env, void** priv_data, ERL_NIF_TERM load_info)
     ATOMS.atomRevokePartition = make_atom(env, kAtomRevokePartition);
     ATOMS.atomStats = make_atom(env, kAtomStats);
     ATOMS.atomClientStopped = make_atom(env, kAtomClientStopped);
+    ATOMS.atomNotAvailable = make_atom(env, kAtomNotAvailable);
+    ATOMS.atomCreateTime = make_atom(env, kAtomCreateTime);
+    ATOMS.atomLogAppendTime = make_atom(env, kAtomLogAppendTime);
 
     erlkaf_data* data = static_cast<erlkaf_data*>(enif_alloc(sizeof(erlkaf_data)));
     open_resources(env, data);
@@ -114,7 +120,7 @@ static ErlNifFunc nif_funcs[] =
     {"producer_set_owner", 2, enif_producer_set_owner},
     {"producer_topic_new", 3, enif_producer_topic_new},
     {"producer_cleanup", 1, enif_producer_cleanup},
-    {"produce", 6, enif_produce},
+    {"produce", 7, enif_produce},
     {"get_metadata", 1, enif_get_metadata, ERL_NIF_DIRTY_JOB_IO_BOUND},
 
     {"consumer_new", 4, enif_consumer_new},

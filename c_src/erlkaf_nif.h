@@ -31,6 +31,9 @@ struct atoms
     ERL_NIF_TERM atomRevokePartition;
     ERL_NIF_TERM atomStats;
     ERL_NIF_TERM atomClientStopped;
+    ERL_NIF_TERM atomNotAvailable;
+    ERL_NIF_TERM atomCreateTime;
+    ERL_NIF_TERM atomLogAppendTime;
 };
 
 struct erlkaf_data

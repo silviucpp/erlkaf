@@ -14,6 +14,7 @@
     create/1,
     produce/2,
     produce/3,
+    produce/4,
     produce_multiple/4,
 
     % consumer callbacks
@@ -65,6 +66,9 @@ produce(Key, Value) ->
 
 produce(Key, Value, Headers) ->
     ok = erlkaf:produce(?PRODUCER_CLIENT, ?TOPIC, Key, Value, Headers).
+
+produce(Key, Value, Headers, Ts) ->
+    ok = erlkaf:produce(?PRODUCER_CLIENT, ?TOPIC, ?DEFAULT_PARTITIONER, Key, Value, Headers, Ts).
 
 produce_multiple(0, _Key, _Value, _Headers) ->
     ok;

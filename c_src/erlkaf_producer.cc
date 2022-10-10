@@ -340,6 +340,7 @@ ERL_NIF_TERM enif_produce(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
     int32_t partition;
     ErlNifBinary key;
     ErlNifBinary value;
+    long timestamp;
 
     scoped_ptr(headers, rd_kafka_headers_t, NULL, rd_kafka_headers_destroy);
 
@@ -383,7 +384,10 @@ ERL_NIF_TERM enif_produce(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
         }
     }
 
-    if(!headers.get())
+    if(!enif_get_int64(env, argv[6], &timestamp))
+        return make_badarg(env);
+
+    if(!headers.get() && timestamp == 0)
     {
         rd_kafka_topic_t* topic = producer->topics->GetOrCreateTopic(topic_name);
 
@@ -402,6 +406,7 @@ ERL_NIF_TERM enif_produce(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
                                                        RD_KAFKA_V_VALUE(value.data, value.size),
                                                        RD_KAFKA_V_KEY(key.data, key.size),
                                                        RD_KAFKA_V_HEADERS(headers.get()),
+                                                       RD_KAFKA_V_TIMESTAMP(timestamp),
                                                        RD_KAFKA_V_END);
 
         if(result != RD_KAFKA_RESP_ERR_NO_ERROR)

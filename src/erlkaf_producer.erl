@@ -11,7 +11,7 @@
     % api
 
     start_link/4,
-    queue_event/6,
+    queue_event/7,
 
     % gen_server
 
@@ -37,8 +37,8 @@
 start_link(ClientId, DrCallback, ErlkafConfig, ProducerRef) ->
     gen_server:start_link(?MODULE, [ClientId, DrCallback, ErlkafConfig, ProducerRef], []).
 
-queue_event(Pid, TopicName, Partition, Key, Value, Headers) ->
-    erlkaf_utils:safe_call(Pid, {queue_event, TopicName, Partition, Key, Value, Headers}).
+queue_event(Pid, TopicName, Partition, Key, Value, Headers, Timestamp) ->
+    erlkaf_utils:safe_call(Pid, {queue_event, TopicName, Partition, Key, Value, Headers, Timestamp}).
 
 init([ClientId, DrCallback, ErlkafConfig, ProducerRef]) ->
     Pid = self(),
@@ -64,7 +64,7 @@ init([ClientId, DrCallback, ErlkafConfig, ProducerRef]) ->
         overflow_method = OverflowStrategy,
         pqueue = Queue}}.
 
-handle_call({queue_event, TopicName, Partition, Key, Value, Headers}, _From, #state{
+handle_call({queue_event, TopicName, Partition, Key, Value, Headers, Timestamp}, _From, #state{
     pqueue = Queue,
     pqueue_sch = QueueScheduled,
     overflow_method = OverflowMethod} = State) ->
@@ -72,7 +72,7 @@ handle_call({queue_event, TopicName, Partition, Key, Value, Headers}, _From, #st
     case OverflowMethod of
         local_disk_queue ->
             schedule_consume_queue(QueueScheduled, 1000),
-            ok = erlkaf_local_queue:enq(Queue, TopicName, Partition, Key, Value, Headers),
+            ok = erlkaf_local_queue:enq(Queue, TopicName, Partition, Key, Value, Headers, Timestamp),
             {reply, ok, State#state{pqueue_sch = true}};
         _ ->
             {reply, OverflowMethod, State}
@@ -169,8 +169,8 @@ consume_queue(ClientRef, Q, N) ->
             log_completed(N),
             completed;
         #{payload := Msg} ->
-            {TopicName, Partition, Key, Value, Headers} = decode_queued_message(Msg),
-            case erlkaf_nif:produce(ClientRef, TopicName, Partition, Key, Value, Headers) of
+            {TopicName, Partition, Key, Value, Headers, Timestamp} = decode_queued_message(Msg),
+            case erlkaf_nif:produce(ClientRef, TopicName, Partition, Key, Value, Headers, Timestamp) of
                 ok ->
                     [#{payload := Msg}] = erlkaf_local_queue:deq(Q),
                     consume_queue(ClientRef, Q, N-1);
@@ -195,7 +195,7 @@ log_completed(N) ->
 % todo: remove this in the future. it's here just to make sure nobody will update from a
 % older version having messages in the local queue. Without this hack old messages won't be decoded
 
-decode_queued_message({TopicName, Partition, Key, Value}) ->
-    {TopicName, Partition, Key, Value, undefined};
+decode_queued_message({TopicName, Partition, Key, Value, Headers}) ->
+    {TopicName, Partition, Key, Value, Headers, 0};
 decode_queued_message(R) ->
     R.

@@ -25,6 +25,7 @@
 -type callback_dispatch_mode() :: {dispatch_mode, dispatch_mode()}.
 -type callback_options() :: callback_module() | callback_args() | callback_dispatch_mode().
 -type topic() :: {binary(), [callback_options()]}.
+-type timestamp_type() :: not_available | create_time | log_append_time.
 
 -type topic_option() ::
     {request_required_acks, integer()} |
@@ -151,6 +152,7 @@
     offset ::integer(),
     key :: key(),
     value ::binary(),
-    headers :: headers()
+    headers :: headers(),
+    timestamp :: {integer(), timestamp_type()}
 }).
 

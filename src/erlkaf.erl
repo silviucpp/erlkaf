@@ -19,6 +19,7 @@
     produce/4,
     produce/5,
     produce/6,
+    produce/7,
 
     get_metadata/1,
     get_readable_error/1
@@ -124,22 +125,28 @@ get_metadata(ClientId) ->
     ok | {error, reason()}.
 
 produce(ClientId, TopicName, Key, Value) ->
-    produce(ClientId, TopicName, ?DEFAULT_PARTITIONER, Key, Value, undefined).
+    produce(ClientId, TopicName, ?DEFAULT_PARTITIONER, Key, Value, undefined, 0).
 
 -spec produce(client_id(), binary(), key(), value(), headers()) ->
     ok | {error, reason()}.
 
 produce(ClientId, TopicName, Key, Value, Headers) ->
-    produce(ClientId, TopicName, ?DEFAULT_PARTITIONER, Key, Value, Headers).
+    produce(ClientId, TopicName, ?DEFAULT_PARTITIONER, Key, Value, Headers, 0).
 
 -spec produce(client_id(), binary(), partition(), key(), value(), headers()) ->
     ok | {error, reason()}.
 
 produce(ClientId, TopicName, Partition, Key, Value, Headers0) ->
+    produce(ClientId, TopicName, Partition, Key, Value, Headers0, 0).
+
+-spec produce(client_id(), binary(), partition(), key(), value(), headers(), non_neg_integer()) ->
+    ok | {error, reason()}.
+
+produce(ClientId, TopicName, Partition, Key, Value, Headers0, Timestamp) ->
     case erlkaf_cache_client:get(ClientId) of
         {ok, ClientRef, ClientPid} ->
             Headers = to_headers(Headers0),
-            case erlkaf_nif:produce(ClientRef, TopicName, Partition, Key, Value, Headers) of
+            case erlkaf_nif:produce(ClientRef, TopicName, Partition, Key, Value, Headers, Timestamp) of
                 ok ->
                     ok;
                 {error, ?RD_KAFKA_RESP_ERR_QUEUE_FULL} ->
