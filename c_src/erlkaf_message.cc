@@ -43,6 +43,8 @@ inline ERL_NIF_TERM rd_kafka_timestamp_type_to_nif(rd_kafka_timestamp_type_t t)
         case RD_KAFKA_TIMESTAMP_LOG_APPEND_TIME:
             return ATOMS.atomLogAppendTime;
     }
+    
+    return ATOMS.atomNotAvailable;
 }
 
 }
