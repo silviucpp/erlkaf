@@ -1,5 +1,10 @@
 ### Changelog:
 
+#### v2.1.0
+
+- Fix for kafka tombstones messages (https://github.com/silviucpp/erlkaf/issues/51)
+
+
 #### v2.0.9
 
 - Fix build with OTP 25

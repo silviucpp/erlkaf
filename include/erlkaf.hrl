@@ -9,6 +9,7 @@
 -type reason() :: any().
 -type state() :: any().
 -type key() :: undefined | binary().
+-type value() :: undefined| binary().
 -type partition() :: ?DEFAULT_PARTITIONER | integer().
 -type partition_assignment_strategy() :: range |roundrobin.
 -type compression_codec() :: none | gzip | snappy | lz4 | inherit.

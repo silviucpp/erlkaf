@@ -21,7 +21,6 @@
     produce/6,
 
     get_metadata/1,
-    
     get_readable_error/1
 ]).
 
@@ -121,19 +120,19 @@ get_metadata(ClientId) ->
             Error
     end.
 
--spec produce(client_id(), binary(), key(), binary()) ->
+-spec produce(client_id(), binary(), key(), value()) ->
     ok | {error, reason()}.
 
 produce(ClientId, TopicName, Key, Value) ->
     produce(ClientId, TopicName, ?DEFAULT_PARTITIONER, Key, Value, undefined).
 
--spec produce(client_id(), binary(), key(), binary(), headers()) ->
+-spec produce(client_id(), binary(), key(), value(), headers()) ->
     ok | {error, reason()}.
 
 produce(ClientId, TopicName, Key, Value, Headers) ->
     produce(ClientId, TopicName, ?DEFAULT_PARTITIONER, Key, Value, Headers).
 
--spec produce(client_id(), binary(), partition(), key(), binary(), headers()) ->
+-spec produce(client_id(), binary(), partition(), key(), value(), headers()) ->
     ok | {error, reason()}.
 
 produce(ClientId, TopicName, Partition, Key, Value, Headers0) ->
@@ -165,8 +164,8 @@ produce(ClientId, TopicName, Partition, Key, Value, Headers0) ->
     end.
 
 -spec get_readable_error(reason()) -> atom().
-    
-get_readable_error(Error) ->    
+
+get_readable_error(Error) ->
     erlkaf_error_converter:get_readable_error(Error).
 
 %internals

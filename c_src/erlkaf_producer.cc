@@ -361,7 +361,12 @@ ERL_NIF_TERM enif_produce(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
     }
 
     if (!get_binary(env, argv[4], &value))
-        return make_badarg(env);
+    {
+        if(!enif_is_identical(ATOMS.atomUndefined, argv[4]))
+            return make_badarg(env);
+
+        memset(&value, 0, sizeof(ErlNifBinary));
+    }
 
     if(!enif_is_identical(argv[5], ATOMS.atomUndefined))
     {

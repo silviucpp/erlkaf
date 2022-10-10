@@ -36,7 +36,7 @@ ERL_NIF_TERM make_message_nif(ErlNifEnv* env, ERL_NIF_TERM topic, ERL_NIF_TERM p
 {
     ERL_NIF_TERM key = msg->key == NULL ? ATOMS.atomUndefined : make_binary(env, reinterpret_cast<const char*>(msg->key), msg->key_len);
     ERL_NIF_TERM offset = enif_make_int64(env, msg->offset);
-    ERL_NIF_TERM value = make_binary(env, reinterpret_cast<const char*>(msg->payload), msg->len);
+    ERL_NIF_TERM value = msg->payload == NULL ? ATOMS.atomUndefined : make_binary(env, reinterpret_cast<const char*>(msg->payload), msg->len);
     ERL_NIF_TERM headers = get_headers(env, msg);
     return enif_make_tuple7(env, ATOMS.atomMessage, topic, partition, offset, key, value, headers);
 }
