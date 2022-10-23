@@ -215,9 +215,8 @@ process_events_one_by_one([], _ClientRef, _Backoff, _CbModule, CbState) ->
 recv_stop() ->
     receive {stop, _From, _Tag} = Msg -> Msg after 0 -> false end.
 
-handle_stop(From, Tag, #state{topic_name = TopicName, partition = Partition, queue_ref = Queue}) ->
+handle_stop(From, Tag, #state{topic_name = TopicName, partition = Partition}) ->
     ?LOG_INFO("stop consumer for: ~p partition: ~p", [TopicName, Partition]),
-    ok = erlkaf_nif:consumer_queue_cleanup(Queue),
     From ! {stopped, Tag}.
 
 exponential_backoff(0) ->

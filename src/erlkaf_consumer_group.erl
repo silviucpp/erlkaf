@@ -78,7 +78,7 @@ handle_info({assign_partitions, Partitions}, #state{
     PartFun = fun({TopicName, Partition, Offset, QueueRef}, Tmap) ->
         TopicSettings = maps:get(TopicName, TopicsSettingsMap),
         {ok, Pid} = erlkaf_consumer:start_link(ClientRef, TopicName, Partition, Offset, QueueRef, TopicSettings),
-        maps:put({TopicName, Partition}, Pid, Tmap)
+        maps:put({TopicName, Partition}, {Pid, QueueRef}, Tmap)
     end,
 
     {noreply, State#state{active_topics_map = lists:foldl(PartFun, ActiveTopicsMap, Partitions)}};
@@ -88,8 +88,8 @@ handle_info({revoke_partitions, Partitions}, #state{
     active_topics_map = ActiveTopicsMap} = State) ->
 
     ?LOG_INFO("revoke partitions: ~p", [Partitions]),
-    Pids = get_pids(ActiveTopicsMap, Partitions),
-    ok = stop_consumers(Pids),
+    PidQueuePairs = get_pid_queue_pairs(ActiveTopicsMap, Partitions),
+    ok = stop_consumers(PidQueuePairs),
     ?LOG_INFO("all existing consumers stopped for partitions: ~p", [Partitions]),
     ok = erlkaf_nif:consumer_partition_revoke_completed(ClientRef),
     {noreply, State#state{active_topics_map = #{}}};
@@ -124,9 +124,12 @@ terminate(_Reason, #state{active_topics_map = TopicsMap, client_ref = ClientRef,
 code_change(_OldVsn, State, _Extra) ->
     {ok, State}.
 
-get_pids(TopicsMap, Partitions) ->
+get_pid_queue_pairs(TopicsMap, Partitions) ->
     lists:map(fun(P) -> maps:get(P, TopicsMap) end, Partitions).
 
-stop_consumers(Pids) ->
-    erlkaf_utils:parralel_exec(fun(Pid) -> erlkaf_consumer:stop(Pid) end, Pids).
+stop_consumers(PidQueuePairs) ->
+    erlkaf_utils:parralel_exec(fun({Pid, QueueRef}) -> 
+        erlkaf_consumer:stop(Pid),
+        ok = erlkaf_nif:consumer_queue_cleanup(QueueRef)
+    end, PidQueuePairs).
 
