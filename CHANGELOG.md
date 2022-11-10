@@ -4,6 +4,8 @@
 
 - Fix for kafka tombstones messages (https://github.com/silviucpp/erlkaf/issues/51)
 - Add support for message timestamp (https://github.com/silviucpp/erlkaf/issues/41)
+- Update to librdkafka v1.9.2
+- Bug fixing into cleanup consumer queue in consumer group (#52)
 
 #### v2.0.9
 
