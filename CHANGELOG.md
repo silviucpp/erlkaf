@@ -1,5 +1,9 @@
 ### Changelog:
 
+#### v2.1.1
+
+- Update esq (https://github.com/silviucpp/erlkaf/issues/55)
+
 #### v2.1.0
 
 - Fix for kafka tombstones messages (https://github.com/silviucpp/erlkaf/issues/51)
