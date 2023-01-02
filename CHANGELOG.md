@@ -1,5 +1,9 @@
 ### Changelog:
 
+#### v2.1.2
+
+- Proper fix for building with mix (https://github.com/fogfish/esq/issues/20#issuecomment-1369142644)
+
 #### v2.1.1
 
 - Update esq (https://github.com/silviucpp/erlkaf/issues/55)
