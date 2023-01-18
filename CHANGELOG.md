@@ -1,5 +1,10 @@
 ### Changelog:
 
+#### v2.1.3
+
+- Migrate from lager to erlang logger. 
+- Important bug fixing causing crashes in rare situations because of undefined functions.
+
 #### v2.1.2
 
 - Proper fix for building with mix (https://github.com/fogfish/esq/issues/20#issuecomment-1369142644)

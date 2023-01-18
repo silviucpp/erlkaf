@@ -150,14 +150,14 @@ produce(ClientId, TopicName, Partition, Key, Value, Headers0, Timestamp) ->
                 ok ->
                     ok;
                 {error, ?RD_KAFKA_RESP_ERR_QUEUE_FULL} ->
-                    case erlkaf_producer:queue_event(ClientPid, TopicName, Partition, Key, Value, Headers) of
+                    case erlkaf_producer:queue_event(ClientPid, TopicName, Partition, Key, Value, Headers, Timestamp) of
                         ok ->
                             ok;
                         drop_records ->
                             ?LOG_WARNING("message: ~p dropped", [{TopicName, Partition, Key, Value, Headers}]),
                             ok;
                         block_calling_process ->
-                            produce_blocking(ClientRef, TopicName, Partition, Key, Value, Headers);
+                            produce_blocking(ClientRef, TopicName, Partition, Key, Value, Headers, Timestamp);
                         Error ->
                             Error
                     end;
@@ -177,13 +177,13 @@ get_readable_error(Error) ->
 
 %internals
 
-produce_blocking(ClientRef, TopicName, Partition, Key, Value, Headers) ->
-    case erlkaf_nif:produce(ClientRef, TopicName, Partition, Key, Value, Headers) of
+produce_blocking(ClientRef, TopicName, Partition, Key, Value, Headers, Timestamp) ->
+    case erlkaf_nif:produce(ClientRef, TopicName, Partition, Key, Value, Headers, Timestamp) of
         ok ->
             ok;
         {error, ?RD_KAFKA_RESP_ERR_QUEUE_FULL} ->
             timer:sleep(100),
-            produce_blocking(ClientRef, TopicName, Partition, Key, Value, Headers);
+            produce_blocking(ClientRef, TopicName, Partition, Key, Value, Headers, Timestamp);
         Error ->
             Error
     end.

@@ -1,22 +1,9 @@
 % logs
 
--define(PRINT_MSG(Format, Args),
+-include_lib("kernel/include/logger.hrl").
+
+-define(LOG_PRINT(Format, Args),
     io:format(Format, Args)).
-
--define(LOG_DEBUG(Format, Args),
-    lager:debug(Format, Args)).
-
--define(LOG_INFO(Format, Args),
-    lager:info(Format, Args)).
-
--define(LOG_WARNING(Format, Args),
-    lager:warning(Format, Args)).
-
--define(LOG_ERROR(Format, Args),
-    lager:error(Format, Args)).
-
--define(LOG_CRITICAL(Format, Args),
-    lager:critical(Format, Args)).
 
 % erlkaf errors
 
