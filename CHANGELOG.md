@@ -1,5 +1,9 @@
 ### Changelog:
 
+#### 2.1.4
+
+- Bug fixing: avoid assigning partitions if consumer is not running (https://github.com/silviucpp/erlkaf/pull/60)
+
 #### v2.1.3
 
 - Migrate from lager to erlang logger. 
