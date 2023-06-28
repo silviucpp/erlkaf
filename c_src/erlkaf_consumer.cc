@@ -103,6 +103,12 @@ ERL_NIF_TERM partition_list_to_nif(ErlNifEnv* env, enif_consumer* consumer, rd_k
 
 void assign_partitions(ErlNifEnv* env, enif_consumer* consumer, rd_kafka_t *rk, rd_kafka_topic_partition_list_t *partitions)
 {
+    if(!consumer->running)
+    {
+        rd_kafka_assign(rk, NULL);
+        return;
+    }
+    
     rd_kafka_resp_err_t response = rd_kafka_assign(rk, partitions);
 
     if(response != RD_KAFKA_RESP_ERR_NO_ERROR)
