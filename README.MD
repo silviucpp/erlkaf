@@ -36,7 +36,7 @@ into the topics list. This breaks the backward compatibility for the API and con
 On Ubuntu make sure you have installed :
 
 ```sh
-sudo apt-get install libsasl2-dev liblz4-dev libzstd-dev
+sudo apt-get install libsasl2-dev liblz4-dev libzstd-dev zlib1g-dev
 ```
 
 Add `erlkaf` as a dependency to your project. The library works with `rebar`, `rebar3` or `hex.pm`
