@@ -6,10 +6,10 @@ OS=$(uname -s)
 KERNEL=$(echo $(lsb_release -ds 2>/dev/null || cat /etc/*release 2>/dev/null | head -n1 | awk '{print $1;}') | awk '{print $1;}')
 CPUS=`getconf _NPROCESSORS_ONLN 2>/dev/null || sysctl -n hw.ncpu`
 
-# https://github.com/edenhill/librdkafka.git
+# https://github.com/confluentinc/librdkafka.git
 
 LIBRDKAFKA_DESTINATION=librdkafka
-LIBRDKAFKA_REPO=https://github.com/edenhill/librdkafka.git
+LIBRDKAFKA_REPO=https://github.com/confluentinc/librdkafka.git
 LIBRDKAFKA_BRANCH=master
 LIBRDKAFKA_REV=9b72ca3aa6c49f8f57eea02f70aadb1453d3ba1f
 LIBRDKAFKA_SUCCESS=src/librdkafka.a
