@@ -74,13 +74,6 @@ CXXFLAGS += -DNDEBUG \
             -I ../_build/deps \
 			-g -Wextra -Werror -Wno-missing-field-initializers -fno-exceptions -fno-rtti -std=c++11
 
-LDFLAGS += -L ../_build/deps/librdkafka/src \
-           -lrdkafka \
-           -lsasl2 \
-           -lz \
-           -lssl \
-           -lcrypto \
-           -lstdc++ \
-           -llz4 \
-           -lzstd \
-           -lcurl
+LDFLAGS += -L ../_build/deps/librdkafka/src -lrdkafka
+LDFLAGS += $(shell pkg-config --libs libsasl2 zlib openssl libcrypto liblz4 libzstd libcurl)
+
