@@ -1,7 +1,7 @@
 -module(erlkaf_config).
 
 % librdkafka configs are described here:
-% https://github.com/edenhill/librdkafka/blob/master/CONFIGURATION.md
+% https://github.com/confluentinc/librdkafka/blob/master/CONFIGURATION.md
 
 -export([
     convert_topic_config/1,

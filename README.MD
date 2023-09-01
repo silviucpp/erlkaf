@@ -252,6 +252,6 @@ statistics are disabled). The granularity is 1000 ms. Also you can poll the stat
 
 The list of all available properties of client and topics are described [here][2]
 
-[1]:https://github.com/edenhill/librdkafka
+[1]:https://github.com/confluentinc/librdkafka
 [2]:https://github.com/silviucpp/erlkaf/blob/master/CONFIGURATION.md
 [3]:https://github.com/silviucpp/erlkaf/blob/master/CHANGELOG.md

@@ -157,7 +157,7 @@ schedule_consume_queue(Timeout) ->
 %todo:
 % * we need support in case we shutdown the producer to get back the pending messages from librdkafka and
 %   write them in the local queue. this is not supported now by librdkafka
-%   more details: https://github.com/edenhill/librdkafka/issues/990
+%   more details: https://github.com/confluentinc/librdkafka/issues/990
 
 consume_queue(_ClientRef, _Q, 0) ->
     log_completed(0),
