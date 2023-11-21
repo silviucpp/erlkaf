@@ -146,6 +146,37 @@ ERL_NIF_TERM enif_producer_topic_new(ErlNifEnv* env, int argc, const ERL_NIF_TER
     return ATOMS.atomOk;
 }
 
+// ERL_NIF_TERM enif_producer_topic_delete(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
+// {
+//     UNUSED(argc);
+
+//     std::string topic_name;
+//     enif_producer* producer;
+
+//     erlkaf_data* data = static_cast<erlkaf_data*>(enif_priv_data(env));
+
+//     if(!enif_get_resource(env, argv[0], data->res_producer,  reinterpret_cast<void**>(&producer)))
+//         return make_badarg(env);
+
+//     if(!get_string(env, argv[1], &topic_name))
+//         return make_badarg(env);
+
+//     scoped_ptr(config, rd_kafka_topic_conf_t, rd_kafka_topic_conf_new(), rd_kafka_topic_conf_destroy);
+
+//     ERL_NIF_TERM parse_result = parse_topic_config(env, argv[2], config.get());
+
+//     if(parse_result != ATOMS.atomOk)
+//         return parse_result;
+
+//     bool already_exist;
+
+//     if(!producer->topics->AddTopic(topic_name, config.get(), &already_exist))
+//         return make_error(env, already_exist ? "topic already exist" : "failed to create topic");
+
+//     config.release();
+//     return ATOMS.atomOk;
+// }
+
 ERL_NIF_TERM enif_producer_new(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
 {
     UNUSED(argc);
