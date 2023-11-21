@@ -1,6 +1,4 @@
 #include "topicmanager.h"
-#include "macros.h"
-#include <memory>
 #include "rdkafka.h"
 
 TopicManager::TopicManager(rd_kafka_t *rk) : rk_(rk) { }
@@ -32,7 +30,7 @@ rd_kafka_topic_t* TopicManager::AddTopic(const std::string& name, rd_kafka_topic
     return topic;
 }
 
-void* TopicManager::DeleteTopic(const std::string& name, bool* not_found)
+void* TopicManager::DeleteTopic(const std::string& name, rd_kafka_DeleteTopic_t* del_topics, bool* not_found)
 {
     CritScope ss(&crt_);
 
@@ -44,9 +42,9 @@ void* TopicManager::DeleteTopic(const std::string& name, bool* not_found)
         return NULL;
     }
 
-    scoped_ptr(del_topics, rd_kafka_DeleteTopic_t*, rd_kafka_DeleteTopic_new(name.c_str()), rd_kafka_DeleteTopic_destroy);
+    // scoped_ptr(del_topics, rd_kafka_DeleteTopic_t*, rd_kafka_DeleteTopic_new(name.c_str()), rd_kafka_DeleteTopic_destroy);
      	
-    rd_kafka_DeleteTopic_t* del_topics = rd_kafka_DeleteTopic_new(name.c_str());
+    // rd_kafka_DeleteTopic_t* del_topics = rd_kafka_DeleteTopic_new(name.c_str());
 
     *not_found = false;
     rd_kafka_DeleteTopics(rk_, &del_topics, 1, NULL, NULL);

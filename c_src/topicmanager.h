@@ -3,6 +3,7 @@
 
 #include "macros.h"
 #include "critical_section.h"
+#include "rdkafka.h"
 
 #include <map>
 #include <string>
@@ -19,7 +20,7 @@ public:
     ~TopicManager();
 
     rd_kafka_topic_t* AddTopic(const std::string& name, rd_kafka_topic_conf_t* conf, bool* already_exist);
-    void* DeleteTopic(const std::string& name, bool* not_found);
+    void* DeleteTopic(const std::string& name, rd_kafka_DeleteTopic_t* del_topics, bool* not_found);
     rd_kafka_topic_t* GetOrCreateTopic(const std::string& name);
 
 private:
