@@ -42,12 +42,14 @@ void* TopicManager::DeleteTopic(const std::string& name, rd_kafka_DeleteTopic_t*
         return NULL;
     }
 
-    // scoped_ptr(del_topics, rd_kafka_DeleteTopic_t*, rd_kafka_DeleteTopic_new(name.c_str()), rd_kafka_DeleteTopic_destroy);
-     	
-    // rd_kafka_DeleteTopic_t* del_topics = rd_kafka_DeleteTopic_new(name.c_str());
+    rd_kafka_AdminOptions_t *options;
+    options = rd_kafka_AdminOptions_new(rk_, RD_KAFKA_ADMIN_OP_DELETETOPICS);
+
 
     *not_found = false;
-    rd_kafka_DeleteTopics(rk_, &del_topics, 1, NULL, NULL);
+    rd_kafka_DeleteTopics(rk_, &del_topics, 1, options, NULL);
+
+    rd_kafka_AdminOptions_destroy(options);
 
     return NULL;
 }
