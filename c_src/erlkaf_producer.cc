@@ -162,7 +162,7 @@ ERL_NIF_TERM enif_producer_topic_delete(ErlNifEnv* env, int argc, const ERL_NIF_
         return make_badarg(env);
 
     rd_kafka_DeleteTopic_t **del_topics;
-    del_topics = (rd_kafka_DeleteTopic_t **)malloc(sizeof(*del_topics));
+    del_topics = reinterpret_cast<rd_kafka_DeleteTopic_t **>(malloc(sizeof(*del_topics)));
     del_topics[0] = rd_kafka_DeleteTopic_new(topic_name.data());
 
     bool not_found;
@@ -170,7 +170,7 @@ ERL_NIF_TERM enif_producer_topic_delete(ErlNifEnv* env, int argc, const ERL_NIF_
     producer->topics->DeleteTopic(topic_name, *del_topics, &not_found);
 
     if(not_found)
-        return make_error(env,"topic not found");
+        return make_error(env, "topic not found");
 
     rd_kafka_DeleteTopic_destroy_array(del_topics, 1);
     free(del_topics);

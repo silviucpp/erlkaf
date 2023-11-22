@@ -16,6 +16,8 @@
     create_topic/2,
     create_topic/3,
 
+    delete_topic/2,
+
     produce/4,
     produce/5,
     produce/6,
@@ -105,6 +107,16 @@ create_topic(ClientId, TopicName, TopicConfig) ->
                 Error ->
                     Error
             end;
+        _ ->
+            {error, ?ERR_UNDEFINED_CLIENT}
+    end.
+
+-spec delete_topic(client_id(), binary()) ->
+    ok | {error, reason()}.
+delete_topic(ClientId, TopicName) ->
+    case erlkaf_cache_client:get(ClientId) of
+        {ok, ClientRef, _ClientPid} ->
+            erlkaf_manager:delete_topic(ClientRef, TopicName);
         _ ->
             {error, ?ERR_UNDEFINED_CLIENT}
     end.
