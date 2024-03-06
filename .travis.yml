@@ -18,7 +18,7 @@ matrix:
 
     - os: linux
       dist: jammy
-      otp_release: 26.2.2
+      otp_release: 26.1.1
 
     - os: osx
       osx_image: xcode12.4
