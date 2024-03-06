@@ -16,6 +16,10 @@ matrix:
       dist: jammy
       otp_release: 25.2.1
 
+    - os: linux
+      dist: jammy
+      otp_release: 26.2.2
+
     - os: osx
       osx_image: xcode12.4
       language: generic
