@@ -65,6 +65,7 @@ BuildLibrary()
         $LIBRDKAFKA_DESTINATION)
             case $OS in
                 Darwin)
+                    export HOMEBREW_NO_AUTO_UPDATE=1
                     brew install openssl@1.1 lz4 zstd curl
                     OPENSSL_ROOT_DIR=$(brew --prefix openssl@1.1)
                     export CPPFLAGS=-I$OPENSSL_ROOT_DIR/include/

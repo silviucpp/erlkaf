@@ -1,5 +1,10 @@
 ### Changelog:
 
+#### 2.1.5
+
+- Bug fixing: brew install causing undesired updates and crashing other Homebrew pkgs (https://github.com/silviucpp/erlkaf/issues/68)
+- Update travis config
+
 #### 2.1.4
 
 - Bug fixing: avoid assigning partitions if consumer is not running (https://github.com/silviucpp/erlkaf/pull/60)
