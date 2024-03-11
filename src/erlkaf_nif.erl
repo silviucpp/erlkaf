@@ -27,7 +27,6 @@
 
 load_nif() ->
     SoName = erlkaf_utils:get_priv_path(?MODULE),
-    io:format(<<"Loading library: ~p ~n">>, [SoName]),
     ok = erlang:load_nif(SoName, 0).
 
 not_loaded(Line) ->
