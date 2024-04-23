@@ -1,5 +1,9 @@
 ### Changelog:
 
+#### 2.1.6
+
+- Bug fixing: https://github.com/silviucpp/erlkaf/pull/71
+
 #### 2.1.5
 
 - Bug fixing: brew install causing undesired updates and crashing other Homebrew pkgs (https://github.com/silviucpp/erlkaf/issues/68)
