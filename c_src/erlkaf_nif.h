@@ -34,6 +34,7 @@ struct atoms
     ERL_NIF_TERM atomNotAvailable;
     ERL_NIF_TERM atomCreateTime;
     ERL_NIF_TERM atomLogAppendTime;
+    ERL_NIF_TERM atomOauthbearerTokenRefresh;
 };
 
 struct erlkaf_data

@@ -5,6 +5,7 @@
 #include "erlkaf_nif.h"
 #include "erlkaf_config.h"
 #include "erlkaf_logger.h"
+#include "erlkaf_oauthbearer.h"
 #include "rdkafka.h"
 #include "queuecallbacksdispatcher.h"
 #include "erlkaf_message.h"
@@ -13,6 +14,9 @@
 #include <memory>
 #include <string>
 #include <future>
+#include <vector>
+#include <sstream>
+#include <iostream>
 
 namespace {
 
@@ -63,6 +67,26 @@ int stats_callback(rd_kafka_t *rk, char *json, size_t json_len, void *opaque)
     enif_send(NULL, &producer->owner_pid, env, enif_make_tuple2(env, ATOMS.atomStats, stats));
     enif_free_env(env);
     return 0;
+}
+
+void oauthbearer_token_refresh_callback(rd_kafka_t *rk, const char *oauthbearer_config, void *opaque)
+{
+    UNUSED(rk);
+
+    enif_producer* producer = static_cast<enif_producer*>(opaque);
+    ErlNifEnv* env = enif_alloc_env();
+
+    if (oauthbearer_config == NULL)
+    {
+        enif_send(NULL, &producer->owner_pid, env, enif_make_tuple2(env, ATOMS.atomOauthbearerTokenRefresh, ATOMS.atomUndefined));
+    }
+    else
+    {
+        ERL_NIF_TERM config = make_binary(env, oauthbearer_config, strlen(oauthbearer_config));
+        enif_send(NULL, &producer->owner_pid, env, enif_make_tuple2(env, ATOMS.atomOauthbearerTokenRefresh, config));
+    }
+
+    enif_free_env(env);
 }
 
 bool populate_headers(ErlNifEnv* env, ERL_NIF_TERM headers_term, rd_kafka_headers_t* out)
@@ -164,6 +188,8 @@ ERL_NIF_TERM enif_producer_new(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv
 
     rd_kafka_conf_set_log_cb(config.get(), logger_callback);
     rd_kafka_conf_set_stats_cb(config.get(), stats_callback);
+    rd_kafka_conf_set_oauthbearer_token_refresh_cb(config.get(), oauthbearer_token_refresh_callback);
+    rd_kafka_conf_enable_sasl_queue(config.get(), 1);
 
     if(has_dr_callback)
         rd_kafka_conf_set_dr_msg_cb(config.get(), delivery_report_callback);
@@ -213,6 +239,8 @@ ERL_NIF_TERM enif_producer_set_owner(ErlNifEnv* env, int argc, const ERL_NIF_TER
 
     if(!enif_get_local_pid(env, argv[1], &producer->owner_pid))
         return make_badarg(env);
+
+    rd_kafka_sasl_background_callbacks_enable(producer->kf);
 
     return ATOMS.atomOk;
 }
@@ -416,4 +444,52 @@ ERL_NIF_TERM enif_produce(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
     }
 
     return ATOMS.atomOk;
+}
+
+ERL_NIF_TERM enif_producer_oauthbearer_set_token(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
+{
+    UNUSED(argc);
+
+    std::string token;
+    long lifetime;
+    std::string principal;
+    std::string extensions_str;
+
+    erlkaf_data* data = static_cast<erlkaf_data*>(enif_priv_data(env));
+    enif_producer* producer;
+
+    if(!enif_get_resource(env, argv[0], data->res_producer, reinterpret_cast<void**>(&producer)))
+        return make_badarg(env);
+
+    if(!get_string(env, argv[1], &token))
+        return make_badarg(env);
+
+    if(!enif_get_long(env, argv[2], &lifetime))
+        return make_badarg(env);
+
+    if(!get_string(env, argv[3], &principal))
+        return make_badarg(env);
+
+    if(!get_string(env, argv[4], &extensions_str))
+        return make_badarg(env);
+
+    return oauthbearer_set_token(producer->kf, token, lifetime, principal, extensions_str);
+}
+
+ERL_NIF_TERM enif_producer_oauthbearer_set_token_failure(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
+{
+    UNUSED(argc);
+
+    std::string error_str;
+
+    erlkaf_data* data = static_cast<erlkaf_data*>(enif_priv_data(env));
+    enif_producer* producer;
+
+    if(!enif_get_resource(env, argv[0], data->res_producer, reinterpret_cast<void**>(&producer)))
+        return make_badarg(env);
+
+    if(!get_string(env, argv[1], &error_str))
+        return make_badarg(env);
+
+    return oauthbearer_set_token_failure(producer->kf, error_str);
 }
