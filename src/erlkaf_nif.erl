@@ -13,6 +13,8 @@
     producer_set_owner/2,
     producer_topic_new/3,
     produce/7,
+    producer_oauthbearer_set_token/5,
+    producer_oauthbearer_set_token_failure/2,
     get_metadata/1,
 
     consumer_new/4,
@@ -20,7 +22,9 @@
     consumer_queue_poll/2,
     consumer_queue_cleanup/1,
     consumer_offset_store/4,
-    consumer_cleanup/1
+    consumer_cleanup/1,
+    consumer_oauthbearer_set_token/5,
+    consumer_oauthbearer_set_token_failure/2
 ]).
 
 %% nif functions
@@ -50,6 +54,12 @@ producer_topic_new(_ClientRef, _TopicName, _TopicConfig) ->
 produce(_ClientRef, _TopicRef, _Partition, _Key, _Value, _Headers, _Timestamp) ->
     ?NOT_LOADED.
 
+producer_oauthbearer_set_token(_ClientRef, _Token, _LifeTime, _Principal, _Extensions) ->
+    ?NOT_LOADED.
+
+producer_oauthbearer_set_token_failure(_ClientRef, _Error) ->
+    ?NOT_LOADED.
+
 get_metadata(_ClientRef) ->
     ?NOT_LOADED.
 
@@ -69,4 +79,10 @@ consumer_offset_store(_ClientRef, _TopicName, _Partition, _Offset) ->
     ?NOT_LOADED.
 
 consumer_cleanup(_ClientRef) ->
+    ?NOT_LOADED.
+
+consumer_oauthbearer_set_token(_ClientRef, _Token, _LifeTime, _Principal, _Extensions) ->
+    ?NOT_LOADED.
+
+consumer_oauthbearer_set_token_failure(_ClientRef, _Error) ->
     ?NOT_LOADED.

@@ -33,6 +33,7 @@ const char kAtomClientStopped[] = "client_stopped";
 const char kAtomNotAvailable[] = "not_available";
 const char kAtomCreateTime[] = "create_time";
 const char kAtomLogAppendTime[] = "log_append_time";
+const char kAtomOauthbearerTokenRefresh[] = "oauthbearer_token_refresh";
 
 atoms ATOMS;
 
@@ -75,6 +76,7 @@ int on_nif_load(ErlNifEnv* env, void** priv_data, ERL_NIF_TERM load_info)
     ATOMS.atomNotAvailable = make_atom(env, kAtomNotAvailable);
     ATOMS.atomCreateTime = make_atom(env, kAtomCreateTime);
     ATOMS.atomLogAppendTime = make_atom(env, kAtomLogAppendTime);
+    ATOMS.atomOauthbearerTokenRefresh = make_atom(env, kAtomOauthbearerTokenRefresh);
 
     erlkaf_data* data = static_cast<erlkaf_data*>(enif_alloc(sizeof(erlkaf_data)));
     open_resources(env, data);
@@ -122,13 +124,17 @@ static ErlNifFunc nif_funcs[] =
     {"producer_cleanup", 1, enif_producer_cleanup},
     {"produce", 7, enif_produce},
     {"get_metadata", 1, enif_get_metadata, ERL_NIF_DIRTY_JOB_IO_BOUND},
+    {"producer_oauthbearer_set_token", 5, enif_producer_oauthbearer_set_token},
+    {"producer_oauthbearer_set_token_failure", 2, enif_producer_oauthbearer_set_token_failure},
 
     {"consumer_new", 4, enif_consumer_new},
     {"consumer_partition_revoke_completed", 1, enif_consumer_partition_revoke_completed},
     {"consumer_queue_poll", 2, enif_consumer_queue_poll},
     {"consumer_queue_cleanup", 1, enif_consumer_queue_cleanup},
     {"consumer_offset_store", 4, enif_consumer_offset_store},
-    {"consumer_cleanup", 1, enif_consumer_cleanup}
+    {"consumer_cleanup", 1, enif_consumer_cleanup},
+    {"consumer_oauthbearer_set_token", 5, enif_consumer_oauthbearer_set_token},
+    {"consumer_oauthbearer_set_token_failure", 2, enif_consumer_oauthbearer_set_token_failure}
 };
 
 ERL_NIF_INIT(erlkaf_nif, nif_funcs, on_nif_load, NULL, on_nif_upgrade, on_nif_unload)

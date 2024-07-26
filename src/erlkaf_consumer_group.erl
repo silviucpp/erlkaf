@@ -23,7 +23,8 @@
     topics_settings = #{},
     active_topics_map = #{},
     stats_cb,
-    stats = []
+    stats = [],
+    oauthbearer_token_refresh_cb
 }).
 
 start_link(ClientId, GroupId, Topics, EkClientConfig, RdkClientConfig, EkTopicConfig, RdkTopicConfig) ->
@@ -42,7 +43,8 @@ init([ClientId, GroupId, Topics, EkClientConfig, RdkClientConfig, _EkTopicConfig
                 client_id = ClientId,
                 client_ref = ClientRef,
                 topics_settings = maps:from_list(Topics),
-                stats_cb = erlkaf_utils:lookup(stats_callback, EkClientConfig)
+                stats_cb = erlkaf_utils:lookup(stats_callback, EkClientConfig),
+                oauthbearer_token_refresh_cb = erlkaf_utils:lookup(oauthbearer_token_refresh_callback, EkClientConfig)
             }};
         Error ->
             {stop, Error}
@@ -67,6 +69,23 @@ handle_info({stats, Stats0}, #state{stats_cb = StatsCb, client_id = ClientId} = 
             ?LOG_ERROR("~p:stats_callback client_id: ~p error: ~p", [StatsCb, ClientId, Error])
     end,
     {noreply, State#state{stats = Stats}};
+
+handle_info({oauthbearer_token_refresh, OauthBearerConfig}, #state{
+    oauthbearer_token_refresh_cb = OauthbearerTokenRefreshCb,
+    client_id = ClientId,
+    client_ref = ClientRef} = State) ->
+
+    case catch erlkaf_utils:call_oauthbearer_token_refresh_callback(OauthbearerTokenRefreshCb, OauthBearerConfig) of
+        {ok, Token, LifeTime, Principal} ->
+            erlkaf_nif:consumer_oauthbearer_set_token(ClientRef, Token, LifeTime, Principal, "");
+        {ok, Token, LifeTime, Principal, Extensions} ->
+            erlkaf_nif:consumer_oauthbearer_set_token(ClientRef, Token, LifeTime, Principal, Extensions);
+        {error, Error} ->
+            erlkaf_nif:consumer_oauthbearer_set_token_failure(ClientRef, Error),
+            ?LOG_ERROR("~p:oauthbearer_token_refresh_callback client_id: ~p error: ~p", [OauthbearerTokenRefreshCb, ClientId, Error])
+    end,
+
+    {noreply, State};
 
 handle_info({assign_partitions, Partitions}, #state{
     client_ref = ClientRef,

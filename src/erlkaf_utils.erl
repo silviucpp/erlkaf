@@ -11,6 +11,7 @@
     safe_call/2,
     safe_call/3,
     call_stats_callback/3,
+    call_oauthbearer_token_refresh_callback/2,
     parralel_exec/2
 ]).
 
@@ -84,10 +85,17 @@ safe_call(Receiver, Message, Timeout) ->
 
 call_stats_callback(undefined, _ClientId, _Stats) ->
     ok;
-call_stats_callback(C, ClientId, Stats) when is_function(C, 2) ->
-    C(ClientId, Stats);
-call_stats_callback(C, ClientId, Stats) ->
-    C:stats_callback(ClientId, Stats).
+call_stats_callback(C, OAuthBearerConfig, Stats) when is_function(C, 2) ->
+    C(OAuthBearerConfig, Stats);
+call_stats_callback(C, OAuthBearerConfig, Stats) ->
+    C:stats_callback(OAuthBearerConfig, Stats).
+
+call_oauthbearer_token_refresh_callback(undefined, _OauthbearerConfig) ->
+    ok;
+call_oauthbearer_token_refresh_callback(C, OauthbearerConfig) when is_function(C, 1) ->
+    C(OauthbearerConfig);
+call_oauthbearer_token_refresh_callback(C, OauthbearerConfig) ->
+    C:oauthbearer_token_refresh_callback(OauthbearerConfig).
 
 parralel_exec(Fun, List) ->
     Parent = self(),

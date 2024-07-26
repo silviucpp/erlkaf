@@ -11,5 +11,7 @@ ERL_NIF_TERM enif_consumer_queue_poll(ErlNifEnv* env, int argc, const ERL_NIF_TE
 ERL_NIF_TERM enif_consumer_queue_cleanup(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[]);
 ERL_NIF_TERM enif_consumer_offset_store(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[]);
 ERL_NIF_TERM enif_consumer_cleanup(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[]);
+ERL_NIF_TERM enif_consumer_oauthbearer_set_token(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[]);
+ERL_NIF_TERM enif_consumer_oauthbearer_set_token_failure(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[]);
 
 #endif  // C_SRC_ERLKAF_CONSUMER_H_

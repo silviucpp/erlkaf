@@ -31,7 +31,8 @@
     stats = [],
     overflow_method,
     pqueue,
-    pqueue_sch = true
+    pqueue_sch = true,
+    oauthbearer_token_refresh_cb
 }).
 
 start_link(ClientId, DrCallback, ErlkafConfig, ProducerRef) ->
@@ -44,6 +45,7 @@ init([ClientId, DrCallback, ErlkafConfig, ProducerRef]) ->
     Pid = self(),
     OverflowStrategy = erlkaf_utils:lookup(queue_buffering_overflow_strategy, ErlkafConfig, local_disk_queue),
     StatsCallback =  erlkaf_utils:lookup(stats_callback, ErlkafConfig),
+    OauthbearerTokenRefreshCb = erlkaf_utils:lookup(oauthbearer_token_refresh_callback, ErlkafConfig),
     ok = erlkaf_nif:producer_set_owner(ProducerRef, Pid),
     ok = erlkaf_cache_client:set(ClientId, ProducerRef, Pid),
     {ok, Queue} = erlkaf_local_queue:new(ClientId),
@@ -62,7 +64,8 @@ init([ClientId, DrCallback, ErlkafConfig, ProducerRef]) ->
         dr_cb = DrCallback,
         stats_cb = StatsCallback,
         overflow_method = OverflowStrategy,
-        pqueue = Queue}}.
+        pqueue = Queue,
+        oauthbearer_token_refresh_cb = OauthbearerTokenRefreshCb}}.
 
 handle_call({queue_event, TopicName, Partition, Key, Value, Headers, Timestamp}, _From, #state{
     pqueue = Queue,
@@ -115,6 +118,23 @@ handle_info({stats, Stats0}, #state{stats_cb = StatsCb, client_id = ClientId} = 
             ?LOG_ERROR("~p:stats_callback client_id: ~p error: ~p", [StatsCb, ClientId, Error])
     end,
     {noreply, State#state{stats = Stats}};
+
+handle_info({oauthbearer_token_refresh, OauthBearerConfig}, #state{
+    oauthbearer_token_refresh_cb = OauthbearerTokenRefreshCb, 
+    client_id = ClientId, 
+    ref = ClientRef} = State) ->
+    
+    case catch erlkaf_utils:call_oauthbearer_token_refresh_callback(OauthbearerTokenRefreshCb, OauthBearerConfig) of
+        {ok, Token, LifeTime, Principal} ->
+            erlkaf_nif:producer_oauthbearer_set_token(ClientRef, Token, LifeTime, Principal, "");
+        {ok, Token, LifeTime, Principal, Extensions} ->
+            erlkaf_nif:producer_oauthbearer_set_token(ClientRef, Token, LifeTime, Principal, Extensions);
+        {error, Error} ->
+            erlkaf_nif:producer_oauthbearer_set_token_failure(ClientRef, Error),
+            ?LOG_ERROR("~p:oauthbearer_token_refresh_callback client_id: ~p error: ~p", [OauthbearerTokenRefreshCb, ClientId, Error])
+    end,
+
+    {noreply, State};
 
 handle_info(Info, State) ->
     ?LOG_ERROR("received unknown message: ~p", [Info]),

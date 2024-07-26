@@ -11,6 +11,10 @@
 -callback stats_callback(client_id(), map()) ->
     ok.
 
+-callback oauthbearer_token_refresh_callback(binary()) ->
+    ok.
+
 -optional_callbacks([
-    stats_callback/2
+    stats_callback/2,
+    oauthbearer_token_refresh_callback/1
 ]).

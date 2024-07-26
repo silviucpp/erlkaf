@@ -80,6 +80,8 @@ is_erlkaf_config(delivery_report_callback = K, V) ->
     check_callback(K, V, 2);
 is_erlkaf_config(stats_callback = K, V) ->
     check_callback(K, V, 2);
+is_erlkaf_config(oauthbearer_token_refresh_callback = K, V) ->
+    check_callback(K, V, 1);
 is_erlkaf_config(queue_buffering_overflow_strategy = K, V) ->
     case V of
         local_disk_queue ->
@@ -218,6 +220,18 @@ to_librdkafka_config(sasl_oauthbearer_config, V) ->
     {<<"sasl.oauthbearer.config">>, erlkaf_utils:to_binary(V)};
 to_librdkafka_config(enable_sasl_oauthbearer_unsecure_jwt, V) ->
     {<<"enable.sasl.oauthbearer.unsecure.jwt">>, erlkaf_utils:to_binary(V)};
+to_librdkafka_config(sasl_oauthbearer_method, V) ->
+    {<<"sasl.oauthbearer.method">>, erlkaf_utils:to_binary(V)};
+to_librdkafka_config(sasl_oauthbearer_client_id, V) ->
+    {<<"sasl.oauthbearer.client.id">>, erlkaf_utils:to_binary(V)};
+to_librdkafka_config(sasl_oauthbearer_client_secret, V) ->
+    {<<"sasl.oauthbearer.client.secret">>, erlkaf_utils:to_binary(V)};
+to_librdkafka_config(sasl_oauthbearer_scope, V) ->
+    {<<"sasl.oauthbearer.scope">>, erlkaf_utils:to_binary(V)};
+to_librdkafka_config(sasl_oauthbearer_extensions, V) ->
+    {<<"sasl.oauthbearer.extensions">>, erlkaf_utils:to_binary(V)};
+to_librdkafka_config(sasl_oauthbearer_token_endpoint_url, V) ->
+    {<<"sasl.oauthbearer.token.endpoint.url">>, erlkaf_utils:to_binary(V)};
 to_librdkafka_config(group_instance_id, V) ->
     {<<"group.instance.id">>, erlkaf_utils:to_binary(V)};
 to_librdkafka_config(session_timeout_ms, V) ->
