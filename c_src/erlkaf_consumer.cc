@@ -16,8 +16,6 @@
 #include <future>
 #include <string.h>
 #include <unistd.h>
-#include <sstream>
-#include <iostream>
 
 namespace {
 
@@ -111,7 +109,7 @@ void assign_partitions(ErlNifEnv* env, enif_consumer* consumer, rd_kafka_t *rk, 
         rd_kafka_assign(rk, NULL);
         return;
     }
-    
+
     rd_kafka_resp_err_t response = rd_kafka_assign(rk, partitions);
 
     if(response != RD_KAFKA_RESP_ERR_NO_ERROR)
@@ -184,7 +182,7 @@ void oauthbearer_token_refresh_callback(rd_kafka_t *rk, const char *oauthbearer_
         ERL_NIF_TERM config = make_binary(env, oauthbearer_config, strlen(oauthbearer_config));
         enif_send(NULL, &consumer->owner, env, enif_make_tuple2(env, ATOMS.atomOauthbearerTokenRefresh, config));
     }
-    
+
     enif_free_env(env);
 }
 
@@ -471,7 +469,7 @@ ERL_NIF_TERM enif_consumer_cleanup(ErlNifEnv* env, int argc, const ERL_NIF_TERM 
 ERL_NIF_TERM enif_consumer_oauthbearer_set_token(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
 {
     UNUSED(argc);
-    
+
     std::string token;
     long lifetime;
     std::string principal;

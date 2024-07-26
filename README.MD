@@ -1,5 +1,5 @@
 # erlkaf
-[![Build Status](https://travis-ci.com/silviucpp/erlkaf.svg?branch=master)](https://travis-ci.com/github/silviucpp/erlkaf)
+[![Build Status](https://app.travis-ci.com/silviucpp/erlkaf.svg?branch=master)](https://travis-ci.com/github/silviucpp/erlkaf)
 [![GitHub](https://img.shields.io/github/license/silviucpp/erlkaf)](https://github.com/silviucpp/erlkaf/blob/master/LICENSE)
 [![Hex.pm](https://img.shields.io/hexpm/v/erlkaf)](https://hex.pm/packages/erlkaf)
 

@@ -6,6 +6,8 @@
 #include <sstream>
 #include <iostream>
 
+namespace {
+
 char** split_extensions(const std::string extensions_str, size_t* length)
 {
     std::stringstream extensions_stream(extensions_str);
@@ -42,6 +44,8 @@ void free_extensions(char** extensions, size_t length)
 
         delete[] extensions;
     }
+}
+
 }
 
 ERL_NIF_TERM oauthbearer_set_token(rd_kafka_t* kf, std::string token, long lifetime, std::string principal, std::string extensions_str)

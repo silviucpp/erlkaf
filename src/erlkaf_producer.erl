@@ -120,10 +120,10 @@ handle_info({stats, Stats0}, #state{stats_cb = StatsCb, client_id = ClientId} = 
     {noreply, State#state{stats = Stats}};
 
 handle_info({oauthbearer_token_refresh, OauthBearerConfig}, #state{
-    oauthbearer_token_refresh_cb = OauthbearerTokenRefreshCb, 
-    client_id = ClientId, 
+    oauthbearer_token_refresh_cb = OauthbearerTokenRefreshCb,
+    client_id = ClientId,
     ref = ClientRef} = State) ->
-    
+
     case catch erlkaf_utils:call_oauthbearer_token_refresh_callback(OauthbearerTokenRefreshCb, OauthBearerConfig) of
         {ok, Token, LifeTime, Principal} ->
             erlkaf_nif:producer_oauthbearer_set_token(ClientRef, Token, LifeTime, Principal, "");
