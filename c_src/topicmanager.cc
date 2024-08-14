@@ -30,6 +30,33 @@ rd_kafka_topic_t* TopicManager::AddTopic(const std::string& name, rd_kafka_topic
     return topic;
 }
 
+void* TopicManager::DeleteTopic(const std::string& name, rd_kafka_DeleteTopic_t* del_topics, bool* not_found)
+{
+    CritScope ss(&crt_);
+
+    auto it = topics_.find(name);
+
+    if(it == topics_.end())
+    {
+        *not_found = true;
+        return NULL;
+    }
+
+    rd_kafka_AdminOptions_t *options;
+    options = rd_kafka_AdminOptions_new(rk_, RD_KAFKA_ADMIN_OP_DELETETOPICS);
+
+    rd_kafka_queue_t *rkqu;
+    rkqu = rd_kafka_queue_new(rk_);
+
+    *not_found = false;
+    rd_kafka_DeleteTopics(rk_, &del_topics, 1, options, rkqu);
+
+    rd_kafka_AdminOptions_destroy(options);
+    rd_kafka_queue_destroy(rkqu);
+
+    return NULL;
+}
+
 void TopicManager::Cleanup()
 {
     CritScope ss(&crt_);
