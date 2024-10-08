@@ -54,19 +54,21 @@ template <typename T> ERL_NIF_TERM parse_config(ErlNifEnv* env, ERL_NIF_TERM lis
     return ATOMS.atomOk;
 }
 
-bool appy_kafka_default_config(rd_kafka_conf_t* config)
+bool appy_kafka_default_config(rd_kafka_conf_t* config, TargetObject target)
 {
-    if(rd_kafka_conf_set(config, "enable.auto.commit", "true", NULL, 0) != RD_KAFKA_CONF_OK)
-        return false;
+    if(target == TargetObject::Consumer) {
+        if(rd_kafka_conf_set(config, "enable.auto.commit", "true", NULL, 0) != RD_KAFKA_CONF_OK)
+            return false;
 
-    if(rd_kafka_conf_set(config, "enable.auto.offset.store", "false", NULL, 0) != RD_KAFKA_CONF_OK)
-        return false;
+        if(rd_kafka_conf_set(config, "enable.auto.offset.store", "false", NULL, 0) != RD_KAFKA_CONF_OK)
+            return false;
 
-    if(rd_kafka_conf_set(config, "enable.partition.eof", "false", NULL, 0) != RD_KAFKA_CONF_OK)
-        return false;
+        if(rd_kafka_conf_set(config, "enable.partition.eof", "false", NULL, 0) != RD_KAFKA_CONF_OK)
+            return false;
 
-    if(rd_kafka_conf_set(config, "allow.auto.create.topics", "true", NULL, 0) != RD_KAFKA_CONF_OK)
-        return false;
+        if(rd_kafka_conf_set(config, "allow.auto.create.topics", "true", NULL, 0) != RD_KAFKA_CONF_OK)
+            return false;
+    }
 
 #ifdef SIGIO
     // quick termination
@@ -99,9 +101,9 @@ ERL_NIF_TERM parse_topic_config(ErlNifEnv* env, ERL_NIF_TERM list, rd_kafka_topi
     return parse_config(env, list, conf, kTopicConfFuns);
 }
 
-ERL_NIF_TERM parse_kafka_config(ErlNifEnv* env, ERL_NIF_TERM list, rd_kafka_conf_t* conf)
+ERL_NIF_TERM parse_kafka_config(ErlNifEnv* env, ERL_NIF_TERM list, rd_kafka_conf_t* conf, TargetObject target)
 {
-    if(!appy_kafka_default_config(conf))
+    if(!appy_kafka_default_config(conf, target))
         return make_error(env, "failed to apply default kafka config");
 
     return parse_config(env, list, conf, kKafkaConfFuns);
