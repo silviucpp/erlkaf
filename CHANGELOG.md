@@ -3,6 +3,7 @@
 #### 2.1.6
 
 - OAuthbearer support (contribution from macasado86 : https://github.com/silviucpp/erlkaf/pull/74)
+- Add default config based on target object (contribution from gabriel-araujjo : https://github.com/silviucpp/erlkaf/pull/76)
 
 #### 2.1.5
 
