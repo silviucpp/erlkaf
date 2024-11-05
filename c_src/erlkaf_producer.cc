@@ -178,7 +178,7 @@ ERL_NIF_TERM enif_producer_new(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv
 
     scoped_ptr(config, rd_kafka_conf_t, rd_kafka_conf_new(), rd_kafka_conf_destroy);
 
-    ERL_NIF_TERM parse_result = parse_kafka_config(env, argv[1], config.get());
+    ERL_NIF_TERM parse_result = parse_kafka_config(env, argv[1], config.get(), TargetObject::Producer);
 
     if(parse_result != ATOMS.atomOk)
         return parse_result;

@@ -264,7 +264,7 @@ ERL_NIF_TERM enif_consumer_new(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv
     scoped_ptr(client_conf, rd_kafka_conf_t, rd_kafka_conf_new(), rd_kafka_conf_destroy);
     scoped_ptr(topic_conf, rd_kafka_topic_conf_t, rd_kafka_topic_conf_new(), rd_kafka_topic_conf_destroy);
 
-    ERL_NIF_TERM parse_result = parse_kafka_config(env, argv[2], client_conf.get());
+    ERL_NIF_TERM parse_result = parse_kafka_config(env, argv[2], client_conf.get(), TargetObject::Consumer);
 
     if(parse_result != ATOMS.atomOk)
         return parse_result;
