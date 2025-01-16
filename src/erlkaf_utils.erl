@@ -2,6 +2,7 @@
 
 -export([
     get_priv_path/1,
+    get_local_queue_path/1,
     get_env/1,
     get_env/2,
     lookup/2,
@@ -15,6 +16,20 @@
     parralel_exec/2
 ]).
 
+-spec get_local_queue_path(string() | atom()) -> string() | undefined.
+get_local_queue_path(File) ->
+    case application:get_env(erlkaf, global_client_options) of
+        undefined -> 
+            get_priv_path(File);
+        {ok, Val} -> 
+            case lookup(local_queue_path, Val) of
+                undefined -> 
+                    get_priv_path(File);
+                Path ->
+                    filename:join(Path, File)
+            end
+    end.
+    
 get_priv_path(File) ->
     case code:priv_dir(erlkaf) of
         {error, bad_name} ->
