@@ -111,6 +111,7 @@ batch_size                               |  P  | 1 .. 2147483647 |       1000000
 delivery_report_only_error               |  P  | true, false     |         false | Only provide delivery reports for failed messages
 delivery_report_callback                 |  P  | module or fun/2 |       undefined| A callback where delivery reports are sent (`erlkaf_producer_callbacks` behaviour)
 sticky_partitioning_linger_ms            |  P  | 0 .. 900000     |            10 | Delay in milliseconds to wait to assign new sticky partitions for each topic. By default, set to double the time of linger.ms. To disable sticky behavior, set to 0. This behavior affects messages with the key NULL in all cases, and messages with key lengths of zero when the consistent_random partitioner is in use. These messages would otherwise be assigned randomly. A higher value allows for more effective batching of these messages.
+local_queue_path                         |  P  |                 |               | Path to directory where local disk queue files will be paced if queue_buffering_overflow_strategy for producer set to local_disk_queue. Default value is priv directory of erlkaf application.
 
 ## Topic configuration properties
 
