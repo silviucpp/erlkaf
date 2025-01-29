@@ -82,6 +82,12 @@ is_erlkaf_config(stats_callback = K, V) ->
     check_callback(K, V, 2);
 is_erlkaf_config(oauthbearer_token_refresh_callback = K, V) ->
     check_callback(K, V, 1);
+is_erlkaf_config(local_queue_path = K, []) -> throw({error, {options, {K, []}}});
+is_erlkaf_config(local_queue_path = K, V) ->
+    case io_lib:latin1_char_list(V) of
+        true -> true;
+        _ -> throw({error, {options, {K, V}}})
+    end;
 is_erlkaf_config(queue_buffering_overflow_strategy = K, V) ->
     case V of
         local_disk_queue ->
