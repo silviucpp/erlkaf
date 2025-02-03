@@ -13,6 +13,7 @@
     start_consumer_group/5,
     stop_client/1,
     create_topic/3,
+    delete_topic/2,
 
     % gen_server
 
@@ -43,6 +44,9 @@ stop_client(ClientId) ->
 create_topic(ClientRef, TopicName, TopicConfig) ->
     erlkaf_utils:safe_call(?MODULE, {create_topic, ClientRef, TopicName, TopicConfig}).
 
+delete_topic(ClientRef, TopicName) ->
+    erlkaf_utils:safe_call(?MODULE, {delete_topic, ClientRef, TopicName}).
+
 %gen server
 
 init([]) ->
@@ -50,6 +54,9 @@ init([]) ->
 
 handle_call({create_topic, ClientRef, TopicName, TopicConfig}, _From, State) ->
     {reply, erlkaf_nif:producer_topic_new(ClientRef, TopicName, TopicConfig), State};
+
+handle_call({delete_topic, ClientRef, TopicName}, _From, State) ->
+    {reply, erlkaf_nif:producer_topic_new(ClientRef, TopicName), State};
 
 handle_call({start_producer, ClientId, ErlkafConfig, LibRdkafkaConfig}, _From, State) ->
     case internal_start_producer(ClientId, ErlkafConfig, LibRdkafkaConfig) of

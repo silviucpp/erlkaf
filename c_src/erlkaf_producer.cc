@@ -167,6 +167,38 @@ ERL_NIF_TERM enif_producer_topic_new(ErlNifEnv* env, int argc, const ERL_NIF_TER
     return ATOMS.atomOk;
 }
 
+ERL_NIF_TERM enif_producer_topic_delete(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
+{
+    UNUSED(argc);
+
+    std::string topic_name;
+    enif_producer* producer;
+
+    erlkaf_data* data = static_cast<erlkaf_data*>(enif_priv_data(env));
+
+    if(!enif_get_resource(env, argv[0], data->res_producer,  reinterpret_cast<void**>(&producer)))
+        return make_badarg(env);
+
+    if(!get_string(env, argv[1], &topic_name))
+        return make_badarg(env);
+
+    rd_kafka_DeleteTopic_t **del_topics;
+    del_topics = reinterpret_cast<rd_kafka_DeleteTopic_t **>(malloc(sizeof(*del_topics)));
+    del_topics[0] = rd_kafka_DeleteTopic_new(topic_name.data());
+
+    bool not_found;
+
+    producer->topics->DeleteTopic(topic_name, *del_topics, &not_found);
+
+    if(not_found)
+        return make_error(env, "topic not found");
+
+    rd_kafka_DeleteTopic_destroy_array(del_topics, 1);
+    free(del_topics);
+
+    return ATOMS.atomOk;
+}
+
 ERL_NIF_TERM enif_producer_new(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
 {
     UNUSED(argc);
