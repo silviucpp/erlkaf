@@ -106,7 +106,8 @@ internal_start_producer(ClientId, ErlkafConfig, LibRdkafkaConfig) ->
 internal_start_consumer(ClientId, GroupId, Topics, ClientConfig, DefaultTopicsConfig) ->
     case erlkaf_cache_client:get(ClientId) of
         undefined ->
-            case valid_consumer_topics(Topics) of
+            ConsumerModule = consumer_module(ClientConfig),
+            case valid_consumer_topics(ConsumerModule, Topics) of
                 ok ->
                     case erlkaf_config:convert_kafka_config(ClientConfig) of
                         {ok, EkClientConfig, RdkClientConfig} ->
@@ -135,18 +136,38 @@ internal_stop_client(ClientId) ->
             {error, ?ERR_UNDEFINED_CLIENT}
     end.
 
-valid_consumer_topics([H|T]) ->
+valid_consumer_topics(erlkaf_consumer, [H|T]) ->
     case H of
         {K, V} when is_binary(K) and is_list(V) ->
             Mod = erlkaf_utils:lookup(callback_module, V),
             case Mod =/= undefined andalso is_atom(Mod) of
                 true ->
-                    valid_consumer_topics(T);
+                    valid_consumer_topics(erlkaf_consumer, T);
                 _ ->
                     {error, {invalid_topic, H}}
             end;
         _ ->
             {error, {invalid_topic, H}}
     end;
-valid_consumer_topics([]) ->
+valid_consumer_topics(erlkaf_poll_consumer, [H|T]) ->
+    case H of
+        {K, V} when is_binary(K) and is_list(V) ->
+            PollSize = erlkaf_utils:lookup(poll_batch_size, V),
+            if is_integer(PollSize) ->
+                valid_consumer_topics(erlkaf_poll_consumer, T);
+            true ->
+                {error, {invalid_topic, H}}
+            end;
+        _ ->
+            {error, {invalid_topic, H}}
+    end;
+valid_consumer_topics(_, []) ->
     ok.
+
+consumer_module(ClientConfig) ->
+    case erlkaf_utils:lookup(poll_consumer, ClientConfig) of
+        true ->
+            erlkaf_poll_consumer;
+        _ ->
+            erlkaf_consumer
+    end.

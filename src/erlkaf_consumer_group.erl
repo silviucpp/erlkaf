@@ -6,6 +6,8 @@
 
 -export([
     start_link/7,
+    poll/2,
+    commit_offsets/2,
 
     % gen_server
 
@@ -22,6 +24,7 @@
     client_ref,
     topics_settings = #{},
     active_topics_map = #{},
+    consumer_module,
     stats_cb,
     stats = [],
     oauthbearer_token_refresh_cb
@@ -34,6 +37,7 @@ init([ClientId, GroupId, Topics, EkClientConfig, RdkClientConfig, _EkTopicConfig
     process_flag(trap_exit, true),
 
     TopicsNames = lists:map(fun({K, _}) -> K end, Topics),
+    PollConsumer = erlkaf_utils:lookup(poll_consumer, EkClientConfig, false),
 
     case erlkaf_nif:consumer_new(GroupId, TopicsNames, RdkClientConfig, RdkTopicConfig) of
         {ok, ClientRef} ->
@@ -43,6 +47,7 @@ init([ClientId, GroupId, Topics, EkClientConfig, RdkClientConfig, _EkTopicConfig
                 client_id = ClientId,
                 client_ref = ClientRef,
                 topics_settings = maps:from_list(Topics),
+                consumer_module = consumer_module(PollConsumer),
                 stats_cb = erlkaf_utils:lookup(stats_callback, EkClientConfig),
                 oauthbearer_token_refresh_cb = erlkaf_utils:lookup(oauthbearer_token_refresh_callback, EkClientConfig)
             }};
@@ -50,11 +55,51 @@ init([ClientId, GroupId, Topics, EkClientConfig, RdkClientConfig, _EkTopicConfig
             {stop, Error}
     end.
 
+consumer_module(PollConsumer) ->
+    case PollConsumer of
+        true ->
+            erlkaf_poll_consumer;
+        _ ->
+            erlkaf_consumer
+    end.
+
+poll(Pid, Timeout) ->
+    erlkaf_utils:safe_call(Pid, {poll, Timeout}, infinity).
+
+commit_offsets(Pid, PartitionOffsets) ->
+    gen_server:cast(Pid, {commit_offsets, PartitionOffsets}).
+
 handle_call(get_stats, _From, #state{stats = Stats} = State) ->
     {reply, {ok, Stats}, State};
 
+handle_call({poll, Timeout}, _From, #state{active_topics_map = ActiveTopicsMap} = State) ->
+    MapFun = fun({Topic, Partition}, {ConsumerPid, _Ref}) -> 
+        case erlkaf_utils:safe_call(ConsumerPid, poll, Timeout) of
+            {ok, Events, ConsumerLastOffset} when length(Events) > 0 ->
+                {Topic, Partition, Events, ConsumerLastOffset};
+            _ -> 
+                undefined
+        end
+    end,
+    ReduceFun = fun
+        (undefined, Acc) -> Acc;
+        (Events, Acc) -> [Events | Acc] 
+    end,
+
+    Events = parallel_map_reduce(MapFun, ReduceFun, [], ActiveTopicsMap),
+
+    {reply, {ok, Events}, State};
+
 handle_call(_Request, _From, State) ->
     {reply, ok, State}.
+
+handle_cast({commit_offsets, PartitionOffsets}, #state{active_topics_map = ActiveTopicsMap} = State) ->
+    erlkaf_utils:parralel_exec(fun({Topic, Partition, Offset}) -> 
+        {ConsumerPid, _Ref} = maps:get({Topic, Partition}, ActiveTopicsMap),
+        gen_server:cast(ConsumerPid, {commit_offset, Offset}) 
+    end, PartitionOffsets),
+
+    {noreply, State};
 
 handle_cast(_Request, State) ->
     {noreply, State}.
@@ -90,13 +135,14 @@ handle_info({oauthbearer_token_refresh, OauthBearerConfig}, #state{
 handle_info({assign_partitions, Partitions}, #state{
     client_ref = ClientRef,
     topics_settings = TopicsSettingsMap,
-    active_topics_map = ActiveTopicsMap} = State) ->
+    active_topics_map = ActiveTopicsMap,
+    consumer_module = ConsumerModule} = State) ->
 
     ?LOG_INFO("assign partitions: ~p", [Partitions]),
 
     PartFun = fun({TopicName, Partition, Offset, QueueRef}, Tmap) ->
         TopicSettings = maps:get(TopicName, TopicsSettingsMap),
-        {ok, Pid} = erlkaf_consumer:start_link(ClientRef, TopicName, Partition, Offset, QueueRef, TopicSettings),
+        {ok, Pid} = ConsumerModule:start_link(ClientRef, TopicName, Partition, Offset, QueueRef, TopicSettings),
         maps:put({TopicName, Partition}, {Pid, QueueRef}, Tmap)
     end,
 
@@ -104,11 +150,12 @@ handle_info({assign_partitions, Partitions}, #state{
 
 handle_info({revoke_partitions, Partitions}, #state{
     client_ref = ClientRef,
-    active_topics_map = ActiveTopicsMap} = State) ->
+    active_topics_map = ActiveTopicsMap,
+    consumer_module = ConsumerModule} = State) ->
 
     ?LOG_INFO("revoke partitions: ~p", [Partitions]),
     PidQueuePairs = get_pid_queue_pairs(ActiveTopicsMap, Partitions),
-    ok = stop_consumers(PidQueuePairs),
+    ok = stop_consumers(ConsumerModule, PidQueuePairs),
     ?LOG_INFO("all existing consumers stopped for partitions: ~p", [Partitions]),
     ok = erlkaf_nif:consumer_partition_revoke_completed(ClientRef),
     {noreply, State#state{active_topics_map = #{}}};
@@ -127,8 +174,8 @@ handle_info({'EXIT', FromPid, Reason}, #state{active_topics_map = ActiveTopics} 
 handle_info(_Info, State) ->
     {noreply, State}.
 
-terminate(_Reason, #state{active_topics_map = TopicsMap, client_ref = ClientRef, client_id = ClientId}) ->
-    stop_consumers(maps:values(TopicsMap)),
+terminate(_Reason, #state{active_topics_map = TopicsMap, client_ref = ClientRef, client_id = ClientId, consumer_module = ConsumerModule}) ->
+    stop_consumers(ConsumerModule, maps:values(TopicsMap)),
     ok = erlkaf_nif:consumer_cleanup(ClientRef),
 
     ?LOG_INFO("wait for consumer client ~p to stop...", [ClientId]),
@@ -146,9 +193,25 @@ code_change(_OldVsn, State, _Extra) ->
 get_pid_queue_pairs(TopicsMap, Partitions) ->
     lists:map(fun(P) -> maps:get(P, TopicsMap) end, Partitions).
 
-stop_consumers(PidQueuePairs) ->
+stop_consumers(ConsumerModule, PidQueuePairs) ->
     erlkaf_utils:parralel_exec(fun({Pid, QueueRef}) -> 
-        erlkaf_consumer:stop(Pid),
+        ConsumerModule:stop(Pid),
         ok = erlkaf_nif:consumer_queue_cleanup(QueueRef)
     end, PidQueuePairs).
 
+parallel_map_reduce(MapFun, ReduceFun, Acc, Map) when is_map(Map) ->
+    Parent = self(),
+    Pids = [spawn_monitor(fun() -> Parent ! {self(), MapFun(K, V)} end) || {K, V} <- maps:to_list(Map)],
+    reduce(ReduceFun, Pids, Acc).
+
+reduce(_ReduceFun, [], Acc) -> Acc;
+reduce(ReduceFun, [{Pid, MRef} | Tail], Acc) ->
+    receive
+        {Pid, Result} ->
+            erlang:demonitor(MRef, [flush]),
+            NewAcc = ReduceFun(Result, Acc),
+            reduce(ReduceFun, Tail, NewAcc);
+        {'DOWN', MRef, process, Pid, Reason} ->
+            ?LOG_ERROR("polling process ~p exited: ~p", [Pid, Reason]),
+            Acc
+    end.
