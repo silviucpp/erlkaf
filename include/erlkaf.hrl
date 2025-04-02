@@ -24,7 +24,7 @@
 -type dispatch_mode() :: one_by_one | {batch, non_neg_integer()}.
 -type callback_dispatch_mode() :: {dispatch_mode, dispatch_mode()}.
 -type callback_options() :: callback_module() | callback_args() | callback_dispatch_mode().
--type topic() :: {binary(), [callback_options()]}.
+-type topic() :: {binary(), [callback_options()]} | {binary(), proplists:proplist()}.
 -type timestamp_type() :: not_available | create_time | log_append_time.
 
 -type topic_option() ::
@@ -142,7 +142,8 @@
     {batch_size, non_neg_integer()} |
     {delivery_report_only_error, boolean()} |
     {delivery_report_callback, any()} |
-    {sticky_partitioning_linger_ms, non_neg_integer()}.
+    {sticky_partitioning_linger_ms, non_neg_integer()} |
+    {oauthbearer_token_refresh_callback, any()}.
 
 % records
 

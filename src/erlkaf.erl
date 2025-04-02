@@ -22,7 +22,10 @@
     produce/7,
 
     get_metadata/1,
-    get_readable_error/1
+    get_readable_error/1,
+    poll/1,
+    poll/2,
+    commit_offsets/2
 ]).
 
 -spec start() ->
@@ -174,6 +177,29 @@ produce(ClientId, TopicName, Partition, Key, Value, Headers0, Timestamp) ->
 
 get_readable_error(Error) ->
     erlkaf_error_converter:get_readable_error(Error).
+
+-spec poll(client_id()) -> {ok, list()} | {error, reason()}.
+
+poll(ClientId) ->
+    poll(ClientId, 5000).
+
+-spec poll(client_id(), integer()) -> {ok, list()} | {error, reason()}.
+
+poll(ClientId, Timeout) ->
+    case erlkaf_cache_client:get(ClientId) of
+        {ok, _ClientRef, ClientPid} ->
+            erlkaf_consumer_group:poll(ClientPid, Timeout);
+        undefined ->
+            {error, ?ERR_UNDEFINED_CLIENT}
+    end.
+
+commit_offsets(ClientId, PartitionOffsets) ->
+    case erlkaf_cache_client:get(ClientId) of
+        {ok, _ClientRef, ClientPid} ->
+            erlkaf_consumer_group:commit_offsets(ClientPid, PartitionOffsets);
+        undefined ->
+            {error, ?ERR_UNDEFINED_CLIENT}
+    end.
 
 %internals
 

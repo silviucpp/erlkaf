@@ -99,6 +99,8 @@ is_erlkaf_config(queue_buffering_overflow_strategy = K, V) ->
         _ ->
             throw({error, {options, {K, V}}})
     end;
+is_erlkaf_config(poll_consumer = _K, V) ->
+    is_boolean(V);
 is_erlkaf_config(_, _) ->
     false.
 

@@ -238,6 +238,69 @@ You can call those like:
 ok = test_consumer:create_consumer().
 ```
 
+#### Polling consumer
+
+There is another type of consumer where users explicitly request more messages from Kafka on demand.
+To use this consumer, you need to set the `poll_consumer` property to `true` in the client configuration.
+Then, when defining the topics to connect to, you can set a `poll_batch_size` which will be the number
+of events to request per topic partition.
+
+After that, you only need to call repeatedly the function `erlkaf:poll(ClientId, Timeout)`
+or simply `erlkaf:poll(ClientId)` (to use a default timeout of 5000 ms) to ask for more
+events to Kafka.
+
+Likewise, you need to commit offsets per topic/partition using the function
+`erlkaf:commit_offsets(ClientId, PartitionOffsets)`. `PartitionOffsets` is a list
+of tuples in the form of `{Topic, Partition, Offset}`.
+
+This is an example of a module that uses the explicit polling consumer mechanism:
+
+```erlang
+-module(test_poll_consumer).
+
+-define(TOPICS, [
+    {<<"benchmark">>, [
+       {poll_batch_size, 50} % default value is 100
+   ]}
+]).
+
+-export([
+    create_consumer/0,
+    process/0
+]).
+
+create_consumer() ->
+    erlkaf:start(),
+    ClientId = client_consumer,
+    GroupId = <<"erlkaf_consumer">>,
+    ClientCfg = [{bootstrap_servers, <<"broker1:9092">>}, {poll_consumer, true}],
+    TopicConf = [{auto_offset_reset, smallest}],
+    ok = erlkaf:create_consumer_group(ClientId, GroupId, ?TOPICS, ClientCfg, TopicConf).
+
+process() ->
+    {ok, Received} = erlkaf:poll(client_consumer, 5000),
+    lists:foreach(fun({Topic, Partition, Events, _LastOffset}) ->
+        io:format("Received ~p events from topic ~p and partition ~p \n", [Events, Topic, Partition])
+    end, Received),
+
+    PartitionOffsets = lists:map(fun({Topic, Partition, _Events, LastOffset}) ->
+        {Topic, Partition, LastOffset}
+    end, Received),
+    erlkaf:commit_offsets(client_consumer, PartitionOffsets).
+```
+
+Then you can create the consumer:
+
+```erlang
+ok = test_poll_consumer:create_consumer().
+```
+
+And once the partitions have been assigned, you can poll events from Kafka:
+
+```erlang
+test_poll_consumer:process().
+```
+
 ### Error messages
 
 We forward all rdkafka errors to the calling application. To translate the received error, please use `get_readable_error/1` on the returned error to get a translated message
