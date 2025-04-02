@@ -1,5 +1,9 @@
 ### Changelog:
 
+#### 2.1.7
+
+- Add support for Polling consumer (contribution from macasado86 : https://github.com/silviucpp/erlkaf/pull/79)
+
 #### 2.1.6
 
 - OAuthbearer support (contribution from macasado86 : https://github.com/silviucpp/erlkaf/pull/74)

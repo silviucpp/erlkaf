@@ -16,24 +16,24 @@ matrix:
       dist: jammy
       otp_release: 26.1.1
 
-    - os: osx
-      osx_image: xcode13.4
-      language: generic
-      env:
-        - HOMEBREW_NO_INSTALLED_DEPENDENTS_CHECK=true
-        - HOMEBREW_NO_INSTALL_UPGRADE=true
-        - HOMEBREW_NO_INSTALL_CLEANUP=true
-        - HOMEBREW_NO_AUTO_UPDATE=true
-      cache:
-        directories:
-          - $HOME/Library/Caches/Homebrew
-          - /usr/local/Homebrew
+#    - os: osx
+#      osx_image: xcode13.4
+#      language: generic
+#      env:
+#        - HOMEBREW_NO_INSTALLED_DEPENDENTS_CHECK=true
+#        - HOMEBREW_NO_INSTALL_UPGRADE=true
+#        - HOMEBREW_NO_INSTALL_CLEANUP=true
+#        - HOMEBREW_NO_AUTO_UPDATE=true
+#      cache:
+#        directories:
+#          - $HOME/Library/Caches/Homebrew
+#          - /usr/local/Homebrew
 
 before_script:
 
   - if [[ $TRAVIS_OS_NAME == linux ]]; then sudo apt-get -y update || true ; fi
   - if [[ $TRAVIS_OS_NAME == linux ]]; then sudo apt-get install -y libsasl2-dev liblz4-dev libzstd-dev || true ; fi
-  - if [[ $TRAVIS_OS_NAME == osx ]]; then brew install --force-bottle erlang openssl@1.1 lz4 zstd curl || true; fi
+#  - if [[ $TRAVIS_OS_NAME == osx ]]; then brew install --force-bottle erlang openssl@1.1 lz4 zstd curl || true; fi
 
   - curl https://s3.amazonaws.com/rebar3/rebar3 --output rebar3 && chmod +x rebar3
 
