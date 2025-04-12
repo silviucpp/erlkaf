@@ -91,7 +91,7 @@ BuildLibrary()
             esac
 
             fail_check ./configure
-            fail_check make -j $CPUS
+            fail_check make -j $CPUS libs
 
             rm src/*.dylib
             rm src/*.so
