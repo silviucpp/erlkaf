@@ -1,5 +1,9 @@
 ### Changelog:
 
+#### 2.1.8
+
+- Improve compilation speed using ccache (enabled via `ERLKAF_USE_CCACHE` env variable).
+
 #### 2.1.7
 
 - Add support for Polling consumer (contribution from macasado86 : https://github.com/silviucpp/erlkaf/pull/79)
