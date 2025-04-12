@@ -6,6 +6,21 @@ OS=$(uname -s)
 KERNEL=$(echo $(lsb_release -ds 2>/dev/null || cat /etc/*release 2>/dev/null | head -n1 | awk '{print $1;}') | awk '{print $1;}')
 CPUS=`getconf _NPROCESSORS_ONLN 2>/dev/null || sysctl -n hw.ncpu`
 
+# Enable ccache based on $ERLKAF_USE_CCACHE environment variable
+
+CCACHE_ENABLED=0
+if [ "$ERLKAF_USE_CCACHE" = "1" ]; then
+    if command -v ccache &> /dev/null; then
+        echo "ccache is enabled and will be used."
+        export PATH="/usr/local/bin/ccache:$PATH"
+        export CC="ccache gcc"
+        export CXX="ccache g++"
+        CCACHE_ENABLED=1
+    else
+        echo "ccache is not installed. Proceeding without ccache..."
+    fi
+fi
+
 # https://github.com/confluentinc/librdkafka.git
 
 LIBRDKAFKA_DESTINATION=librdkafka
@@ -35,7 +50,7 @@ fail_check()
 CheckoutLib()
 {
     if [ -f "$DEPS_LOCATION/$4/$5" ]; then
-        echo "$4 fork already exist. delete $DEPS_LOCATION/$4 for a fresh checkout ..."
+        echo "$4 fork already exists. Delete $DEPS_LOCATION/$4 for a fresh checkout ..."
     else
         #repo rev branch destination
 

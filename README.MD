@@ -5,13 +5,13 @@
 
 *Erlang kafka driver based on [librdkafka][1]*
 
-### Implementation notes
+## Implementation notes
 
 The library is implemented in top of `librdkafka` which is a C library implementation of the Apache Kafka protocol 
 designed with message delivery reliability and high performance in mind, current figures exceed 1 million msgs/second 
 for the producer and 3 million msgs/second for the consumer. 
 
-##### How erlkaf affects the Erlang schedulers
+### How erlkaf affects the Erlang schedulers
 
 It's well known that NIF's can affect the Erlang schedulers performances in case the functions are not returning in less
 than 1-2 ms and blocks the scheduler threads.
@@ -21,7 +21,7 @@ will return immediately. The `librdkafka` driver use it's own thread pool for ma
 has it's own thread from where is sending async the events (delivery reports, logs, statistics) to erlang 
 using `enif_send`.
 
-### Upgrading from v1.X to v2.0.0
+## Upgrading from v1.X to v2.0.0
 
 Version 2.0.0 contains a major rewrite of the consumer groups in order to be able to scale when you have lot of topics:
  
@@ -31,7 +31,7 @@ how many producers or consumer groups you have, one single thread will be used t
 - In version 1.x each consumer group can handle a list of topics but you cannot specify a callback for each topic. Now the callbacks settings moved
 into the topics list. This breaks the backward compatibility for the API and config. More details into [Changelog][3].
 
-### User guide
+## User guide
 
 On Ubuntu make sure you have installed :
 
@@ -39,7 +39,7 @@ On Ubuntu make sure you have installed :
 sudo apt-get install libsasl2-dev liblz4-dev libzstd-dev
 ```
 
-Add `erlkaf` as a dependency to your project. The library works with `rebar`, `rebar3` or `hex.pm`
+Add `erlkaf` as a dependency to your project. The library works with `rebar3` or `hex.pm`
 
 ```erlang
 {deps, [
@@ -102,7 +102,19 @@ options it's value will be overwritten.
 For producers in case you don't need to customize the topic properties you can omit the `topics` property as time they will
 be created on the first produce operation with default settings. 
 
-### Producer API
+### Speeding Up the Compilation Process
+
+You can use `ccache` to speed up the compilation:
+
+- Install `ccache` on your platform (e.g., `sudo apt-get install ccache` for Debian-based systems or `brew install ccache` for macOS).
+- In `rebar.config.script`, add:
+
+```erlang
+os:putenv("ERLKAF_USE_CCACHE", "1"),
+Config.
+```
+
+## Producer API
 
 The following example will create a producer client with id `client_producer` which sends also delivery reports to the same module.
 
@@ -163,7 +175,7 @@ received delivery report: {ok, {erlkaf_msg,<<"benchmark">>,4,6172,<<"key1">>,<<"
 In case you are not interested in the delivery reports don't specify any callback, or in case you want to receive the 
 delivery reports only in case of errors you have to specify a callback and set `delivery_report_only_error` on `true`.
 
-##### Message queues
+#### Message queues
 
 The produced messages are queued in memory based on (`queue_buffering_max_messages` and `queue_buffering_max_kbytes`), 
 until they are delivered and acknowledged by the kafka broker, once the memory queue it's full there are three options defined by (`queue_buffering_overflow_strategy`) :
@@ -172,7 +184,7 @@ until they are delivered and acknowledged by the kafka broker, once the memory q
 - `block_calling_process` - calling process it's blocked until there is enough room into the memory queue 
 - `drop_records` - records are dropped in case the memory queue is full
  
-### Consumer API:
+## Consumer API:
 
 The following example creates a consumer group that will consume messages from `benchmark` topic. For each topic and partition
 the application will spawn an erlang process that will pull the messages. 
@@ -238,7 +250,7 @@ You can call those like:
 ok = test_consumer:create_consumer().
 ```
 
-#### Polling consumer
+### Polling consumer
 
 There is another type of consumer where users explicitly request more messages from Kafka on demand.
 To use this consumer, you need to set the `poll_consumer` property to `true` in the client configuration.
@@ -301,17 +313,16 @@ And once the partitions have been assigned, you can poll events from Kafka:
 test_poll_consumer:process().
 ```
 
-### Error messages
+## Error messages
 
 We forward all rdkafka errors to the calling application. To translate the received error, please use `get_readable_error/1` on the returned error to get a translated message
 
-
-### Statistics
+## Statistics
 
 In order to get statistics you can register the `stats_callback` callback which is called every `statistics_interval_ms` (default 0 which means
 statistics are disabled). The granularity is 1000 ms. Also you can poll the stats for each client using `erlkaf:get_stats/1`.
 
-### Configs
+## Configs
 
 The list of all available properties of client and topics are described [here][2]
 
