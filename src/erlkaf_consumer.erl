@@ -31,6 +31,7 @@
     cb_state,
     poll_batch_size,
     poll_idle_ms,
+    max_retries,
     dispatch_mode,
     messages = [],
     last_offset = -1
@@ -62,6 +63,7 @@ init([ClientRef, TopicName, Partition, Offset, QueueRef, TopicSettings]) ->
     CbArgs = erlkaf_utils:lookup(callback_args, TopicSettings, []),
     DispatchMode = erlkaf_utils:lookup(dispatch_mode, TopicSettings, one_by_one),
     PollIdleMs = erlkaf_utils:lookup(poll_idle_ms, TopicSettings, ?DEFAULT_POLL_IDLE_MS),
+    MaxRetires = erlkaf_utils:lookup(max_retries, TopicSettings, infinity),
 
     case catch CbModule:init(TopicName, Partition, Offset, CbArgs) of
         {ok, CbState} ->
@@ -78,6 +80,7 @@ init([ClientRef, TopicName, Partition, Offset, QueueRef, TopicSettings]) ->
                 cb_state = CbState,
                 poll_batch_size = PollBatchSize,
                 poll_idle_ms = PollIdleMs,
+                max_retries = MaxRetires,
                 dispatch_mode = DpMode
             }};
         Error ->
@@ -113,10 +116,11 @@ handle_info(process_messages, #state{
     messages = Msgs,
     dispatch_mode = DispatchMode,
     client_ref = ClientRef,
+    max_retries = MaxRetries,
     cb_module = CbModule,
     cb_state = CbState} = State) ->
 
-    case process_events(DispatchMode, Msgs, batch_offset(DispatchMode, State), ClientRef, CbModule, CbState) of
+    case process_events(DispatchMode, Msgs, batch_offset(DispatchMode, State), ClientRef, CbModule, CbState, MaxRetries) of
         {ok, NewCbState} ->
             schedule_poll(0),
             {noreply, State#state{messages = [], last_offset = -1, cb_state = NewCbState}};
@@ -163,53 +167,70 @@ schedule_message_process(Timeout) ->
 commit_offset(ClientRef, #erlkaf_msg{topic = Topic, partition = Partition, offset = Offset}) ->
     erlkaf_nif:consumer_offset_store(ClientRef, Topic, Partition, Offset).
 
-process_events(one_by_one, Msgs, _LastBatchOffset, ClientRef, CbModule, CbState) ->
-    process_events_one_by_one(Msgs, ClientRef, 0, CbModule, CbState);
-process_events(batch, Msgs, LastBatchOffset, ClientRef, CbModule, CbState) ->
-    process_events_batch(Msgs, LastBatchOffset, ClientRef, 0, CbModule, CbState).
+process_events(one_by_one, Msgs, _LastBatchOffset, ClientRef, CbModule, CbState, MaxRetries) ->
+    process_events_one_by_one(Msgs, ClientRef, 0, CbModule, CbState, MaxRetries, MaxRetries);
+process_events(batch, Msgs, LastBatchOffset, ClientRef, CbModule, CbState, MaxRetries) ->
+    process_events_batch(Msgs, LastBatchOffset, ClientRef, 0, CbModule, CbState, MaxRetries).
 
-process_events_batch(Msgs, LastBatchOffset, ClientRef, Backoff, CbModule, CbState) ->
+process_events_batch(Msgs, LastBatchOffset, ClientRef, Backoff, CbModule, CbState, MaxRetries) ->
     case catch CbModule:handle_message(Msgs, CbState) of
         {ok, NewCbState} ->
             {Topic, Partition, Offset} = LastBatchOffset,
             ok = erlkaf_nif:consumer_offset_store(ClientRef, Topic, Partition, Offset),
             {ok, NewCbState};
-        {error, Reason, NewCbState} ->
+        Error ->
+            {Reason, NewCbState} = new_error_state(Error, CbState),
             ?LOG_ERROR("~p:handle_message for batch error: ~p", [CbModule, Reason]),
             case recv_stop() of
                 false ->
-                    process_events_batch(Msgs, LastBatchOffset, ClientRef, exponential_backoff(Backoff), CbModule, NewCbState);
-                StopMsg ->
-                    StopMsg
-            end;
-        Error ->
-            ?LOG_ERROR("~p:handle_message for batch error: ~p", [CbModule, Error]),
-            case recv_stop() of
-                false ->
-                    process_events_batch(Msgs, LastBatchOffset, ClientRef, exponential_backoff(Backoff), CbModule, CbState);
+                    case MaxRetries == infinity orelse MaxRetries > 0 of
+                        true ->
+                            process_events_batch(Msgs, LastBatchOffset, ClientRef, exponential_backoff(Backoff), CbModule, NewCbState, max_retry(MaxRetries));
+                        _ ->
+                            case handle_failed_message(CbModule, NewCbState, Msgs, 0, MaxRetries) of
+                                {ok, NewCbState2} ->
+                                    {Topic, Partition, Offset} = LastBatchOffset,
+                                    ok = erlkaf_nif:consumer_offset_store(ClientRef, Topic, Partition, Offset),
+                                    {ok, NewCbState2};
+                                Other ->
+                                    ?LOG_ERROR("~p:handle_failed_message for batch failed with: ~p", [CbModule, Error]),
+                                    Other
+                            end
+                    end;
                 StopMsg ->
                     StopMsg
             end
     end.
 
-process_events_one_by_one([H|T] = Msgs, ClientRef, Backoff, CbModule, CbState) ->
+process_events_one_by_one([H|T] = Msgs, ClientRef, Backoff, CbModule, CbState, MaxRetries, CurrentMaxRetries) ->
     case recv_stop() of
         false ->
             case catch CbModule:handle_message(H, CbState) of
                 {ok, NewCbState} ->
                     ok = commit_offset(ClientRef, H),
-                    process_events_one_by_one(T, ClientRef, 0, CbModule, NewCbState);
-                {error, Reason, NewCbState} ->
-                    ?LOG_ERROR("~p:handle_message for: ~p error: ~p", [CbModule, H, Reason]),
-                    process_events_one_by_one(Msgs, ClientRef, exponential_backoff(Backoff), CbModule, NewCbState);
+                    process_events_one_by_one(T, ClientRef, 0, CbModule, NewCbState, MaxRetries, MaxRetries);
                 Error ->
-                    ?LOG_ERROR("~p:handle_message for: ~p error: ~p", [CbModule, H, Error]),
-                    process_events_one_by_one(Msgs, ClientRef, exponential_backoff(Backoff), CbModule, CbState)
+                    {Reason, NewCbState} = new_error_state(Error, CbState),
+                    ?LOG_ERROR("~p:handle_message for: ~p error: ~p", [CbModule, H, Reason]),
+
+                    case CurrentMaxRetries == infinity orelse CurrentMaxRetries > 0 of
+                        true ->
+                            process_events_one_by_one(Msgs, ClientRef, exponential_backoff(Backoff), CbModule, NewCbState, MaxRetries, max_retry(CurrentMaxRetries));
+                        _ ->
+                            case handle_failed_message(CbModule, NewCbState, H, 0, MaxRetries) of
+                                {ok, NewCbState2} ->
+                                    ok = commit_offset(ClientRef, H),
+                                    process_events_one_by_one(T, ClientRef, 0, CbModule, NewCbState2, MaxRetries, MaxRetries);
+                                Other ->
+                                    ?LOG_ERROR("~p:handle_failed_message for batch failed with: ~p", [CbModule, Error]),
+                                    Other
+                            end
+                    end
             end;
         StopMsg ->
             StopMsg
     end;
-process_events_one_by_one([], _ClientRef, _Backoff, _CbModule, CbState) ->
+process_events_one_by_one([], _ClientRef, _Backoff, _CbModule, CbState, _MaxRetries, _CurrentMaxRetries) ->
     {ok, CbState}.
 
 recv_stop() ->
@@ -227,3 +248,36 @@ exponential_backoff(4000) ->
 exponential_backoff(Backoff) ->
     timer:sleep(Backoff),
     Backoff * 2.
+
+new_error_state({error, Reason, NewCbState}, _State) ->
+    {Reason, NewCbState};
+new_error_state(Error, State) ->
+    {Error, State}.
+
+max_retry(infinity) ->
+    infinity;
+max_retry(N) ->
+    N-1.
+
+handle_failed_message(CbModule, CbState, Message, Backoff, MaxRetry) ->
+    case erlang:function_exported(CbModule, handle_failed_message, 2) of
+        true ->
+            case catch CbModule:handle_failed_message(Message, CbState) of
+                {ok, _NewCbState} = R ->
+                    R;
+                Error ->
+                    case recv_stop() of
+                        false ->
+                            case MaxRetry == infinity orelse MaxRetry > 0 of
+                                true ->
+                                    handle_failed_message(CbModule, CbState, Message, exponential_backoff(Backoff), max_retry(MaxRetry));
+                                _ ->
+                                    Error
+                            end;
+                        StopMsg ->
+                            StopMsg
+                    end
+            end;
+        false ->
+            {ok, CbState}
+    end.

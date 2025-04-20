@@ -1,5 +1,9 @@
 ### Changelog:
 
+#### 2.1.9 
+
+- Added support for Dead Letter Queue callbacks and configurable retry limits before marking an event as failed.
+
 #### 2.1.8
 
 - Improve compilation speed using ccache (enabled via `ERLKAF_USE_CCACHE` env variable).
