@@ -95,8 +95,12 @@ handle_call(_Request, _From, State) ->
 
 handle_cast({commit_offsets, PartitionOffsets}, #state{active_topics_map = ActiveTopicsMap} = State) ->
     erlkaf_utils:parralel_exec(fun({Topic, Partition, Offset}) -> 
-        {ConsumerPid, _Ref} = maps:get({Topic, Partition}, ActiveTopicsMap),
-        gen_server:cast(ConsumerPid, {commit_offset, Offset}) 
+        case maps:find({Topic, Partition}, ActiveTopicsMap) of
+            {ok, {ConsumerPid, _Ref}} ->
+                erlkaf_utils:safe_cast(ConsumerPid, {commit_offset, Offset});
+            error ->
+                ?LOG_ERROR("no process found for topic ~p and partition ~p when committing offset", [Topic, Partition])
+        end
     end, PartitionOffsets),
 
     {noreply, State};

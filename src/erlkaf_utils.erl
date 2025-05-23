@@ -11,6 +11,7 @@
     to_binary/1,
     safe_call/2,
     safe_call/3,
+    safe_cast/2,
     call_stats_callback/3,
     call_oauthbearer_token_refresh_callback/2,
     parralel_exec/2
@@ -91,6 +92,16 @@ safe_call(Receiver, Message) ->
 safe_call(Receiver, Message, Timeout) ->
     try
         gen_server:call(Receiver, Message, Timeout)
+    catch
+        exit:{noproc, _} ->
+            {error, not_started};
+        _: Exception ->
+            {error, Exception}
+    end.
+
+safe_cast(Receiver, Message) ->
+    try
+        gen_server:cast(Receiver, Message)
     catch
         exit:{noproc, _} ->
             {error, not_started};
