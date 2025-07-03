@@ -72,7 +72,7 @@ endif
 CXXFLAGS += -DNDEBUG \
             -I ../_build/deps/librdkafka/src \
             -I ../_build/deps \
-			-g -Wextra -Werror -Wno-missing-field-initializers -fno-exceptions -fno-rtti -std=c++11
+			-g -Wextra -Werror -Wno-missing-field-initializers -Wno-ignored-qualifiers -fno-exceptions -fno-rtti -std=c++11
 
 LDFLAGS += -L ../_build/deps/librdkafka/src \
            -lrdkafka \
