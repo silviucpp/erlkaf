@@ -26,7 +26,7 @@ fi
 LIBRDKAFKA_DESTINATION=librdkafka
 LIBRDKAFKA_REPO=https://github.com/confluentinc/librdkafka.git
 LIBRDKAFKA_BRANCH=master
-LIBRDKAFKA_REV=9b72ca3aa6c49f8f57eea02f70aadb1453d3ba1f
+LIBRDKAFKA_REV=2af6749287b3695edf2421631ebf08d6bcb176e3
 LIBRDKAFKA_SUCCESS=src/librdkafka.a
 
 # https://github.com/cameron314/concurrentqueue.git

@@ -5,15 +5,15 @@ matrix:
 
   include:
     - os: linux
-      dist: bionic
-      otp_release: 25.3.2.6
-
-    - os: linux
       dist: focal
       otp_release: 27.0
 
     - os: linux
       dist: jammy
+      otp_release: 26.1.1
+
+    - os: linux
+      dist: noble
       otp_release: 26.1.1
 
 before_script:

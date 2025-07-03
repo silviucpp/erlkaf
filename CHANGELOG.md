@@ -1,5 +1,11 @@
 ### Changelog:
 
+#### 2.2.0
+
+- Update to librdkafka v2.10.1
+- Add support for `client_dns_lookup` and `fetch_queue_backoff_ms` configs
+- Add a safe_cast function to cast commit offset function (contribution from macasado86 : https://github.com/silviucpp/erlkaf/pull/80)
+
 #### 2.1.9 
 
 - Added support for Dead Letter Queue callbacks and configurable retry limits before marking an event as failed.

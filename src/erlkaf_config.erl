@@ -262,6 +262,8 @@ to_librdkafka_config(queued_max_messages_kbytes, V) ->
     {<<"queued.max.messages.kbytes">>, erlkaf_utils:to_binary(V)};
 to_librdkafka_config(fetch_wait_max_ms, V) ->
     {<<"fetch.wait.max.ms">>, erlkaf_utils:to_binary(V)};
+to_librdkafka_config(fetch_queue_backoff_ms, V) ->
+    {<<"fetch.queue.backoff.ms">>, erlkaf_utils:to_binary(V)};
 to_librdkafka_config(fetch_message_max_bytes, V) ->
     {<<"fetch.message.max.bytes">>, erlkaf_utils:to_binary(V)};
 to_librdkafka_config(fetch_max_bytes, V) ->
@@ -310,6 +312,8 @@ to_librdkafka_config(plugin_library_paths, V) ->
     {<<"plugin.library.paths">>, erlkaf_utils:to_binary(V)};
 to_librdkafka_config(sticky_partitioning_linger_ms, V) ->
     {<<"sticky.partitioning.linger.ms">>, erlkaf_utils:to_binary(V)};
+to_librdkafka_config(client_dns_lookup, V) ->
+    {<<"client.dns.lookup">>, erlkaf_utils:to_binary(V)};
 to_librdkafka_config(K, V) ->
     throw({error, {options, {K, V}}}).
 
