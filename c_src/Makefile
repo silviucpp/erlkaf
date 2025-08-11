@@ -74,6 +74,15 @@ CXXFLAGS += -DNDEBUG \
             -I ../_build/deps \
 			-g -Wextra -Werror -Wno-missing-field-initializers -Wno-ignored-qualifiers -fno-exceptions -fno-rtti -std=c++11
 
+# Check if a C++ flag is supported by the compiler.
+cxx_flag_if_supported = \
+  $(shell printf 'int main(){return 0;}\n' | \
+    $(CXX) -x c++ -c -Werror $(1) -o /dev/null - >/dev/null 2>&1 && \
+    printf '%s' '$(1)')
+
+# Silence Clang's "variable length arrays in C++" warning when supported.
+CXXFLAGS += $(call cxx_flag_if_supported,-Wno-vla-cxx-extension)
+
 LDFLAGS += -L ../_build/deps/librdkafka/src \
            -lrdkafka \
            -lsasl2 \
