@@ -111,11 +111,14 @@ handle_cast(_Request, State) ->
 handle_info({stats, Stats0}, #state{stats_cb = StatsCb, client_id = ClientId} = State) ->
     Stats = erlkaf_json:decode(Stats0),
 
-    case catch erlkaf_utils:call_stats_callback(StatsCb, ClientId, Stats) of
+    try erlkaf_utils:call_stats_callback(StatsCb, ClientId, Stats) of
         ok ->
             ok;
         Error ->
             ?LOG_ERROR("~p:stats_callback client_id: ~p error: ~p", [StatsCb, ClientId, Error])
+    catch
+        C:E ->
+            ?LOG_ERROR("~p:stats_callback client_id: ~p error: ~p:~p", [StatsCb, ClientId, C, E])
     end,
     {noreply, State#state{stats = Stats}};
 
@@ -124,7 +127,7 @@ handle_info({oauthbearer_token_refresh, OauthBearerConfig}, #state{
     client_id = ClientId,
     client_ref = ClientRef} = State) ->
 
-    case catch erlkaf_utils:call_oauthbearer_token_refresh_callback(OauthbearerTokenRefreshCb, OauthBearerConfig) of
+    try erlkaf_utils:call_oauthbearer_token_refresh_callback(OauthbearerTokenRefreshCb, OauthBearerConfig) of
         {ok, Token, LifeTime, Principal} ->
             erlkaf_nif:consumer_oauthbearer_set_token(ClientRef, Token, LifeTime, Principal, "");
         {ok, Token, LifeTime, Principal, Extensions} ->
@@ -132,6 +135,10 @@ handle_info({oauthbearer_token_refresh, OauthBearerConfig}, #state{
         {error, Error} ->
             erlkaf_nif:consumer_oauthbearer_set_token_failure(ClientRef, Error),
             ?LOG_ERROR("~p:oauthbearer_token_refresh_callback client_id: ~p error: ~p", [OauthbearerTokenRefreshCb, ClientId, Error])
+    catch
+        C:E ->
+            erlkaf_nif:consumer_oauthbearer_set_token_failure(ClientRef, lists:flatten(io_lib:format("~p:~p", [C, E]))),
+            ?LOG_ERROR("~p:oauthbearer_token_refresh_callback client_id: ~p error: ~p:~p", [OauthbearerTokenRefreshCb, ClientId, C, E])
     end,
 
     {noreply, State};

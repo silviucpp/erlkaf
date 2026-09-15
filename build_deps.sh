@@ -25,8 +25,8 @@ fi
 
 LIBRDKAFKA_DESTINATION=librdkafka
 LIBRDKAFKA_REPO=https://github.com/confluentinc/librdkafka.git
-LIBRDKAFKA_BRANCH=master
-LIBRDKAFKA_REV=2af6749287b3695edf2421631ebf08d6bcb176e3
+LIBRDKAFKA_BRANCH=v2.15.1
+LIBRDKAFKA_REV=c58bbed850ebe1cc493259d11e4de6ca930d5120
 LIBRDKAFKA_SUCCESS=src/librdkafka.a
 
 # https://github.com/cameron314/concurrentqueue.git
@@ -83,8 +83,8 @@ BuildLibrary()
                     export HOMEBREW_NO_INSTALL_UPGRADE=true
                     export HOMEBREW_NO_INSTALL_CLEANUP=true
                     export HOMEBREW_NO_AUTO_UPDATE=1
-                    brew install openssl@1.1 lz4 zstd curl
-                    OPENSSL_ROOT_DIR=$(brew --prefix openssl@1.1)
+                    brew install openssl@3 lz4 zstd curl
+                    OPENSSL_ROOT_DIR=$(brew --prefix openssl@3)
                     export CPPFLAGS=-I$OPENSSL_ROOT_DIR/include/
                     export LDFLAGS=-L$OPENSSL_ROOT_DIR/lib
                     ;;

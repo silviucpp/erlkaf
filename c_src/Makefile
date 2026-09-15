@@ -4,7 +4,7 @@ PROJECT_NIF_NAME=erlkaf_nif
 include nif.mk
 
 ifeq ($(UNAME_SYS), darwin)
-	OPENSSL_ROOT := $(shell brew --prefix openssl@1.1)
+	OPENSSL_ROOT := $(shell brew --prefix openssl@3)
 	LZ4_ROOT := $(shell brew --prefix lz4)
 	ZSTD_ROOT := $(shell brew --prefix zstd)
 

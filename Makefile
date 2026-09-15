@@ -14,14 +14,10 @@ C_SRC_ENV ?= $(C_SRC_DIR)/env.mk
 
 #regenerate all the time the env.mk
 ifneq ($(wildcard $(C_SRC_DIR)),)
-	GEN_ENV ?= $(shell erl -noshell -s init stop -eval "file:write_file(\"$(C_SRC_ENV)\", \
+	GEN_ENV ?= $(shell erl -noshell -eval "file:write_file(\"$(C_SRC_ENV)\", \
 		io_lib:format( \
-			\"ERTS_INCLUDE_DIR ?= ~s/erts-~s/include/~n\" \
-			\"ERL_INTERFACE_INCLUDE_DIR ?= ~s~n\" \
-			\"ERL_INTERFACE_LIB_DIR ?= ~s~n\", \
-			[code:root_dir(), erlang:system_info(version), \
-			code:lib_dir(erl_interface, include), \
-			code:lib_dir(erl_interface, lib)])), \
+			\"ERTS_INCLUDE_DIR ?= ~s/erts-~s/include/~n\", \
+			[code:root_dir(), erlang:system_info(version)])), \
 		halt().")
     $(GEN_ENV)
 endif
@@ -40,7 +36,6 @@ cppcheck:
              -I /usr/local/opt/openssl/include \
              -I deps/librdkafka/src \
              -I $(ERTS_INCLUDE_DIR) \
-             -I $(ERL_INTERFACE_INCLUDE_DIR) \
              --force \
              --enable=all \
 	 		 --xml-version=2 \

@@ -119,9 +119,7 @@ get_metadata(ClientId) ->
         {ok, ClientRef, _ClientPid} ->
             erlkaf_nif:get_metadata(ClientRef);
         undefined ->
-            {error, ?ERR_UNDEFINED_CLIENT};
-        Error ->
-            Error
+            {error, ?ERR_UNDEFINED_CLIENT}
     end.
 
 -spec produce(client_id(), binary(), key(), value()) ->
@@ -168,9 +166,7 @@ produce(ClientId, TopicName, Partition, Key, Value, Headers0, Timestamp) ->
                     Error
             end;
         undefined ->
-            {error, ?ERR_UNDEFINED_CLIENT};
-        Error ->
-            Error
+            {error, ?ERR_UNDEFINED_CLIENT}
     end.
 
 -spec get_readable_error(reason()) -> atom().
