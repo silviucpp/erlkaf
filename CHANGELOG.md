@@ -1,5 +1,11 @@
 ### Changelog:
 
+#### 2.2.2
+
+- Fix OTP 29 compatibility (contribution from x0id : https://github.com/silviucpp/erlkaf/pull/86)
+- Update to librdkafka v2.15.1
+- Migrate to openssl 3.x
+
 #### 2.2.1
 
 - Fix for Variable length arrays break builds in some environments (contribution from dbloemendal-mi : https://github.com/silviucpp/erlkaf/pull/82)
